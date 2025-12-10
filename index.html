@@ -399,19 +399,26 @@
       gap: 10px;
     }
 
+    /* Generation Panel */
+    .generation-panel {
+      display: none;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-subtle);
+      animation: slideIn 0.4s var(--ease-out-expo);
+    }
+
+    .generation-panel.visible {
+      display: block;
+    }
+
     /* Analysis Box */
     .analysis-box {
-      margin-top: 20px;
       padding: 16px;
       background: var(--bg-elevated);
       border: 1px solid var(--border-subtle);
       border-radius: 10px;
-      display: none;
-      animation: slideIn 0.3s var(--ease-out-expo);
-    }
-
-    .analysis-box.visible {
-      display: block;
+      margin-bottom: 20px;
     }
 
     @keyframes slideIn {
@@ -435,10 +442,128 @@
       margin-bottom: 12px;
     }
 
-    .analysis-box p {
+    .analysis-content {
       font-size: 0.88rem;
       line-height: 1.6;
       color: var(--text-secondary);
+    }
+
+    .analysis-loading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-tertiary);
+      font-size: 0.85rem;
+    }
+
+    .analysis-loading .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border-subtle);
+      border-top-color: var(--accent-warm);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .analysis-result {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .analysis-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .analysis-tag {
+      padding: 4px 10px;
+      background: var(--accent-warm-dim);
+      border-radius: 100px;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: var(--accent-warm);
+    }
+
+    .analysis-summary {
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    /* Suggestions List */
+    .suggestions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .suggestion-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .suggestion-item:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent-warm);
+    }
+
+    .suggestion-item.selected {
+      background: var(--accent-warm-dim);
+      border-color: var(--accent-warm);
+    }
+
+    .suggestion-radio {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border-medium);
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 2px;
+      position: relative;
+      transition: all 0.15s ease;
+    }
+
+    .suggestion-item.selected .suggestion-radio {
+      border-color: var(--accent-warm);
+    }
+
+    .suggestion-item.selected .suggestion-radio::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 8px;
+      height: 8px;
+      background: var(--accent-warm);
+      border-radius: 50%;
+    }
+
+    .suggestion-content {
+      flex: 1;
+    }
+
+    .suggestion-action {
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .suggestion-detail {
+      font-size: 0.82rem;
+      color: var(--text-tertiary);
+      line-height: 1.5;
     }
 
     /* Sidebar Footer */
@@ -1032,99 +1157,120 @@
           <textarea id="sourceText" class="source-textarea" placeholder="Begin with your raw material..."></textarea>
         </div>
 
-        <div class="analysis-box" id="analysisBox">
-          <h3>Analysis</h3>
-          <p id="analysisContent"></p>
-        </div>
-
-        <div class="field">
-          <div class="field-label">
-            <span>Parameters</span>
-          </div>
-
-          <div class="params-grid">
-            <div class="param-slider">
-              <div class="param-slider-header">
-                <span class="param-slider-label">Tone</span>
-                <span class="param-slider-value" id="toneValue">Neutral</span>
-              </div>
-              <div class="slider-track">
-                <input type="range" id="toneSlider" min="-100" max="100" value="0">
-              </div>
-              <div class="slider-labels">
-                <span>Casual</span>
-                <span>Formal</span>
-              </div>
-            </div>
-
-            <div class="param-slider">
-              <div class="param-slider-header">
-                <span class="param-slider-label">Length</span>
-                <span class="param-slider-value" id="lengthValue">Same</span>
-              </div>
-              <div class="slider-track">
-                <input type="range" id="lengthSlider" min="-100" max="100" value="0">
-              </div>
-              <div class="slider-labels">
-                <span>Shorter</span>
-                <span>Longer</span>
-              </div>
-            </div>
-
-            <div class="param-slider">
-              <div class="param-slider-header">
-                <span class="param-slider-label">Complexity</span>
-                <span class="param-slider-value" id="complexityValue">Moderate</span>
-              </div>
-              <div class="slider-track">
-                <input type="range" id="complexitySlider" min="-100" max="100" value="0">
-              </div>
-              <div class="slider-labels">
-                <span>Simple</span>
-                <span>Elaborate</span>
-              </div>
-            </div>
-
-            <div class="param-row">
-              <div class="param-select">
-                <div class="field-label" style="margin-bottom: 8px;">
-                  <span>Audience</span>
-                </div>
-                <select id="audience">
-                  <option value="general">General</option>
-                  <option value="technical">Technical</option>
-                  <option value="executive">Executive</option>
-                  <option value="casual">Casual</option>
-                  <option value="academic">Academic</option>
-                </select>
-              </div>
-
-              <div class="param-select">
-                <div class="field-label" style="margin-bottom: 8px;">
-                  <span>Intent</span>
-                </div>
-                <select id="intent">
-                  <option value="inform">Inform</option>
-                  <option value="persuade">Persuade</option>
-                  <option value="entertain">Entertain</option>
-                  <option value="instruct">Instruct</option>
-                  <option value="inspire">Inspire</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div class="actions">
-          <button class="btn btn-primary" id="generateBtn">
+          <button class="btn btn-primary" id="addSourceBtn">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            Generate Variant
+            Add to Canvas
           </button>
-          <div class="btn-row">
-            <button class="btn btn-secondary" id="analyzeBtn">Analyze</button>
-            <button class="btn btn-secondary" id="addSourceBtn">Add to Canvas</button>
+        </div>
+
+        <!-- Analysis & Generation Panel (shown after source is added) -->
+        <div class="generation-panel" id="generationPanel">
+          <div class="analysis-box visible" id="analysisBox">
+            <h3>Analysis</h3>
+            <div id="analysisContent" class="analysis-content">
+              <div class="analysis-loading">
+                <div class="spinner"></div>
+                <span>Analyzing your text...</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="field" id="suggestionsField" style="display: none;">
+            <div class="field-label">
+              <span>Generate From Suggestion</span>
+            </div>
+            <div class="suggestions-list" id="suggestionsList"></div>
+          </div>
+
+          <div class="field">
+            <div class="field-label">
+              <span>Or Customize Parameters</span>
+            </div>
+
+            <div class="params-grid">
+              <div class="param-slider">
+                <div class="param-slider-header">
+                  <span class="param-slider-label">Tone</span>
+                  <span class="param-slider-value" id="toneValue">Neutral</span>
+                </div>
+                <div class="slider-track">
+                  <input type="range" id="toneSlider" min="-100" max="100" value="0">
+                </div>
+                <div class="slider-labels">
+                  <span>Casual</span>
+                  <span>Formal</span>
+                </div>
+              </div>
+
+              <div class="param-slider">
+                <div class="param-slider-header">
+                  <span class="param-slider-label">Length</span>
+                  <span class="param-slider-value" id="lengthValue">Same</span>
+                </div>
+                <div class="slider-track">
+                  <input type="range" id="lengthSlider" min="-100" max="100" value="0">
+                </div>
+                <div class="slider-labels">
+                  <span>Shorter</span>
+                  <span>Longer</span>
+                </div>
+              </div>
+
+              <div class="param-slider">
+                <div class="param-slider-header">
+                  <span class="param-slider-label">Complexity</span>
+                  <span class="param-slider-value" id="complexityValue">Moderate</span>
+                </div>
+                <div class="slider-track">
+                  <input type="range" id="complexitySlider" min="-100" max="100" value="0">
+                </div>
+                <div class="slider-labels">
+                  <span>Simple</span>
+                  <span>Elaborate</span>
+                </div>
+              </div>
+
+              <div class="param-row">
+                <div class="param-select">
+                  <div class="field-label" style="margin-bottom: 8px;">
+                    <span>Audience</span>
+                  </div>
+                  <select id="audience">
+                    <option value="general">General</option>
+                    <option value="technical">Technical</option>
+                    <option value="executive">Executive</option>
+                    <option value="casual">Casual</option>
+                    <option value="academic">Academic</option>
+                  </select>
+                </div>
+
+                <div class="param-select">
+                  <div class="field-label" style="margin-bottom: 8px;">
+                    <span>Intent</span>
+                  </div>
+                  <select id="intent">
+                    <option value="inform">Inform</option>
+                    <option value="persuade">Persuade</option>
+                    <option value="entertain">Entertain</option>
+                    <option value="instruct">Instruct</option>
+                    <option value="inspire">Inspire</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" id="generateBtn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              Generate Variant
+            </button>
           </div>
         </div>
       </div>
@@ -1205,10 +1351,17 @@
     const lengthValue = document.getElementById('lengthValue');
     const complexityValue = document.getElementById('complexityValue');
     const generateBtn = document.getElementById('generateBtn');
-    const analyzeBtn = document.getElementById('analyzeBtn');
     const addSourceBtn = document.getElementById('addSourceBtn');
+    const generationPanel = document.getElementById('generationPanel');
     const analysisBox = document.getElementById('analysisBox');
     const analysisContent = document.getElementById('analysisContent');
+    const suggestionsField = document.getElementById('suggestionsField');
+    const suggestionsList = document.getElementById('suggestionsList');
+
+    // State for current source card and analysis
+    let currentSourceCard = null;
+    let currentAnalysis = null;
+    let selectedSuggestion = null;
     const critiquePanel = document.getElementById('critiquePanel');
     const critiqueContent = document.getElementById('critiqueContent');
     const critiqueClose = document.getElementById('critiqueClose');
@@ -1733,15 +1886,109 @@ ${content}`;
       return html;
     }
 
-    // Add source to canvas
-    function addSourceToCanvas() {
+    // Add source to canvas and trigger analysis
+    async function addSourceToCanvas() {
       const text = sourceText.value.trim();
       if (!text) {
         alert('Please enter some source text');
         return;
       }
-      createCard(['Source'], text, 'source');
+
+      // Create source card
+      currentSourceCard = createCard(['Source'], text, 'source');
       zoomToFit();
+
+      // Show generation panel
+      generationPanel.classList.add('visible');
+
+      // Reset analysis state
+      currentAnalysis = null;
+      selectedSuggestion = null;
+      suggestionsField.style.display = 'none';
+      suggestionsList.innerHTML = '';
+
+      // Show loading state
+      analysisContent.innerHTML = `
+        <div class="analysis-loading">
+          <div class="spinner"></div>
+          <span>Analyzing your text...</span>
+        </div>
+      `;
+
+      // Disable add button while processing
+      addSourceBtn.disabled = true;
+
+      // Analyze the source text
+      try {
+        const prompt = `Analyze this text and provide feedback. Respond in JSON format only:
+
+{
+  "tone": "casual" | "neutral" | "formal",
+  "audience": "who this seems written for",
+  "intent": "inform" | "persuade" | "entertain" | "instruct" | "inspire",
+  "summary": "One sentence describing what this text is about",
+  "suggestions": [
+    {"action": "Brief improvement title", "detail": "How to implement this improvement", "prompt_instruction": "Specific instruction for rewriting"},
+    {"action": "Brief improvement title", "detail": "How to implement this improvement", "prompt_instruction": "Specific instruction for rewriting"},
+    {"action": "Brief improvement title", "detail": "How to implement this improvement", "prompt_instruction": "Specific instruction for rewriting"}
+  ]
+}
+
+Text to analyze:
+${text}`;
+
+        const result = await callClaude(prompt);
+        const jsonMatch = result.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          currentAnalysis = JSON.parse(jsonMatch[0]);
+          renderAnalysis(currentAnalysis);
+        } else {
+          throw new Error('Invalid response format');
+        }
+      } catch (err) {
+        analysisContent.innerHTML = `<p style="color: var(--accent-error);">Error: ${err.message}</p>`;
+      } finally {
+        addSourceBtn.disabled = false;
+      }
+    }
+
+    // Render analysis results
+    function renderAnalysis(analysis) {
+      analysisContent.innerHTML = `
+        <div class="analysis-result">
+          <div class="analysis-meta">
+            <span class="analysis-tag">${analysis.tone}</span>
+            <span class="analysis-tag">${analysis.audience}</span>
+            <span class="analysis-tag">${analysis.intent}</span>
+          </div>
+          <p class="analysis-summary">${analysis.summary}</p>
+        </div>
+      `;
+
+      // Render suggestions
+      if (analysis.suggestions && analysis.suggestions.length > 0) {
+        suggestionsField.style.display = 'block';
+        suggestionsList.innerHTML = analysis.suggestions.map((s, i) => `
+          <div class="suggestion-item" data-index="${i}">
+            <div class="suggestion-radio"></div>
+            <div class="suggestion-content">
+              <div class="suggestion-action">${s.action}</div>
+              <div class="suggestion-detail">${s.detail}</div>
+            </div>
+          </div>
+        `).join('');
+
+        // Add click handlers for suggestions
+        suggestionsList.querySelectorAll('.suggestion-item').forEach(item => {
+          item.addEventListener('click', () => {
+            // Deselect others
+            suggestionsList.querySelectorAll('.suggestion-item').forEach(i => i.classList.remove('selected'));
+            // Select this one
+            item.classList.add('selected');
+            selectedSuggestion = currentAnalysis.suggestions[parseInt(item.dataset.index)];
+          });
+        });
+      }
     }
 
     // Find or create source card for given text
@@ -1768,21 +2015,36 @@ ${content}`;
         return;
       }
 
-      // First, ensure source card exists on canvas
-      const sourceCard = getOrCreateSourceCard(text);
+      // Use existing source card or create one
+      const sourceCard = currentSourceCard || getOrCreateSourceCard(text);
 
-      // Get labels from sliders
-      const toneDesc = toneValue.textContent;
-      const lengthDesc = lengthValue.textContent;
-      const complexityDesc = complexityValue.textContent;
-      const audience = audienceSelect.value;
-      const intent = intentSelect.value;
+      let prompt;
+      let tags;
 
-      const tone = parseInt(toneSlider.value);
-      const length = parseInt(lengthSlider.value);
-      const complexity = parseInt(complexitySlider.value);
+      // Check if a suggestion is selected
+      if (selectedSuggestion) {
+        prompt = `Rewrite the following text based on this specific instruction:
+${selectedSuggestion.prompt_instruction}
 
-      const prompt = `Rewrite the following text with these parameters:
+Original text:
+${text}
+
+Provide ONLY the rewritten text, no explanations or preamble.`;
+
+        tags = [selectedSuggestion.action];
+      } else {
+        // Use parameter sliders
+        const toneDesc = toneValue.textContent;
+        const lengthDesc = lengthValue.textContent;
+        const complexityDesc = complexityValue.textContent;
+        const audience = audienceSelect.value;
+        const intent = intentSelect.value;
+
+        const tone = parseInt(toneSlider.value);
+        const length = parseInt(lengthSlider.value);
+        const complexity = parseInt(complexitySlider.value);
+
+        prompt = `Rewrite the following text with these parameters:
 - Tone: ${toneDesc} (${tone > 0 ? 'more formal' : tone < 0 ? 'more casual' : 'keep similar'})
 - Length: ${lengthDesc} (${length > 0 ? 'expand and elaborate' : length < 0 ? 'condense and shorten' : 'keep similar length'})
 - Complexity: ${complexityDesc} (${complexity > 0 ? 'use more sophisticated vocabulary and elaborate sentence structures' : complexity < 0 ? 'use simpler words and shorter sentences' : 'keep similar complexity'})
@@ -1794,7 +2056,9 @@ ${text}
 
 Provide ONLY the rewritten text, no explanations or preamble.`;
 
-      const tags = [toneDesc, complexityDesc, audience];
+        tags = [toneDesc, complexityDesc, audience];
+      }
+
       const card = createCard(tags, 'Generating', 'generating');
 
       // Store connection for arrow
@@ -1866,41 +2130,8 @@ Provide ONLY the rewritten text, no explanations or preamble.`;
       }
     }
 
-    // Analyze source
-    async function analyzeSource() {
-      const text = sourceText.value.trim();
-      if (!text) {
-        alert('Please enter some source text');
-        return;
-      }
-
-      const prompt = `Analyze the following text and identify its current parameters. Be concise:
-
-- Tone: [casual/neutral/formal] (score -10 to +10)
-- Apparent audience: [who this seems written for]
-- Intent: [inform/persuade/entertain/instruct/inspire]
-- Key characteristics: [1-2 brief observations]
-
-Text:
-${text}`;
-
-      analyzeBtn.disabled = true;
-      analysisBox.classList.add('visible');
-      analysisContent.textContent = 'Analyzing...';
-
-      try {
-        const result = await callClaude(prompt);
-        analysisContent.textContent = result;
-      } catch (err) {
-        analysisContent.textContent = `Error: ${err.message}`;
-      } finally {
-        analyzeBtn.disabled = false;
-      }
-    }
-
     // Event listeners
     generateBtn.addEventListener('click', generateVariant);
-    analyzeBtn.addEventListener('click', analyzeSource);
     addSourceBtn.addEventListener('click', addSourceToCanvas);
 
     // Initialize
