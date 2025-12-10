@@ -809,6 +809,54 @@
       border-radius: 3px;
     }
 
+    /* Analysis Panel (right side) */
+    .analysis-panel {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      width: 360px;
+      max-height: calc(100vh - 120px);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-medium);
+      border-radius: 16px;
+      box-shadow:
+        0 4px 16px rgba(0,0,0,0.1),
+        0 12px 40px rgba(0,0,0,0.12);
+      z-index: 200;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      animation: panelIn 0.35s var(--ease-out-expo);
+    }
+
+    .analysis-panel.visible {
+      display: flex;
+    }
+
+    .analysis-panel-content {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .suggestions-section {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 20px 20px;
+    }
+
+    .suggestions-section::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .suggestions-section::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .suggestions-section::-webkit-scrollbar-thumb {
+      background: var(--border-medium);
+      border-radius: 3px;
+    }
+
     /* Critique Panel */
     .critique-panel {
       position: absolute;
@@ -1167,28 +1215,11 @@
           </button>
         </div>
 
-        <!-- Analysis & Generation Panel (shown after source is added) -->
+        <!-- Generation Panel (shown after source is added) -->
         <div class="generation-panel" id="generationPanel">
-          <div class="analysis-box visible" id="analysisBox">
-            <h3>Analysis</h3>
-            <div id="analysisContent" class="analysis-content">
-              <div class="analysis-loading">
-                <div class="spinner"></div>
-                <span>Analyzing your text...</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="field" id="suggestionsField" style="display: none;">
-            <div class="field-label">
-              <span>Generate From Suggestion</span>
-            </div>
-            <div class="suggestions-list" id="suggestionsList"></div>
-          </div>
-
           <div class="field">
             <div class="field-label">
-              <span>Or Customize Parameters</span>
+              <span>Parameters</span>
             </div>
 
             <div class="params-grid">
@@ -1290,6 +1321,34 @@
 
       <div class="canvas-hint" id="canvasHint">Card added to canvas</div>
 
+      <!-- Analysis Panel (right side) -->
+      <div class="analysis-panel" id="analysisPanel">
+        <div class="critique-header">
+          <h2>Analysis</h2>
+          <button class="critique-close" id="analysisClose">×</button>
+        </div>
+        <div class="analysis-panel-content" id="analysisContent">
+          <div class="critique-loading">
+            <div class="spinner"></div>
+            <span>Analyzing your text...</span>
+          </div>
+        </div>
+        <div class="suggestions-section" id="suggestionsSection">
+          <div class="critique-section">
+            <h3>Suggestions</h3>
+            <div class="suggestions-list" id="suggestionsList"></div>
+          </div>
+        </div>
+        <div class="critique-actions">
+          <button class="btn btn-primary" id="generateFromSuggestionBtn" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            Generate from Suggestion
+          </button>
+        </div>
+      </div>
+
       <div class="critique-panel" id="critiquePanel">
         <div class="critique-header">
           <h2>Critique</h2>
@@ -1353,10 +1412,12 @@
     const generateBtn = document.getElementById('generateBtn');
     const addSourceBtn = document.getElementById('addSourceBtn');
     const generationPanel = document.getElementById('generationPanel');
-    const analysisBox = document.getElementById('analysisBox');
+    const analysisPanel = document.getElementById('analysisPanel');
     const analysisContent = document.getElementById('analysisContent');
-    const suggestionsField = document.getElementById('suggestionsField');
+    const suggestionsSection = document.getElementById('suggestionsSection');
     const suggestionsList = document.getElementById('suggestionsList');
+    const analysisClose = document.getElementById('analysisClose');
+    const generateFromSuggestionBtn = document.getElementById('generateFromSuggestionBtn');
 
     // State for current source card and analysis
     let currentSourceCard = null;
@@ -1898,18 +1959,19 @@ ${content}`;
       currentSourceCard = createCard(['Source'], text, 'source');
       zoomToFit();
 
-      // Show generation panel
+      // Show generation panel in sidebar and analysis panel on right
       generationPanel.classList.add('visible');
+      analysisPanel.classList.add('visible');
 
       // Reset analysis state
       currentAnalysis = null;
       selectedSuggestion = null;
-      suggestionsField.style.display = 'none';
       suggestionsList.innerHTML = '';
+      generateFromSuggestionBtn.disabled = true;
 
       // Show loading state
       analysisContent.innerHTML = `
-        <div class="analysis-loading">
+        <div class="critique-loading">
           <div class="spinner"></div>
           <span>Analyzing your text...</span>
         </div>
@@ -1946,11 +2008,19 @@ ${text}`;
           throw new Error('Invalid response format');
         }
       } catch (err) {
-        analysisContent.innerHTML = `<p style="color: var(--accent-error);">Error: ${err.message}</p>`;
+        analysisContent.innerHTML = `<p style="color: var(--accent-error); padding: 20px;">Error: ${err.message}</p>`;
       } finally {
         addSourceBtn.disabled = false;
       }
     }
+
+    // Close analysis panel
+    function closeAnalysisPanel() {
+      analysisPanel.classList.remove('visible');
+      selectedSuggestion = null;
+    }
+
+    analysisClose.addEventListener('click', closeAnalysisPanel);
 
     // Render analysis results
     function renderAnalysis(analysis) {
@@ -1967,7 +2037,6 @@ ${text}`;
 
       // Render suggestions
       if (analysis.suggestions && analysis.suggestions.length > 0) {
-        suggestionsField.style.display = 'block';
         suggestionsList.innerHTML = analysis.suggestions.map((s, i) => `
           <div class="suggestion-item" data-index="${i}">
             <div class="suggestion-radio"></div>
@@ -1986,10 +2055,92 @@ ${text}`;
             // Select this one
             item.classList.add('selected');
             selectedSuggestion = currentAnalysis.suggestions[parseInt(item.dataset.index)];
+            generateFromSuggestionBtn.disabled = false;
           });
         });
       }
     }
+
+    // Generate from selected suggestion
+    async function generateFromSuggestion() {
+      if (!selectedSuggestion || !currentSourceCard) return;
+
+      const text = sourceText.value.trim();
+      const prompt = `Rewrite the following text based on this specific instruction:
+${selectedSuggestion.prompt_instruction}
+
+Original text:
+${text}
+
+Provide ONLY the rewritten text, no explanations or preamble.`;
+
+      const tags = [selectedSuggestion.action];
+      const card = createCard(tags, 'Generating', 'generating');
+
+      // Store connection for arrow
+      connections.push({ from: currentSourceCard.id, to: card.id });
+      zoomToFit();
+
+      generateFromSuggestionBtn.disabled = true;
+
+      try {
+        const result = await callClaude(prompt);
+        card.classList.remove('generating');
+        card.classList.add('variant');
+
+        // Store both versions
+        const diffHtml = computeDiff(text, result);
+        card.dataset.rawText = result;
+        card.dataset.diffHtml = diffHtml;
+        card.dataset.viewMode = 'text';
+
+        card.querySelector('.card-content').textContent = result;
+
+        // Add toggle to header
+        const header = card.querySelector('.card-header');
+        const toggleDiv = document.createElement('div');
+        toggleDiv.className = 'view-toggle';
+        toggleDiv.innerHTML = `
+          <button class="toggle-text active" data-mode="text">Text</button>
+          <button class="toggle-diff" data-mode="diff">Diff</button>
+        `;
+        header.appendChild(toggleDiv);
+
+        toggleDiv.querySelectorAll('button').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const mode = btn.dataset.mode;
+            const cardEl = btn.closest('.card');
+            const content = cardEl.querySelector('.card-content');
+            toggleDiv.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (mode === 'diff') {
+              content.innerHTML = cardEl.dataset.diffHtml;
+            } else {
+              content.textContent = cardEl.dataset.rawText;
+            }
+            cardEl.dataset.viewMode = mode;
+          });
+        });
+
+        requestAnimationFrame(() => {
+          updateConnections();
+          zoomToFit();
+        });
+
+        // Close the analysis panel after generating
+        closeAnalysisPanel();
+      } catch (err) {
+        card.classList.remove('generating');
+        card.classList.add('error');
+        card.querySelector('.card-content').textContent = `Error: ${err.message}`;
+        requestAnimationFrame(updateConnections);
+      } finally {
+        generateFromSuggestionBtn.disabled = !selectedSuggestion;
+      }
+    }
+
+    generateFromSuggestionBtn.addEventListener('click', generateFromSuggestion);
 
     // Find or create source card for given text
     function getOrCreateSourceCard(text) {
