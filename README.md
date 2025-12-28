@@ -2,7 +2,8 @@
 
 A spatial writing tool for exploring text variations through AI-powered parametric generation. Generate, compare, and refine multiple versions of your text on an infinite canvas.
 
-![Wordcraft](logo.png)
+<img width="1919" height="993" alt="Screenshot 2025-12-28 at 4 09 36 PM" src="https://github.com/user-attachments/assets/54c9f6f0-5d64-43a7-bd6f-b8009a9fa127" />
+
 
 ## Live Demo
 
