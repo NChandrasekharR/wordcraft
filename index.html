@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wordcraft — Parametric Writing Studio</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500&display=swap" rel="stylesheet">
@@ -83,8 +85,14 @@
 
     .logo {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: 10px;
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
     }
 
     .logo h1 {
@@ -101,6 +109,8 @@
       color: var(--text-tertiary);
       text-transform: uppercase;
       letter-spacing: 0.1em;
+      align-self: flex-end;
+      margin-bottom: 4px;
     }
 
     .sidebar-content {
@@ -789,6 +799,30 @@
       outline-offset: 2px;
     }
 
+    .card.multi-selected {
+      outline: 3px solid var(--accent-purple);
+      outline-offset: 2px;
+    }
+
+    .card.multi-selected .select-badge {
+      position: absolute;
+      top: -12px;
+      right: -12px;
+      width: 28px;
+      height: 28px;
+      background: var(--accent-purple);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(124,92,173,0.4);
+      z-index: 20;
+    }
+
     .card:focus-visible {
       outline: 3px solid var(--accent-warm);
       outline-offset: 2px;
@@ -927,6 +961,58 @@
       position: relative;
     }
 
+    .card-actions {
+      position: absolute;
+      top: 14px;
+      right: 10px;
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .card:hover .card-actions {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .card-action-btn {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-medium);
+      border-radius: 6px;
+      color: var(--text-tertiary);
+      cursor: pointer !important;
+      transition: all 0.15s ease;
+    }
+
+    .card-action-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      border-color: var(--accent-warm);
+    }
+
+    .card-action-btn:active {
+      transform: scale(0.95);
+    }
+
+    .card-action-btn.copied {
+      background: var(--accent-success-dim);
+      border-color: var(--accent-success);
+      color: var(--accent-success);
+    }
+
+    .card-action-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
     .view-toggle {
       position: absolute;
       top: 50%;
@@ -937,6 +1023,11 @@
       border-radius: 5px;
       padding: 2px;
       gap: 1px;
+      transition: right 0.15s ease;
+    }
+
+    .card:hover .view-toggle {
+      right: 72px;
     }
 
     .view-toggle button {
@@ -1315,6 +1406,208 @@
       text-align: center;
     }
 
+    /* Comparison Panel */
+    .compare-panel {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-medium);
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
+      z-index: 300;
+      display: none;
+      flex-direction: column;
+      max-height: 45vh;
+      animation: slideUp 0.3s var(--ease-out-expo);
+    }
+
+    .compare-panel.visible {
+      display: flex;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .compare-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+
+    .compare-header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .compare-header h2 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .compare-header .count-badge {
+      padding: 4px 10px;
+      background: var(--accent-purple-dim);
+      color: var(--accent-purple);
+      border-radius: 100px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+
+    .compare-header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .diff-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .diff-toggle input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent-purple);
+      cursor: pointer;
+    }
+
+    .compare-close {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      color: var(--text-tertiary);
+      font-size: 1.3rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .compare-close:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .compare-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .compare-column {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-subtle);
+    }
+
+    .compare-column:last-child {
+      border-right: none;
+    }
+
+    .compare-column-header {
+      padding: 12px 16px;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+
+    .compare-column-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .compare-column-tag {
+      padding: 3px 8px;
+      background: rgba(42,40,38,0.08);
+      border-radius: 100px;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+    }
+
+    .compare-column-tag.source {
+      background: var(--accent-success-dim);
+      color: var(--accent-success);
+    }
+
+    .compare-column-meta {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-tertiary);
+    }
+
+    .compare-column-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+    }
+
+    .compare-column-content::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .compare-column-content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .compare-column-content::-webkit-scrollbar-thumb {
+      background: var(--border-medium);
+      border-radius: 3px;
+    }
+
+    .compare-column-content .diff-added {
+      background: rgba(45, 138, 95, 0.15);
+      color: #1a5c3f;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-weight: 500;
+    }
+
+    .compare-column-content .diff-removed {
+      background: rgba(197, 61, 61, 0.12);
+      color: #8b2c2c;
+      text-decoration: line-through;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+
     /* Canvas Hint */
     .canvas-hint {
       position: absolute;
@@ -1372,6 +1665,7 @@
     <aside class="sidebar">
       <header class="sidebar-header">
         <div class="logo">
+          <img src="logo.png" alt="Wordcraft" class="logo-icon">
           <h1>Wordcraft</h1>
           <span>v0.1</span>
         </div>
@@ -1564,6 +1858,26 @@
         </div>
       </div>
 
+      <!-- Comparison Panel -->
+      <div class="compare-panel" id="comparePanel">
+        <div class="compare-header">
+          <div class="compare-header-left">
+            <h2>Quick Compare</h2>
+            <span class="count-badge" id="compareCount">2 variants</span>
+          </div>
+          <div class="compare-header-right">
+            <label class="diff-toggle">
+              <input type="checkbox" id="compareDiffToggle">
+              Show Diff
+            </label>
+            <button class="compare-close" id="compareClose">×</button>
+          </div>
+        </div>
+        <div class="compare-body" id="compareBody">
+          <!-- Columns will be dynamically inserted here -->
+        </div>
+      </div>
+
       <div class="zoom-controls">
         <button id="zoomOut">−</button>
         <span class="zoom-level" id="zoomLevel">100%</span>
@@ -1619,6 +1933,9 @@
     const critiqueCache = new Map(); // Cache critiques by card ID
     const connections = []; // Track card connections {from: cardId, to: cardId}
 
+    // Multi-select state
+    let multiSelectedCards = []; // Array of card elements in selection order
+
     // Elements
     const canvasContainer = document.getElementById('canvasContainer');
     const canvas = document.getElementById('canvas');
@@ -1658,6 +1975,13 @@
     const apiKeyStatus = document.getElementById('apiKeyStatus');
     const apiKeyCancel = document.getElementById('apiKeyCancel');
     const apiKeySave = document.getElementById('apiKeySave');
+
+    // Comparison Panel elements
+    const comparePanel = document.getElementById('comparePanel');
+    const compareCount = document.getElementById('compareCount');
+    const compareBody = document.getElementById('compareBody');
+    const compareClose = document.getElementById('compareClose');
+    const compareDiffToggle = document.getElementById('compareDiffToggle');
 
     // Pending action to run after API key is set
     let pendingApiAction = null;
@@ -1940,10 +2264,148 @@
       currentCritique = null;
     }
 
+    // Multi-select functions
+    function toggleMultiSelect(card) {
+      const index = multiSelectedCards.indexOf(card);
+      if (index > -1) {
+        // Remove from selection
+        multiSelectedCards.splice(index, 1);
+        card.classList.remove('multi-selected');
+        const badge = card.querySelector('.select-badge');
+        if (badge) badge.remove();
+      } else {
+        // Add to selection
+        multiSelectedCards.push(card);
+        card.classList.add('multi-selected');
+        const badge = document.createElement('div');
+        badge.className = 'select-badge';
+        badge.textContent = multiSelectedCards.length;
+        card.appendChild(badge);
+      }
+      // Update all badges to reflect current order
+      updateMultiSelectBadges();
+      updateComparePanel();
+    }
+
+    function updateMultiSelectBadges() {
+      multiSelectedCards.forEach((card, index) => {
+        const badge = card.querySelector('.select-badge');
+        if (badge) {
+          badge.textContent = index + 1;
+        }
+      });
+    }
+
+    function clearMultiSelect() {
+      multiSelectedCards.forEach(card => {
+        card.classList.remove('multi-selected');
+        const badge = card.querySelector('.select-badge');
+        if (badge) badge.remove();
+      });
+      multiSelectedCards = [];
+      updateComparePanel();
+    }
+
+    // Comparison panel functions
+    function updateComparePanel() {
+      if (multiSelectedCards.length >= 2) {
+        showComparePanel();
+      } else {
+        hideComparePanel();
+      }
+    }
+
+    function showComparePanel() {
+      compareCount.textContent = `${multiSelectedCards.length} variants`;
+      renderCompareColumns();
+      comparePanel.classList.add('visible');
+    }
+
+    function hideComparePanel() {
+      comparePanel.classList.remove('visible');
+    }
+
+    function renderCompareColumns() {
+      const showDiff = compareDiffToggle.checked;
+      const baselineText = getCardText(multiSelectedCards[0]);
+
+      compareBody.innerHTML = multiSelectedCards.map((card, index) => {
+        const tags = Array.from(card.querySelectorAll('.card-tag')).map(t => t.textContent);
+        const text = getCardText(card);
+        const wordCount = text.split(/\s+/).filter(w => w).length;
+        const isSource = card.classList.contains('source');
+
+        let displayText = text;
+        if (showDiff && index > 0) {
+          displayText = computeDiff(baselineText, text);
+        }
+
+        return `
+          <div class="compare-column">
+            <div class="compare-column-header">
+              <div class="compare-column-tags">
+                ${tags.map(tag => `<span class="compare-column-tag ${isSource ? 'source' : ''}">${tag}</span>`).join('')}
+              </div>
+              <div class="compare-column-meta">${wordCount} words</div>
+            </div>
+            <div class="compare-column-content">${showDiff && index > 0 ? displayText : escapeHtml(displayText)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function getCardText(card) {
+      return card.dataset.rawText || card.querySelector('.card-content').textContent.trim();
+    }
+
+    function downloadCardAsMarkdown(card) {
+      const tags = Array.from(card.querySelectorAll('.card-tag')).map(t => t.textContent);
+      const text = getCardText(card);
+      const isSource = card.classList.contains('source');
+      const wordCount = text.split(/\s+/).filter(w => w).length;
+
+      let markdown = `# ${isSource ? 'Source Text' : 'Variant'}\n\n`;
+      markdown += `**Tags:** ${tags.join(', ')}\n`;
+      markdown += `**Words:** ${wordCount}\n\n`;
+      markdown += `---\n\n`;
+      markdown += text;
+      markdown += `\n\n---\n*Exported from Wordcraft*\n`;
+
+      const filename = isSource
+        ? 'source-text.md'
+        : `variant-${tags.join('-').toLowerCase().replace(/[^a-z0-9-]/g, '')}.md`;
+
+      const blob = new Blob([markdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Compare panel event listeners
+    compareClose.addEventListener('click', () => {
+      clearMultiSelect();
+    });
+
+    compareDiffToggle.addEventListener('change', () => {
+      renderCompareColumns();
+    });
+
     // Click on canvas to deselect
     canvasContainer.addEventListener('click', (e) => {
       if (e.target === canvasContainer || e.target === canvas || e.target === emptyState || e.target.closest('.empty-state')) {
         deselectCard();
+        clearMultiSelect();
       }
     });
 
@@ -2075,6 +2537,11 @@ ${content}`;
           return;
         }
 
+        // Don't start drag on action buttons
+        if (e.target.closest('.card-action-btn') || e.target.closest('.card-actions')) {
+          return;
+        }
+
         // Don't start drag on card-content (allows text selection), but still track for click
         if (e.target.classList.contains('card-content')) {
           mouseDownTime = Date.now();
@@ -2094,7 +2561,20 @@ ${content}`;
       card.addEventListener('click', (e) => {
         if (!isDragging && Date.now() - mouseDownTime < 200) {
           e.stopPropagation();
-          selectCard(card);
+          // Cmd/Ctrl + click for multi-select
+          if (e.metaKey || e.ctrlKey) {
+            // Clear single selection when starting multi-select
+            if (selectedCard && multiSelectedCards.length === 0) {
+              deselectCard();
+            }
+            toggleMultiSelect(card);
+          } else {
+            // Normal click - clear multi-select and do single select
+            if (multiSelectedCards.length > 0) {
+              clearMultiSelect();
+            }
+            selectCard(card);
+          }
         }
       });
     }
@@ -2115,6 +2595,21 @@ ${content}`;
       const tagsHtml = tags.map(t => `<span class="card-tag">${t}</span>`).join('');
 
       card.innerHTML = `
+        <div class="card-actions">
+          <button class="card-action-btn copy-btn" title="Copy to clipboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+          <button class="card-action-btn download-btn" title="Download as Markdown">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </button>
+        </div>
         <div class="card-header">${tagsHtml}</div>
         <div class="card-content">${content}</div>
         <div class="resize-handle resize-handle-e" data-resize="e"></div>
@@ -2124,6 +2619,24 @@ ${content}`;
 
       canvas.appendChild(card);
       makeDraggable(card);
+
+      // Setup card action buttons
+      const copyBtn = card.querySelector('.copy-btn');
+      const downloadBtn = card.querySelector('.download-btn');
+
+      copyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const text = getCardText(card);
+        navigator.clipboard.writeText(text).then(() => {
+          copyBtn.classList.add('copied');
+          setTimeout(() => copyBtn.classList.remove('copied'), 1500);
+        });
+      });
+
+      downloadBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        downloadCardAsMarkdown(card);
+      });
 
       // Animate in
       requestAnimationFrame(() => {
@@ -2679,11 +3192,13 @@ Provide ONLY the rewritten text, no explanations or preamble.`;
       sourceCards.forEach((sourceCard, sourceIndex) => {
         const sourceContent = sourceCard.querySelector('.card-content').textContent.trim();
         const sourceTags = Array.from(sourceCard.querySelectorAll('.card-tag')).map(t => t.textContent);
+        const sourceWordCount = sourceContent.split(/\s+/).filter(w => w).length;
 
         markdown += `## Source ${sourceCards.length > 1 ? sourceIndex + 1 : ''}\n\n`;
         if (sourceTags.length > 0 && sourceTags[0] !== 'Source') {
           markdown += `**Tags:** ${sourceTags.join(', ')}\n\n`;
         }
+        markdown += `*${sourceWordCount} words*\n\n`;
         markdown += `${sourceContent}\n\n`;
 
         // Find variants connected to this source
@@ -2699,8 +3214,10 @@ Provide ONLY the rewritten text, no explanations or preamble.`;
           connectedVariants.forEach((variantCard, variantIndex) => {
             const tags = Array.from(variantCard.querySelectorAll('.card-tag')).map(t => t.textContent);
             const rawText = variantCard.dataset.rawText || variantCard.querySelector('.card-content').textContent.trim();
+            const wordCount = rawText.split(/\s+/).filter(w => w).length;
 
             markdown += `#### ${variantIndex + 1}. ${tags.join(' + ')}\n\n`;
+            markdown += `*${wordCount} words*\n\n`;
             markdown += `${rawText}\n\n`;
           });
         }
@@ -2718,8 +3235,10 @@ Provide ONLY the rewritten text, no explanations or preamble.`;
         orphanedVariants.forEach((variantCard, variantIndex) => {
           const tags = Array.from(variantCard.querySelectorAll('.card-tag')).map(t => t.textContent);
           const rawText = variantCard.dataset.rawText || variantCard.querySelector('.card-content').textContent.trim();
+          const wordCount = rawText.split(/\s+/).filter(w => w).length;
 
           markdown += `### ${variantIndex + 1}. ${tags.join(' + ')}\n\n`;
+          markdown += `*${wordCount} words*\n\n`;
           markdown += `${rawText}\n\n`;
         });
       }
@@ -2741,6 +3260,18 @@ Provide ONLY the rewritten text, no explanations or preamble.`;
     // Event listeners
     generateBtn.addEventListener('click', () => requireApiKey(generateVariant));
     addSourceBtn.addEventListener('click', () => requireApiKey(addSourceToCanvas));
+
+    // Global keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      // Escape to clear selection
+      if (e.key === 'Escape') {
+        if (multiSelectedCards.length > 0) {
+          clearMultiSelect();
+        } else if (selectedCard) {
+          deselectCard();
+        }
+      }
+    });
 
     // Initialize
     updateCanvasTransform();
