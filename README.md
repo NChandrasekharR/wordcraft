@@ -11,6 +11,17 @@ A spatial writing tool for exploring text variations through AI-powered parametr
 
 ## Features
 
+### Agent Swarm (Orchestrated)
+Click **Swarm** in the toolbar to launch a multi-agent run from a single brief:
+- **Planner** decomposes your goal into distinct writing angles
+- **Researcher** (optional) gathers facts via web search and posts a research card
+- **Writers** draft variants in parallel — each appears as a card on the canvas
+- **Critic** presses and probes every draft for weaknesses
+- **Editor** revises drafts to resolve the critique (configurable rounds)
+- **Judge** ranks the variants and highlights a winner
+
+A live activity panel shows each agent's progress, running step/token counts, and a **Stop Swarm** button to cancel mid-run.
+
 ### Parametric Text Generation
 - **Tone** — Slide from casual to formal
 - **Length** — Compress or expand your text
