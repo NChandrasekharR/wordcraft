@@ -1087,6 +1087,98 @@
       position: relative;
     }
 
+    /* Controlled Experiment (noise-baseline) modal */
+    .experiment-modal {
+      width: 920px;
+      max-width: 94vw;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+    }
+
+    .experiment-modal .modal-actions { margin-top: 16px; }
+
+    .exp-verdict {
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-elevated);
+    }
+    .exp-verdict.real { border-color: var(--accent-success); background: var(--accent-success-dim); }
+    .exp-verdict.marginal { border-color: var(--accent-warning); background: var(--accent-warning-dim); }
+    .exp-verdict.noise { border-color: var(--accent-error); background: var(--accent-error-dim); }
+    .exp-verdict strong { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.72rem; }
+
+    .exp-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .exp-col {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .exp-col-head {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .exp-col-head .exp-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .exp-col.noise .exp-label { color: var(--accent-error); }
+    .exp-col.signal .exp-label { color: var(--accent-success); }
+    .exp-col-head .exp-metric { font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px; }
+    .exp-col-head .exp-sub { font-size: 0.72rem; color: var(--text-tertiary); margin-top: 2px; }
+    .exp-diff {
+      padding: 14px;
+      overflow-y: auto;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+    }
+    .exp-diff .diff-added {
+      background: rgba(45, 138, 95, 0.15);
+      color: #1a5c3f;
+      padding: 1px 3px;
+      border-radius: 3px;
+      font-weight: 500;
+    }
+    .exp-diff .diff-removed {
+      background: rgba(197, 61, 61, 0.12);
+      color: #8b2c2c;
+      text-decoration: line-through;
+      padding: 1px 3px;
+      border-radius: 3px;
+    }
+    .exp-loading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 40px;
+      justify-content: center;
+      color: var(--text-tertiary);
+    }
+    .btn.btn-experiment {
+      margin-top: 8px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-medium);
+      color: var(--text-secondary);
+    }
+
     .card-actions {
       position: absolute;
       top: 14px;
@@ -1902,6 +1994,12 @@
               </svg>
               Generate Variant
             </button>
+            <button class="btn btn-experiment" id="experimentBtn" title="Run the change and a re-run of the unchanged config to separate signal from noise">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 3h6M10 3v6.5L5 19a1 1 0 0 0 .9 1.5h12.2A1 1 0 0 0 19 19l-5-9.5V3"></path>
+              </svg>
+              Controlled Experiment
+            </button>
           </div>
         </div>
       </div>
@@ -2087,6 +2185,43 @@
       <div class="modal-actions">
         <button class="btn btn-secondary" id="swarmCancel">Cancel</button>
         <button class="btn btn-primary" id="swarmStart">Launch Swarm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controlled Experiment Modal (signal vs. noise) -->
+  <div class="modal-overlay" id="experimentModal">
+    <div class="modal experiment-modal">
+      <h2>Controlled Experiment</h2>
+      <p id="expIntro">Signal vs. noise: this runs your <strong>current settings</strong> once and re-runs a <strong>neutral baseline</strong> twice — so you can see how much of the change is your edit versus the model's randomness.</p>
+      <div id="expResult" style="flex:1; min-height:0; flex-direction:column; display:none;">
+        <div class="exp-verdict" id="expVerdict"></div>
+        <div class="exp-columns">
+          <div class="exp-col noise">
+            <div class="exp-col-head">
+              <div class="exp-label">Noise · same config, re-run</div>
+              <div class="exp-metric" id="expNoiseMetric"></div>
+              <div class="exp-sub">How much the output changes from randomness alone</div>
+            </div>
+            <div class="exp-diff" id="expNoiseDiff"></div>
+          </div>
+          <div class="exp-col signal">
+            <div class="exp-col-head">
+              <div class="exp-label">Signal · your settings</div>
+              <div class="exp-metric" id="expSignalMetric"></div>
+              <div class="exp-sub">How much the output changes with your edit</div>
+            </div>
+            <div class="exp-diff" id="expSignalDiff"></div>
+          </div>
+        </div>
+      </div>
+      <div class="exp-loading" id="expLoading" style="display:none;">
+        <div class="spinner"></div>
+        <span id="expLoadingText">Running 3 generations…</span>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="expClose">Close</button>
+        <button class="btn btn-primary" id="expRun">Run Experiment</button>
       </div>
     </div>
   </div>
@@ -3776,6 +3911,146 @@ Produce exactly N writer entries where N is given.`,
     });
     agentCancelBtn.addEventListener('click', () => { if (swarm.controller) swarm.controller.abort(); });
     agentClose.addEventListener('click', () => agentPanel.classList.remove('visible'));
+
+    /* =======================================================================
+       Controlled Experiment — the "noise baseline" / control-group prototype.
+       Runs the user's current settings once and re-runs a neutral baseline
+       twice, then shows two diffs side by side: NOISE (baseline vs. a second
+       baseline sample) and SIGNAL (baseline vs. the user's settings). This
+       separates "what your change did" from "what randomness does anyway."
+       ===================================================================== */
+
+    const experimentBtn = document.getElementById('experimentBtn');
+    const experimentModal = document.getElementById('experimentModal');
+    const expRun = document.getElementById('expRun');
+    const expClose = document.getElementById('expClose');
+    const expResult = document.getElementById('expResult');
+    const expLoading = document.getElementById('expLoading');
+    const expIntro = document.getElementById('expIntro');
+    const expVerdict = document.getElementById('expVerdict');
+    const expNoiseDiff = document.getElementById('expNoiseDiff');
+    const expSignalDiff = document.getElementById('expSignalDiff');
+    const expNoiseMetric = document.getElementById('expNoiseMetric');
+    const expSignalMetric = document.getElementById('expSignalMetric');
+
+    function toneLabel(v) { return v <= -60 ? 'Very Casual' : v <= -20 ? 'Casual' : v < 20 ? 'Neutral' : v < 60 ? 'Formal' : 'Very Formal'; }
+    function lengthLabel(v) { return v <= -60 ? 'Much Shorter' : v <= -20 ? 'Shorter' : v < 20 ? 'Same' : v < 60 ? 'Longer' : 'Much Longer'; }
+    function complexityLabel(v) { return v <= -60 ? 'Very Simple' : v <= -20 ? 'Simple' : v < 20 ? 'Moderate' : v < 60 ? 'Elaborate' : 'Very Elaborate'; }
+
+    function buildParamPrompt(text, tone, length, complexity, audience, intent) {
+      return `Rewrite the following text with these parameters:
+- Tone: ${toneLabel(tone)} (${tone > 0 ? 'more formal' : tone < 0 ? 'more casual' : 'keep similar'})
+- Length: ${lengthLabel(length)} (${length > 0 ? 'expand and elaborate' : length < 0 ? 'condense and shorten' : 'keep similar length'})
+- Complexity: ${complexityLabel(complexity)} (${complexity > 0 ? 'use more sophisticated vocabulary and elaborate sentence structures' : complexity < 0 ? 'use simpler words and shorter sentences' : 'keep similar complexity'})
+- Audience: ${audience}
+- Intent: ${intent}
+
+Original text:
+${text}
+
+Provide ONLY the rewritten text, no explanations or preamble.`;
+    }
+
+    // Word-level change magnitude (counts non-whitespace tokens), reusing the
+    // same LCS approach as computeDiff so the metric matches the rendered diff.
+    function computeDiffStats(oldText, newText) {
+      const o = oldText.split(/(\s+)/), n = newText.split(/(\s+)/);
+      const m = o.length, k = n.length;
+      const dp = Array(m + 1).fill(null).map(() => Array(k + 1).fill(0));
+      for (let i = 1; i <= m; i++) for (let j = 1; j <= k; j++)
+        dp[i][j] = o[i - 1] === n[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+      let i = m, j = k, added = 0, removed = 0, same = 0;
+      const isWord = t => t && t.trim() !== '';
+      while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && o[i - 1] === n[j - 1]) { if (isWord(o[i - 1])) same++; i--; j--; }
+        else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) { if (isWord(n[j - 1])) added++; j--; }
+        else { if (isWord(o[i - 1])) removed++; i--; }
+      }
+      const changed = added + removed;
+      const denom = (added + removed + same) || 1;
+      return { added, removed, same, changed, ratio: changed / denom };
+    }
+
+    function renderVerdict(signal, noise) {
+      const s = Math.round(signal * 100), nz = Math.round(noise * 100);
+      let cls, label, msg;
+      if (signal - noise > 0.10 && signal > noise * 1.4) {
+        cls = 'real'; label = 'Real effect';
+        msg = `Your settings change the text well beyond random variation (${s}% vs ${nz}% from noise). This knob is doing real work.`;
+      } else if (signal <= noise * 1.1) {
+        cls = 'noise'; label = 'Within the noise';
+        msg = `Your settings barely move the output more than chance does (${s}% vs ${nz}%). The difference you're seeing may just be randomness — don't trust it without more samples.`;
+      } else {
+        cls = 'marginal'; label = 'Marginal';
+        msg = `Your settings have some effect, but it sits close to the noise floor (${s}% vs ${nz}%). Treat the change as weak evidence.`;
+      }
+      expVerdict.className = `exp-verdict ${cls}`;
+      expVerdict.innerHTML = `<strong>${label}</strong><br>${msg}`;
+    }
+
+    function postExperimentCard(source, text, tags) {
+      const sourceCard = currentSourceCard || getOrCreateSourceCard(source);
+      currentSourceCard = sourceCard;
+      const card = createCard(tags, 'Generating', 'generating');
+      card.classList.remove('generating'); card.classList.add('variant');
+      card.dataset.rawText = text;
+      card.querySelector('.card-content').textContent = text;
+      connections.push({ from: sourceCard.id, to: card.id });
+      requestAnimationFrame(() => { updateConnections(); zoomToFit(); });
+    }
+
+    async function runControlledExperiment() {
+      const source = (currentSourceCard ? getCardText(currentSourceCard) : sourceText.value).trim();
+      if (!source) { alert('Add some source text first.'); return; }
+
+      const cTone = parseInt(toneSlider.value), cLen = parseInt(lengthSlider.value), cCom = parseInt(complexitySlider.value);
+      const cAud = audienceSelect.value, cInt = intentSelect.value;
+      const candidatePrompt = buildParamPrompt(source, cTone, cLen, cCom, cAud, cInt);
+      const baselinePrompt = buildParamPrompt(source, 0, 0, 0, 'general', 'inform');
+
+      expIntro.style.display = 'none';
+      expResult.style.display = 'none';
+      expLoading.style.display = 'flex';
+      expRun.disabled = true;
+      try {
+        // Two baseline samples (for the noise diff) + one candidate, in parallel.
+        const [baseA, baseB, cand] = await Promise.all([
+          callClaude(baselinePrompt),
+          callClaude(baselinePrompt),
+          callClaude(candidatePrompt)
+        ]);
+        const noiseStats = computeDiffStats(baseA, baseB);
+        const signalStats = computeDiffStats(baseA, cand);
+        expNoiseDiff.innerHTML = computeDiff(baseA, baseB);
+        expSignalDiff.innerHTML = computeDiff(baseA, cand);
+        const fmt = st => `${st.changed} words differ (${Math.round(st.ratio * 100)}%)`;
+        expNoiseMetric.textContent = fmt(noiseStats);
+        expSignalMetric.textContent = fmt(signalStats);
+        renderVerdict(signalStats.ratio, noiseStats.ratio);
+        expLoading.style.display = 'none';
+        expResult.style.display = 'flex';
+        // Persist the candidate output so the experiment isn't throwaway.
+        postExperimentCard(source, cand, [toneLabel(cTone), complexityLabel(cCom), 'experiment']);
+      } catch (err) {
+        expLoading.style.display = 'none';
+        expIntro.style.display = 'block';
+        expIntro.innerHTML = `<span style="color:var(--accent-error)">Error: ${err.message}</span>`;
+      } finally {
+        expRun.disabled = false;
+      }
+    }
+
+    function openExperimentModal() {
+      expResult.style.display = 'none';
+      expLoading.style.display = 'none';
+      expIntro.style.display = 'block';
+      expIntro.innerHTML = 'Signal vs. noise: this runs your <strong>current settings</strong> once and re-runs a <strong>neutral baseline</strong> twice — so you can see how much of the change is your edit versus the model\'s randomness. (3 API calls.)';
+      experimentModal.classList.add('visible');
+    }
+    experimentBtn.addEventListener('click', () => requireApiKey(openExperimentModal));
+    expClose.addEventListener('click', () => experimentModal.classList.remove('visible'));
+    experimentModal.addEventListener('click', (e) => { if (e.target === experimentModal) experimentModal.classList.remove('visible'); });
+    expRun.addEventListener('click', runControlledExperiment);
 
     // Initialize
     updateCanvasTransform();
