@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Agent Lab — A Wordcraft Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500&display=swap" rel="stylesheet">
+  <style>
+    /* ---- Wordcraft design tokens (mirrored from index.html) ---- */
+    :root {
+      --bg-deep: #f5f3f0;
+      --bg-surface: #ffffff;
+      --bg-elevated: #fafafa;
+      --border-subtle: rgba(0,0,0,0.08);
+      --border-medium: rgba(0,0,0,0.15);
+      --text-primary: #1a1817;
+      --text-secondary: #4a4745;
+      --text-tertiary: #7a7572;
+      --accent-warm: #c4703c;
+      --accent-warm-dim: rgba(196,112,60,0.12);
+      --accent-success: #2d8a5f;
+      --accent-success-dim: rgba(45,138,95,0.12);
+      --accent-warning: #a67c00;
+      --accent-warning-dim: rgba(166,124,0,0.12);
+      --accent-error: #c53d3d;
+      --accent-error-dim: rgba(197,61,61,0.12);
+      --accent-purple: #7c5cad;
+      --accent-purple-dim: rgba(124,92,173,0.12);
+      --card-border: #e0dcd7;
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-body: 'Source Serif 4', Georgia, serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    body { font-family: var(--font-body); background: #ece8e3; color: var(--text-primary); }
+
+    /* ---- Fixed-stage scaffolding (frontend-slides convention) ---- */
+    .deck-viewport { position: fixed; inset: 0; overflow: hidden; }
+    .deck-stage {
+      position: absolute; left: 0; top: 0;
+      width: 1920px; height: 1080px;
+      overflow: hidden; transform-origin: 0 0;
+      background: var(--bg-deep);
+    }
+    .slide {
+      position: absolute; inset: 0; width: 1920px; height: 1080px;
+      visibility: hidden; opacity: 0; pointer-events: none;
+      padding: 110px 150px 130px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .slide.active, .slide.visible {
+      visibility: visible; opacity: 1; pointer-events: auto; z-index: 1;
+    }
+
+    /* paper grain / warm vignette to echo the Wordcraft canvas */
+    .deck-stage::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(120% 120% at 80% 0%, rgba(196,112,60,0.05), transparent 55%);
+    }
+
+    /* ---- Typography ---- */
+    .kicker {
+      display: inline-flex; align-items: center; gap: 14px;
+      font-family: var(--font-mono); font-size: 24px; font-weight: 500;
+      text-transform: uppercase; letter-spacing: 0.14em;
+      color: var(--accent-warm); margin-bottom: 34px;
+    }
+    .kicker .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent-warm); }
+    .kicker.green { color: var(--accent-success); } .kicker.green .dot { background: var(--accent-success); }
+    .kicker.purple { color: var(--accent-purple); } .kicker.purple .dot { background: var(--accent-purple); }
+
+    h1.hero { font-family: var(--font-display); font-weight: 300; font-size: 150px; line-height: 0.98; letter-spacing: -0.02em; }
+    h2.title { font-family: var(--font-display); font-weight: 400; font-size: 82px; line-height: 1.04; letter-spacing: -0.01em; margin-bottom: 18px; }
+    .lead { font-size: 38px; line-height: 1.45; color: var(--text-secondary); max-width: 1500px; }
+    .lead em { font-style: italic; color: var(--accent-warm); }
+    p { font-size: 32px; line-height: 1.5; color: var(--text-secondary); }
+    .muted { color: var(--text-tertiary); }
+    strong { font-weight: 600; color: var(--text-primary); }
+
+    /* ---- Cards & grids (echo Wordcraft cards) ---- */
+    .grid { display: grid; gap: 28px; margin-top: 44px; }
+    .grid.cols-2 { grid-template-columns: 1fr 1fr; }
+    .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+    .card {
+      background: var(--bg-surface); border: 1px solid var(--card-border);
+      border-radius: 18px; padding: 34px 36px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.04), 0 16px 40px rgba(0,0,0,0.05);
+      border-top: 4px solid var(--accent-warm);
+    }
+    .card.s { border-top-color: var(--accent-success); }
+    .card.p { border-top-color: var(--accent-purple); }
+    .card.w { border-top-color: var(--accent-warning); }
+    .card.e { border-top-color: var(--accent-error); }
+    .card h3 { font-family: var(--font-display); font-weight: 500; font-size: 38px; margin-bottom: 14px; line-height: 1.1; }
+    .card p { font-size: 27px; line-height: 1.45; }
+    .card .num { font-family: var(--font-mono); font-size: 22px; color: var(--text-tertiary); display: block; margin-bottom: 12px; }
+
+    .tag {
+      display: inline-block; font-family: var(--font-mono); font-size: 20px; font-weight: 500;
+      text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent-warm);
+      background: var(--accent-warm-dim); padding: 6px 14px; border-radius: 8px; margin: 0 8px 10px 0;
+    }
+    .tag.s { color: var(--accent-success); background: var(--accent-success-dim); }
+    .tag.p { color: var(--accent-purple); background: var(--accent-purple-dim); }
+    .tag.w { color: var(--accent-warning); background: var(--accent-warning-dim); }
+
+    ul.clean { list-style: none; margin-top: 30px; }
+    ul.clean li { font-size: 33px; line-height: 1.5; color: var(--text-secondary); padding-left: 44px; position: relative; margin-bottom: 22px; }
+    ul.clean li::before { content: ''; position: absolute; left: 0; top: 18px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent-warm-dim); border: 3px solid var(--accent-warm); }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: start; margin-top: 30px; }
+    .chain { font-family: var(--font-mono); font-size: 30px; line-height: 1.9; color: var(--text-secondary); }
+    .chain b { color: var(--accent-warm); font-weight: 500; }
+
+    /* ---- Comparison matrix ---- */
+    table.matrix { width: 100%; border-collapse: collapse; margin-top: 36px; font-size: 26px; }
+    table.matrix th, table.matrix td { padding: 18px 16px; text-align: center; border-bottom: 1px solid var(--border-subtle); }
+    table.matrix th { font-family: var(--font-mono); font-size: 21px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-tertiary); font-weight: 500; }
+    table.matrix td.cap { text-align: left; font-size: 27px; color: var(--text-primary); }
+    table.matrix .lab { background: var(--accent-warm-dim); border-radius: 10px 10px 0 0; color: var(--accent-warm); font-weight: 600; }
+    table.matrix col.labcol { }
+    .mk { font-size: 32px; }
+    .yes { color: var(--accent-success); } .no { color: var(--accent-error); } .part { color: var(--accent-warning); }
+    .lab-col { background: rgba(196,112,60,0.06); }
+
+    /* ---- Footer / chrome ---- */
+    .footer {
+      position: absolute; bottom: 46px; left: 150px; right: 150px;
+      display: flex; justify-content: space-between; align-items: center;
+      font-family: var(--font-mono); font-size: 21px; color: var(--text-tertiary);
+      letter-spacing: 0.04em;
+    }
+    .footer .brand { display: flex; align-items: center; gap: 12px; }
+    .footer .brand .b-dot { width: 10px; height: 10px; border-radius: 2px; background: var(--accent-warm); }
+    .progress { position: absolute; top: 0; left: 0; height: 6px; background: var(--accent-warm); width: 0; transition: width 0.4s var(--ease); z-index: 5; }
+    .hint { position: absolute; bottom: 46px; left: 50%; transform: translateX(-50%); font-family: var(--font-mono); font-size: 19px; color: var(--text-tertiary); opacity: 0.7; }
+
+    /* ---- Reveal animation ---- */
+    .reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.6s var(--ease), transform 0.6s var(--ease); transition-delay: calc(var(--i, 0) * 75ms); }
+    .slide.visible .reveal { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) { .reveal { transition-duration: 0.01ms; } }
+
+    .big-quote { font-family: var(--font-display); font-weight: 300; font-size: 92px; line-height: 1.1; letter-spacing: -0.01em; max-width: 1550px; }
+    .big-quote .hl { color: var(--accent-warm); font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="deck-viewport">
+    <div class="progress" id="progress"></div>
+    <main class="deck-stage" id="deckStage">
+
+      <!-- 1 · TITLE -->
+      <section class="slide title-slide active">
+        <div class="kicker reveal"><span class="dot"></span>Wordcraft · A Design Thesis</div>
+        <h1 class="hero reveal" style="--i:1">The Agent<br>Lab</h1>
+        <p class="lead reveal" style="--i:2; margin-top:46px;">Understanding agent workflows <em>before</em> you trust them — counterfactual legibility, a control group for stochastic systems, and the case against YOLO-in-production.</p>
+        <div class="footer">
+          <div class="brand"><span class="b-dot"></span>WORDCRAFT</div>
+          <div>← / → to navigate</div>
+        </div>
+      </section>
+
+      <!-- 2 · WHAT'S AN AGENT -->
+      <section class="slide">
+        <div class="kicker reveal"><span class="dot"></span>01 · What is an agent?</div>
+        <h2 class="title reveal" style="--i:1">A control loop around a stochastic function</h2>
+        <p class="lead reveal" style="--i:2">A single model call is one sample of <em>text → text</em>. An <strong>agent</strong> wraps it in a loop that keeps acting until a goal is met.</p>
+        <div class="grid cols-3">
+          <div class="card reveal" style="--i:3"><span class="num">Single-shot</span><h3>Prompt → output</h3><p>One call, one result. Wordcraft's original "Generate Variant."</p></div>
+          <div class="card s reveal" style="--i:4"><span class="num">Agentic</span><h3>Loop + tools</h3><p>The model reasons, calls tools, observes, and continues until done.</p></div>
+          <div class="card p reveal" style="--i:5"><span class="num">The formula</span><h3>loop + model + toolset</h3><p>Tools define the agent's action space; the loop gives it persistence.</p></div>
+        </div>
+        <div class="footer"><div class="brand"><span class="b-dot"></span>WORDCRAFT</div><div id="c2"></div></div>
+      </section>
+
+      <!-- 3 · AGENT PATTERNS (catalog) -->
+      <section class="slide">
+        <div class="kicker reveal"><span class="dot"></span>02 · Agentic patterns</div>
+        <h2 class="title reveal" style="--i:1">Spend more inference to beat the single sample</h2>
+        <p class="lead reveal" style="--i:2">Every pattern exploits one of four mechanisms:</p>
+        <div class="grid cols-4">
+          <div class="card reveal" style="--i:3"><h3>Decompose</h3><p>Plan-and-execute · orchestrator-workers. <span class="muted">(Wordcraft's swarm.)</span></p></div>
+          <div class="card s reveal" style="--i:4"><h3>Iterate</h3><p>Self-refine · Reflexion · generator-critic feedback loops.</p></div>
+          <div class="card p reveal" style="--i:5"><h3>Search</h3><p>Chain-of-Thought · self-consistency · Tree-of-Thought.</p></div>
+          <div class="card w reveal" style="--i:6"><h3>Ensemble</h3><p>Debate · mixture-of-agents · blackboard · routing.</p></div>
+        </div>
+        <p class="reveal" style="--i:7; margin-top:40px; font-size:28px;" class="muted">Plus <strong>ReAct</strong> (reason → act → observe) — the canonical tool-using loop that grounds reasoning in the real world.</p>
+        <div class="footer"><div class="brand"><span class="b-dot"></span>WORDCRAFT</div><div id="c3"></div></div>
+      </section>
+
+      <!-- 4 · SPOTLIGHT: Debate & ToT -->
+      <section class="slide">
+        <div class="kicker purple reveal"><span class="dot"></span>02 · Patterns, in focus</div>
+        <h2 class="title reveal" style="--i:1">Debate &amp; Tree-of-Thought</h2>
+        <div class="two-col">
+          <div class="card p reveal" style="--i:2">
+            <h3>Tree-of-Thought</h3>
+            <p>Reframe solving as <strong>search over a tree</strong>: generate candidate thoughts, score each partial path, explore the best, backtrack from dead ends. Game-playing AI, where the moves and the evaluator are both the model.</p>
+            <p class="muted" style="margin-top:16px;">Best when the problem branches and you can judge partial progress. Cost = branching × depth.</p>
+          </div>
+          <div class="card reveal" style="--i:3">
+            <h3>Debate</h3>
+            <p>Agents argue <strong>opposing positions</strong> over rounds; a judge decides. The bet: recognizing a strong argument is easier than generating one, and falsehoods are hard to defend under pressure.</p>
+            <p class="muted" style="margin-top:16px;">Best where correctness is contestable — reasoning, fact-checking. A scalable-oversight technique.</p>
+          </div>
+        </div>
+        <div class="footer"><div class="brand"><span class="b-dot"></span>WORDCRAFT</div><div id="c4"></div></div>
+      </section>
+
+      <!-- 5 · RESOURCES -->
+      <section class="slide">
+        <div class="kicker green reveal"><span class="dot"></span>03 · Build the intuition</div>
+        <h2 class="title reveal" style="--i:1">Resources, for a designer</h2>
+        <div class="grid cols-2">
+          <div class="card s reveal" style="--i:2">
+            <span class="num">Mental models</span>
+            <p><strong>Anthropic — Building Effective Agents</strong> · <strong>Ng — Agentic Design Patterns</strong> (Reflection, Tool-use, Planning, Multi-agent) · Lilian Weng's survey · the Anthropic-vs-Cognition multi-agent debate.</p>
+          </div>
+          <div class="card p reveal" style="--i:3">
+            <span class="num">Foundational papers</span>
+            <p>ReAct · Tree-of-Thoughts · Reflexion · Self-Refine · AI Safety via Debate · Generative Agents (Smallville).</p>
+          </div>
+          <div class="card reveal" style="--i:4">
+            <span class="num">The designer's lane</span>
+            <p><strong>Shape of AI</strong> · <strong>Google PAIR Guidebook</strong> · Microsoft HAX · Bret Victor · Ink &amp; Switch (malleable software) · Vercel Generative UI.</p>
+          </div>
+          <div class="card w reveal" style="--i:5">
+            <span class="num">Build &amp; observe</span>
+            <p>LangGraph · CrewAI · AutoGen · OpenAI Agents SDK — then watch a real trace in LangSmith / Langfuse. Building beats reading.</p>
+          </div>
+        </div>
+        <div class="footer"><div class="brand"><span class="b-dot"></span>WORDCRAFT</div><div id="c5"></div></div>
+      </section>
+
+      <!-- 6 · THE PROBLEM -->
+      <section class="slide">
+        <div class="kicker e reveal" style="color:var(--accent-error);"><span class="dot" style="background:var(--accent-error);"></span>04 · The problem</div>
+        <h2 class="title reveal" style="--i:1">The function <em style="color:var(--accent-warm);font-style:italic;">config → output</em> is illegible</h2>
+        <p class="lead reveal" style="--i:2">You can't form a predictive, causal mental model of it — for four compounding reasons:</p>
+        <div class="grid cols-4">
+          <div class="card e reveal" style="--i:3"><h3>Stochastic</h3><p>Same config, different output. Was it your edit, or chance?</p></div>
+          <div class="card reveal" style="--i:4"><h3>Nonlinear</h3><p>Many knobs; small changes have huge or zero effect.</p></div>
+          <div class="card w reveal" style="--i:5"><h3>Slow &amp; costly</h3><p>Each experiment is 30s + real money. You can't tinker.</p></div>
+          <div class="card p reveal" style="--i:6"><h3>Hidden</h3><p>You see the ends, not the causal chain between.</p></div>
+        </div>
+        <p class="reveal" style="--i:7; margin-top:38px; font-size:28px;">Norman's two gulfs, both widened: <strong>what do I change?</strong> and <strong>what did my change do?</strong> Today's tools narrow only the second.</p>
+        <div class="footer"><div class="brand"><span class="b-dot"></span>WORDCRAFT</div><div id="c6"></div></div>
+      </section>
+
+      <!-- 7 · MY THESIS -->
+      <section class="slide">
+        <div class="kicker reveal"><span class="dot"></span>05 · The thesis</div>
+        <h2 class="title reveal" style="--i:1">You don't debug in production</h2>
+        <div class="two-col">
+          <div class="reveal" style="--i:2">
+            <p class="chain"><b>Deploy</b><br>↳ requires <b>Trust</b><br>&nbsp;&nbsp;&nbsp;↳ requires <b>Understanding</b><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↳ requires <b>Experimentation</b><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↳ requires a <b>venue that isn't production</b></p>
+          </div>
+          <div class="reveal" style="--i:3">
+            <p style="font-size:34px;">The missing surface isn't a better trace — it's a <strong>lab</strong>.</p>
+            <ul class="clean" style="margin-top:24px;">
+              <li><strong>Counterfactual legibility</strong> — the epistemics: change one thing, see the attributed delta.</li>
+              <li><strong>A testbed</strong> — the venue: representative fixtures, no real-world stakes, then <em>promote</em>.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="reveal" style="--i:4; margin-top:30px; font-size:27px;" class="muted">Counterfactual legibility is the instrument. The lab is the venue. <strong>Calibrated trust is the goal.</strong></p>
+        <div class="footer"><div class="brand"><span class="b-dot"></span>WORDCRAFT</div><div id="c7"></div></div>
+      </section>
+
+      <!-- 8 · THE CORE CLAIM -->
+      <section class="slide">
+        <div class="kicker purple reveal"><span class="dot"></span>05 · The core claim</div>
+        <p class="big-quote reveal" style="--i:1">Users are doing science <span class="hl">without a control group.</span></p>
+        <p class="lead reveal" style="--i:2; margin-top:44px;">No product separates the effect of <strong>your change</strong> from the effect of the model's <strong>randomness</strong>. So on every change, run two things — the <strong>changed</strong> config <em>and</em> a re-run of the <strong>unchanged</strong> config — and show both deltas side by side.</p>
+        <div class="grid cols-2">
+          <div class="card e reveal" style="--i:3"><h3>Noise</h3><p>Baseline vs. a second baseline sample — what changes from chance alone.</p></div>
+          <div class="card s reveal" style="--i:4"><h3>Signal</h3><p>Baseline vs. your settings — what your edit actually did.</p></div>
+        </div>
+        <div class="footer"><div class="brand"><span class="b-dot"></span>WORDCRAFT</div><div id="c8"></div></div>
+      </section>
+
+      <!-- 9 · HOW TO TEST IT -->
+      <section class="slide">
+        <div class="kicker green reveal"><span class="dot"></span>06 · How to test it</div>
+        <h2 class="title reveal" style="--i:1">The Controlled Experiment</h2>
+        <p class="lead reveal" style="--i:2">A working prototype in Wordcraft: run current settings once + a neutral baseline twice, then judge signal against noise.</p>
+        <div class="grid cols-3">
+          <div class="card s reveal" style="--i:3"><span class="num">Real effect</span><p>Your settings change the text well beyond random variation. The knob does real work.</p></div>
+          <div class="card w reveal" style="--i:4"><span class="num">Marginal</span><p>Some effect, but close to the noise floor. Weak evidence.</p></div>
+          <div class="card e reveal" style="--i:5"><span class="num">Within the noise</span><p>Barely moves more than chance. Don't trust the difference.</p></div>
+        </div>
+        <p class="reveal" style="--i:6; margin-top:38px; font-size:27px;" class="muted">Principles: controlled experiment as the core gesture · a noise baseline always · cheap fast loops · representative fixtures · promotion from lab to prod.</p>
+        <div class="footer"><div class="brand"><span class="b-dot"></span>WORDCRAFT</div><div id="c9"></div></div>
+      </section>
+
+      <!-- 10 · COMPETITIVE COMPARISON -->
+      <section class="slide">
+        <div class="kicker reveal"><span class="dot"></span>07 · Competitive comparison</div>
+        <h2 class="title reveal" style="--i:1">The solved column vs. the empty row</h2>
+        <table class="matrix reveal" style="--i:2">
+          <thead>
+            <tr>
+              <th style="text-align:left;">Capability</th>
+              <th>Cursor</th><th>Devin</th><th>Deep&nbsp;Research</th><th>Node&nbsp;builders</th>
+              <th class="lab">Agent&nbsp;Lab</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="cap">Editable workflow</td><td class="mk part">◐</td><td class="mk part">◐</td><td class="mk no">✗</td><td class="mk yes">✓</td><td class="mk yes lab-col">✓</td></tr>
+            <tr><td class="cap">Single-run observability</td><td class="mk yes">✓</td><td class="mk yes">✓</td><td class="mk yes">✓</td><td class="mk yes">✓</td><td class="mk yes lab-col">✓</td></tr>
+            <tr><td class="cap">Counterfactual comparison</td><td class="mk no">✗</td><td class="mk no">✗</td><td class="mk no">✗</td><td class="mk no">✗</td><td class="mk yes lab-col">✓</td></tr>
+            <tr><td class="cap"><strong>Control group / noise baseline</strong></td><td class="mk no">✗</td><td class="mk no">✗</td><td class="mk no">✗</td><td class="mk no">✗</td><td class="mk yes lab-col">✓</td></tr>
+            <tr><td class="cap">Safe testbed (fixtures, non-prod)</td><td class="mk part">◐</td><td class="mk part">◐</td><td class="mk no">✗</td><td class="mk part">◐</td><td class="mk yes lab-col">✓</td></tr>
+            <tr><td class="cap">Promotion / progressive trust</td><td class="mk no">✗</td><td class="mk no">✗</td><td class="mk no">✗</td><td class="mk no">✗</td><td class="mk yes lab-col">✓</td></tr>
+          </tbody>
+        </table>
+        <p class="reveal" style="--i:3; margin-top:30px; font-size:26px;" class="muted">Observability of a single run is solved and undifferentiated. The <strong>control-group row is empty</strong> across every shipping product.</p>
+        <div class="footer"><div class="brand"><span class="b-dot"></span>WORDCRAFT</div><div id="c10"></div></div>
+      </section>
+
+      <!-- 11 · CLOSING -->
+      <section class="slide">
+        <div class="kicker reveal"><span class="dot"></span>The provocation</div>
+        <p class="big-quote reveal" style="--i:1">What is the <span class="hl">spreadsheet</span><br>for agents?</p>
+        <p class="lead reveal" style="--i:2; margin-top:44px;">Change a cell, watch everything recompute, <em>understand the model</em>. We built agents that act before we built the instruments to understand them. The simplest slice — the noise baseline — is shippable this week.</p>
+        <div class="footer"><div class="brand"><span class="b-dot"></span>WORDCRAFT · THE AGENT LAB</div><div id="c11"></div></div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    /* ---- frontend-slides navigation controller ---- */
+    class SlidePresentation {
+      constructor() {
+        this.slides = document.querySelectorAll('.slide');
+        this.currentSlide = 0;
+        this.stage = document.getElementById('deckStage');
+        this.progress = document.getElementById('progress');
+        this.setupStageScale();
+        this.setupKeyboardNav();
+        this.setupTouchNav();
+        this.showSlide(0);
+      }
+      setupStageScale() {
+        const scale = () => {
+          const factor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+          const x = (window.innerWidth - 1920 * factor) / 2;
+          const y = (window.innerHeight - 1080 * factor) / 2;
+          this.stage.style.transform = `translate(${x}px, ${y}px) scale(${factor})`;
+        };
+        scale();
+        window.addEventListener('resize', scale);
+      }
+      setupKeyboardNav() {
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); this.showSlide(this.currentSlide + 1); }
+          if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); this.showSlide(this.currentSlide - 1); }
+        });
+      }
+      setupTouchNav() {
+        let touchStart = 0;
+        this.stage.addEventListener('touchstart', (e) => { touchStart = e.touches[0].clientX; });
+        this.stage.addEventListener('touchend', (e) => {
+          const delta = touchStart - e.changedTouches[0].clientX;
+          if (delta > 50) this.showSlide(this.currentSlide + 1);
+          if (delta < -50) this.showSlide(this.currentSlide - 1);
+        });
+      }
+      showSlide(index) {
+        this.currentSlide = Math.max(0, Math.min(index, this.slides.length - 1));
+        this.slides.forEach((slide, i) => {
+          slide.classList.toggle('active', i === this.currentSlide);
+          slide.classList.toggle('visible', i === this.currentSlide);
+          const counter = slide.querySelector('[id^="c"]');
+          if (counter) counter.textContent = `${this.currentSlide + 1} / ${this.slides.length}`;
+        });
+        this.progress.style.width = `${((this.currentSlide + 1) / this.slides.length) * 100}%`;
+      }
+    }
+    new SlidePresentation();
+  </script>
+</body>
+</html>

@@ -34,6 +34,7 @@ The `docs/` folder contains a design exploration on agentic UX:
 - [`agent-lab-thesis.md`](docs/agent-lab-thesis.md) — the full thesis on counterfactual legibility and testable workflows
 - [`agent-lab-talk.md`](docs/agent-lab-talk.md) — a talk-length version (slides + speaker notes)
 - [`agent-lab-related-work.md`](docs/agent-lab-related-work.md) — how shipping agent products compare
+- [`agent-lab-deck.html`](docs/agent-lab-deck.html) — a self-contained slide deck (open in a browser; ← / → to navigate)
 
 ### Parametric Text Generation
 - **Tone** — Slide from casual to formal
