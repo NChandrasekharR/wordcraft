@@ -22,6 +22,19 @@ Click **Swarm** in the toolbar to launch a multi-agent run from a single brief:
 
 A live activity panel shows each agent's progress, running step/token counts, and a **Stop Swarm** button to cancel mid-run.
 
+### Controlled Experiment (Signal vs. Noise)
+Click **Controlled Experiment** in the generation panel to test whether your parameter changes actually move the output — or whether you're just seeing the model's randomness. It runs your current settings once and re-runs a neutral baseline twice, then shows two diffs side by side:
+- **Noise** — baseline vs. a second baseline sample (how much changes from chance alone)
+- **Signal** — baseline vs. your settings (how much your edit changed)
+
+A verdict tells you whether your change is a *real effect*, *marginal*, or *within the noise*. This is a working prototype of the "control group for agents" idea explored in the design docs below.
+
+### Design Notes
+The `docs/` folder contains a design exploration on agentic UX:
+- [`agent-lab-thesis.md`](docs/agent-lab-thesis.md) — the full thesis on counterfactual legibility and testable workflows
+- [`agent-lab-talk.md`](docs/agent-lab-talk.md) — a talk-length version (slides + speaker notes)
+- [`agent-lab-related-work.md`](docs/agent-lab-related-work.md) — how shipping agent products compare
+
 ### Parametric Text Generation
 - **Tone** — Slide from casual to formal
 - **Length** — Compress or expand your text
