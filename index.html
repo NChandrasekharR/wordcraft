@@ -1166,12 +1166,62 @@
     }
     .exp-loading {
       display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 40px;
-      justify-content: center;
-      color: var(--text-tertiary);
+      flex-direction: column;
+      gap: 18px;
+      padding: 24px 4px 8px;
     }
+    .exp-progress-head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .exp-progress-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .exp-progress-sub {
+      font-size: 0.8rem;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+    .exp-steps {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-left: 38px;
+      margin: 0;
+    }
+    .exp-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-tertiary);
+      transition: color 0.2s ease;
+    }
+    .exp-step-icon {
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid var(--border-medium);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      color: #fff;
+    }
+    .exp-step.pending .exp-step-icon { animation: blink 1.1s infinite; }
+    .exp-step.done { color: var(--text-secondary); }
+    .exp-step.done .exp-step-icon {
+      background: var(--accent-success);
+      border-color: var(--accent-success);
+    }
+    .exp-step.done .exp-step-icon::after { content: '✓'; }
     .btn.btn-experiment {
       margin-top: 8px;
       background: var(--bg-elevated);
@@ -2216,8 +2266,18 @@
         </div>
       </div>
       <div class="exp-loading" id="expLoading" style="display:none;">
-        <div class="spinner"></div>
-        <span id="expLoadingText">Running 3 generations…</span>
+        <div class="exp-progress-head">
+          <div class="spinner"></div>
+          <div>
+            <div class="exp-progress-title">Running the experiment…</div>
+            <div class="exp-progress-sub">Generating three rewrites in parallel to separate your change from the model's random variation.</div>
+          </div>
+        </div>
+        <ul class="exp-steps" id="expSteps">
+          <li class="exp-step pending" data-step="baseA"><span class="exp-step-icon"></span>Baseline &middot; sample 1</li>
+          <li class="exp-step pending" data-step="baseB"><span class="exp-step-icon"></span>Baseline &middot; sample 2</li>
+          <li class="exp-step pending" data-step="cand"><span class="exp-step-icon"></span>Your settings</li>
+        </ul>
       </div>
       <div class="modal-actions">
         <button class="btn btn-secondary" id="expClose">Close</button>
@@ -3932,6 +3992,15 @@ Produce exactly N writer entries where N is given.`,
     const expSignalDiff = document.getElementById('expSignalDiff');
     const expNoiseMetric = document.getElementById('expNoiseMetric');
     const expSignalMetric = document.getElementById('expSignalMetric');
+    const expSteps = document.getElementById('expSteps');
+
+    function resetExpSteps() {
+      expSteps.querySelectorAll('.exp-step').forEach(el => el.className = 'exp-step pending');
+    }
+    function markExpStep(id) {
+      const el = expSteps.querySelector(`[data-step="${id}"]`);
+      if (el) el.className = 'exp-step done';
+    }
 
     function toneLabel(v) { return v <= -60 ? 'Very Casual' : v <= -20 ? 'Casual' : v < 20 ? 'Neutral' : v < 60 ? 'Formal' : 'Very Formal'; }
     function lengthLabel(v) { return v <= -60 ? 'Much Shorter' : v <= -20 ? 'Shorter' : v < 20 ? 'Same' : v < 60 ? 'Longer' : 'Much Longer'; }
@@ -4010,14 +4079,16 @@ Provide ONLY the rewritten text, no explanations or preamble.`;
 
       expIntro.style.display = 'none';
       expResult.style.display = 'none';
+      resetExpSteps();
       expLoading.style.display = 'flex';
-      expRun.disabled = true;
+      expRun.style.display = 'none';
       try {
         // Two baseline samples (for the noise diff) + one candidate, in parallel.
+        // Tick each step as its generation returns so progress is visible.
         const [baseA, baseB, cand] = await Promise.all([
-          callClaude(baselinePrompt),
-          callClaude(baselinePrompt),
-          callClaude(candidatePrompt)
+          callClaude(baselinePrompt).then(r => { markExpStep('baseA'); return r; }),
+          callClaude(baselinePrompt).then(r => { markExpStep('baseB'); return r; }),
+          callClaude(candidatePrompt).then(r => { markExpStep('cand'); return r; })
         ]);
         const noiseStats = computeDiffStats(baseA, baseB);
         const signalStats = computeDiffStats(baseA, cand);
@@ -4036,11 +4107,14 @@ Provide ONLY the rewritten text, no explanations or preamble.`;
         expIntro.style.display = 'block';
         expIntro.innerHTML = `<span style="color:var(--accent-error)">Error: ${err.message}</span>`;
       } finally {
+        expRun.style.display = '';
         expRun.disabled = false;
+        expRun.textContent = 'Run again';
       }
     }
 
     function openExperimentModal() {
+      expRun.textContent = 'Run Experiment';
       expResult.style.display = 'none';
       expLoading.style.display = 'none';
       expIntro.style.display = 'block';
