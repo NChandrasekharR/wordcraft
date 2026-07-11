@@ -273,6 +273,8 @@
         <button id="zoomIn">+</button>
         <button id="zoomFit">◻</button>
       </div>
+
+      <div class="toast-container" id="toastContainer" aria-live="polite"></div>
     </main>
   </div>
 
@@ -283,6 +285,13 @@
       <p>Your key is stored locally in your browser and never sent to any server except Anthropic's API. <a href="https://console.anthropic.com/settings/keys" target="_blank">Get your key here</a></p>
       <div class="field">
         <input type="password" id="apiKeyInput" class="api-input" placeholder="sk-ant-api03-...">
+      </div>
+      <div class="field">
+        <label class="remember-key-row">
+          <input type="checkbox" id="apiKeyRemember" checked>
+          <span>Remember key on this device</span>
+        </label>
+        <p class="remember-key-hint">On shared machines, uncheck this — the key is kept only for this browser tab's session.</p>
       </div>
       <div class="field">
         <div class="field-label">

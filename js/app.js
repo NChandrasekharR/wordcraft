@@ -122,6 +122,7 @@
     const apiKeyStatus = document.getElementById('apiKeyStatus');
     const apiKeyCancel = document.getElementById('apiKeyCancel');
     const apiKeySave = document.getElementById('apiKeySave');
+    const apiKeyRemember = document.getElementById('apiKeyRemember');
     const modelSelect = document.getElementById('modelSelect');
 
     // Comparison Panel elements
@@ -130,6 +131,69 @@
     const compareBody = document.getElementById('compareBody');
     const compareClose = document.getElementById('compareClose');
     const compareDiffToggle = document.getElementById('compareDiffToggle');
+
+    /* =======================================================================
+       Toast notifications — replaces alert()/confirm() for in-app messaging.
+       Kept as a top-level (global) function so other classic scripts loaded
+       after this one (js/swarm.js, js/experiment.js) can call it too.
+       ===================================================================== */
+    const toastContainer = document.getElementById('toastContainer');
+
+    // showToast(message, opts): opts = { actionLabel, onAction, duration, tone }
+    // tone: 'info' (default) | 'error'. duration defaults to 5000ms.
+    // Returns { dismiss } so callers can dismiss it programmatically.
+    function showToast(message, opts = {}) {
+      const { actionLabel, onAction, duration = 5000, tone = 'info' } = opts;
+      if (!toastContainer) return { dismiss: () => {} };
+
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${tone === 'error' ? 'error' : 'info'}`;
+
+      const messageEl = document.createElement('span');
+      messageEl.className = 'toast-message';
+      messageEl.textContent = message;
+      toast.appendChild(messageEl);
+
+      let dismissed = false;
+      let timer = null;
+      function dismiss() {
+        if (dismissed) return;
+        dismissed = true;
+        clearTimeout(timer);
+        toast.classList.add('toast-leaving');
+        toast.classList.remove('toast-visible');
+        toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+        // Fallback in case transitionend doesn't fire (e.g. display:none ancestor)
+        setTimeout(() => toast.remove(), 400);
+      }
+
+      if (actionLabel && typeof onAction === 'function') {
+        const actionBtn = document.createElement('button');
+        actionBtn.type = 'button';
+        actionBtn.className = 'toast-action';
+        actionBtn.textContent = actionLabel;
+        actionBtn.addEventListener('click', () => {
+          dismiss();
+          onAction();
+        });
+        toast.appendChild(actionBtn);
+      }
+
+      const closeBtn = document.createElement('button');
+      closeBtn.type = 'button';
+      closeBtn.className = 'toast-close';
+      closeBtn.textContent = '×';
+      closeBtn.setAttribute('aria-label', 'Dismiss notification');
+      closeBtn.addEventListener('click', dismiss);
+      toast.appendChild(closeBtn);
+
+      toastContainer.appendChild(toast);
+      // Animate in on the next frame (so the initial state applies first)
+      requestAnimationFrame(() => toast.classList.add('toast-visible'));
+      timer = setTimeout(dismiss, duration);
+
+      return { dismiss };
+    }
 
     // Pending action to run after API key is set
     let pendingApiAction = null;
@@ -151,6 +215,12 @@
     function showApiKeyModal() {
       apiKeyInput.value = getApiKey();
       modelSelect.value = getModel();
+      // Reflect where the current key lives: unchecked only if it's a
+      // session-only key; checked (the default) if it's in localStorage or
+      // there's no key yet.
+      let inSessionOnly = false;
+      try { inSessionOnly = !!sessionStorage.getItem('anthropic_api_key'); } catch (e) {}
+      apiKeyRemember.checked = !inSessionOnly;
       apiKeyModal.classList.add('visible');
       apiKeyInput.focus();
     }
@@ -164,7 +234,13 @@
       localStorage.setItem('wordcraft_model', modelSelect.value);
       const key = apiKeyInput.value.trim();
       if (key) {
-        localStorage.setItem('anthropic_api_key', key);
+        if (apiKeyRemember.checked) {
+          localStorage.setItem('anthropic_api_key', key);
+          try { sessionStorage.removeItem('anthropic_api_key'); } catch (e) {}
+        } else {
+          try { sessionStorage.setItem('anthropic_api_key', key); } catch (e) {}
+          localStorage.removeItem('anthropic_api_key');
+        }
         updateApiKeyStatus();
         hideApiKeyModal();
         // Execute pending action if any
@@ -782,6 +858,24 @@ ${content}`;
     }
 
     function deleteCard(card) {
+      // Snapshot the card and the connections touching it before removing
+      // anything, so the "Undo" toast action can fully restore it.
+      const snapshot = {
+        id: card.id,
+        classes: Array.from(card.classList).filter(c => !TRANSIENT_CLASSES.includes(c)),
+        tags: Array.from(card.querySelectorAll('.card-tag')).map(t => t.textContent),
+        text: getCardText(card),
+        diffHtml: card.dataset.diffHtml || null,
+        viewMode: card.dataset.viewMode || 'text',
+        x: parseInt(card.style.left) || 0,
+        y: parseInt(card.style.top) || 0,
+        width: card.style.width ? parseInt(card.style.width) : null,
+        height: card.style.height ? parseInt(card.style.height) : null
+      };
+      const removedConnections = connections
+        .filter(conn => conn.from === card.id || conn.to === card.id)
+        .map(conn => ({ from: conn.from, to: conn.to }));
+
       if (selectedCard === card) deselectCard();
       const msIndex = multiSelectedCards.indexOf(card);
       if (msIndex > -1) {
@@ -799,6 +893,34 @@ ${content}`;
       card.remove();
       updateConnections();
       if (!canvas.querySelector('.card')) emptyState.style.display = '';
+
+      showToast('Card deleted', {
+        tone: 'info',
+        duration: 6000,
+        actionLabel: 'Undo',
+        onAction: () => undoDeleteCard(snapshot, removedConnections)
+      });
+    }
+
+    // Recreate a card that was just deleted (via the "Undo" toast action).
+    // If a new card has since taken the same id (ids only ever grow, so this
+    // is unlikely), fall back to a fresh id.
+    function undoDeleteCard(snapshot, removedConnections) {
+      const idTaken = !!document.getElementById(snapshot.id);
+      const data = idTaken ? Object.assign({}, snapshot, { id: null }) : snapshot;
+      const card = materializeCard(data);
+
+      removedConnections.forEach(conn => {
+        connections.push({
+          from: conn.from === snapshot.id ? card.id : conn.from,
+          to: conn.to === snapshot.id ? card.id : conn.to
+        });
+      });
+
+      requestAnimationFrame(() => {
+        updateConnections();
+        zoomToFit();
+      });
     }
 
     // Create SVG container for arrows
@@ -873,7 +995,7 @@ ${content}`;
     async function addSourceToCanvas() {
       const text = sourceText.value.trim();
       if (!text) {
-        alert('Please enter some source text');
+        showToast('Please enter some source text', { tone: 'error' });
         return;
       }
 
@@ -1089,7 +1211,7 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
     async function generateVariant() {
       const text = sourceText.value.trim();
       if (!text) {
-        alert('Please enter some source text');
+        showToast('Please enter some source text', { tone: 'error' });
         return;
       }
 
@@ -1322,6 +1444,31 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
       saveTimer = setTimeout(saveCanvasState, 400);
     }
 
+    // Recreate a card DOM element from a snapshot shaped like serializeCanvas()'s
+    // per-card entries: {id, classes, tags, text, diffHtml, viewMode, x, y,
+    // width, height}. Shared by restoreCanvasState() (page load) and
+    // undoDeleteCard() (the delete-toast "Undo" action).
+    function materializeCard(data) {
+      const type = (data.classes && data.classes[0]) || 'variant';
+      const card = createCard(data.tags || [], data.text || '', type, {
+        id: data.id, x: data.x, y: data.y, width: data.width, height: data.height
+      });
+      (data.classes || []).slice(1).forEach(c => card.classList.add(c));
+      card.dataset.rawText = data.text || '';
+      if (data.diffHtml) {
+        card.dataset.diffHtml = data.diffHtml;
+        card.dataset.viewMode = data.viewMode || 'text';
+        addDiffToggle(card);
+        if (data.viewMode === 'diff') {
+          card.querySelector('.card-content').innerHTML = data.diffHtml;
+          const toggle = card.querySelector('.view-toggle');
+          toggle.querySelector('.toggle-text').classList.remove('active');
+          toggle.querySelector('.toggle-diff').classList.add('active');
+        }
+      }
+      return card;
+    }
+
     function restoreCanvasState() {
       let saved;
       try {
@@ -1334,23 +1481,7 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
       sourceText.value = saved.sourceText || '';
 
       for (const data of saved.cards) {
-        const type = data.classes[0] || 'variant';
-        const card = createCard(data.tags || [], data.text || '', type, {
-          id: data.id, x: data.x, y: data.y, width: data.width, height: data.height
-        });
-        data.classes.slice(1).forEach(c => card.classList.add(c));
-        card.dataset.rawText = data.text || '';
-        if (data.diffHtml) {
-          card.dataset.diffHtml = data.diffHtml;
-          card.dataset.viewMode = data.viewMode || 'text';
-          addDiffToggle(card);
-          if (data.viewMode === 'diff') {
-            card.querySelector('.card-content').innerHTML = data.diffHtml;
-            const toggle = card.querySelector('.view-toggle');
-            toggle.querySelector('.toggle-text').classList.remove('active');
-            toggle.querySelector('.toggle-diff').classList.add('active');
-          }
-        }
+        materializeCard(data);
       }
 
       connections.push(...(saved.connections || []));
@@ -1371,7 +1502,15 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
     }
 
     function clearCanvas() {
-      if (!confirm('Clear the canvas? This removes all cards and the saved session.')) return;
+      showToast('Clear the canvas and saved session?', {
+        tone: 'error',
+        duration: 6000,
+        actionLabel: 'Confirm clear',
+        onAction: () => performClearCanvas()
+      });
+    }
+
+    function performClearCanvas() {
       deselectCard();
       clearMultiSelect();
       canvas.querySelectorAll('.card').forEach(card => card.remove());

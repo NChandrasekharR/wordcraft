@@ -8,6 +8,12 @@
     }
 
     function getApiKey() {
+      try {
+        const sessionKey = sessionStorage.getItem('anthropic_api_key');
+        if (sessionKey) return sessionKey;
+      } catch (e) {
+        // sessionStorage may be unavailable (e.g. private browsing); fall through
+      }
       return localStorage.getItem('anthropic_api_key') || '';
     }
 
