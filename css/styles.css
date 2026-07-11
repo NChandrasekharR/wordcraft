@@ -1077,15 +1077,39 @@
 
     /* Controlled Experiment (noise-baseline) modal */
     .experiment-modal {
-      width: 920px;
+      width: 540px;
       max-width: 94vw;
       max-height: 88vh;
       display: flex;
       flex-direction: column;
       text-align: left;
+      transition: width 0.28s ease;
+    }
+    /* Widen only once the two-column results are on screen. */
+    .experiment-modal.has-results {
+      width: 920px;
     }
 
     .experiment-modal .modal-actions { margin-top: 16px; }
+
+    /* One-knob isolation picker (intro state) */
+    .exp-test-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 4px;
+    }
+    .exp-test-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+    .exp-test-row select {
+      flex: 1;
+      max-width: 260px;
+    }
 
     .exp-verdict {
       border-radius: 12px;

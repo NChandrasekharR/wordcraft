@@ -343,7 +343,18 @@
   <div class="modal-overlay" id="experimentModal">
     <div class="modal experiment-modal">
       <h2>Controlled Experiment</h2>
-      <p id="expIntro">Signal vs. noise: this runs your <strong>current settings</strong> once and re-runs a <strong>neutral baseline</strong> twice — so you can see how much of the change is your edit versus the model's randomness.</p>
+      <p id="expIntro">Signal vs. noise: this runs your <strong>current settings</strong> once and re-runs a <strong>neutral baseline</strong> — so you can see how much of the change is your edit versus the model's randomness. Baselines are cached across runs to build a real noise distribution (2–3 API calls per run).</p>
+      <div class="exp-test-row" id="expTestRow">
+        <label class="exp-test-label" for="expTest">Test</label>
+        <select id="expTest">
+          <option value="all">All settings</option>
+          <option value="tone">Tone only</option>
+          <option value="length">Length only</option>
+          <option value="complexity">Complexity only</option>
+          <option value="audience">Audience only</option>
+          <option value="intent">Intent only</option>
+        </select>
+      </div>
       <div id="expResult" style="flex:1; min-height:0; flex-direction:column; display:none;">
         <div class="exp-verdict" id="expVerdict"></div>
         <div class="exp-columns">
@@ -351,7 +362,7 @@
             <div class="exp-col-head">
               <div class="exp-label">Noise · same config, re-run</div>
               <div class="exp-metric" id="expNoiseMetric"></div>
-              <div class="exp-sub">How much the output changes from randomness alone</div>
+              <div class="exp-sub" id="expNoiseSub">How much the output changes from randomness alone</div>
             </div>
             <div class="exp-diff" id="expNoiseDiff"></div>
           </div>
@@ -359,7 +370,7 @@
             <div class="exp-col-head">
               <div class="exp-label">Signal · your settings</div>
               <div class="exp-metric" id="expSignalMetric"></div>
-              <div class="exp-sub">How much the output changes with your edit</div>
+              <div class="exp-sub" id="expSignalSub">How much the output changes with your edit</div>
             </div>
             <div class="exp-diff" id="expSignalDiff"></div>
           </div>
@@ -370,14 +381,10 @@
           <div class="spinner"></div>
           <div>
             <div class="exp-progress-title">Running the experiment…</div>
-            <div class="exp-progress-sub">Generating three rewrites in parallel to separate your change from the model's random variation.</div>
+            <div class="exp-progress-sub" id="expProgressSub">Generating rewrites in parallel to separate your change from the model's random variation.</div>
           </div>
         </div>
-        <ul class="exp-steps" id="expSteps">
-          <li class="exp-step pending" data-step="baseA"><span class="exp-step-icon"></span>Baseline &middot; sample 1</li>
-          <li class="exp-step pending" data-step="baseB"><span class="exp-step-icon"></span>Baseline &middot; sample 2</li>
-          <li class="exp-step pending" data-step="cand"><span class="exp-step-icon"></span>Your settings</li>
-        </ul>
+        <ul class="exp-steps" id="expSteps"></ul>
       </div>
       <div class="modal-actions">
         <button class="btn btn-secondary" id="expClose">Close</button>
