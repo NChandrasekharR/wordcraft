@@ -211,6 +211,18 @@ python -m http.server 8000
 ### Deployment
 GitHub Pages is configured to serve from `main` branch root. Push to `main` and changes go live within ~1 minute.
 
+### Testing
+Unit tests for the pure helpers in `js/util.js` (escaping, diffing, label
+mapping, prompt building, loose JSON parsing) live in `tests/util.test.js`
+and use only Node's built-in test runner — no dependencies, no `package.json`.
+
+```bash
+node --test tests/
+```
+
+This also works with no path (auto-discovers `tests/*.test.js`) or pointed at
+a single file, e.g. `node --test tests/util.test.js`.
+
 ---
 
 *Last updated: December 2024*
