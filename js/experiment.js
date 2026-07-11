@@ -197,7 +197,7 @@
 
     async function runControlledExperiment() {
       const source = (currentSourceCard ? getCardText(currentSourceCard) : sourceText.value).trim();
-      if (!source) { alert('Add some source text first.'); return; }
+      if (!source) { showToast('Add some source text first.', { tone: 'error' }); return; }
 
       const test = expTest.value;
       const cur = currentSidebarParams();

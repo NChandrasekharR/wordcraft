@@ -235,14 +235,19 @@ test('parseJsonLoose: throws a clear error when no object is present', () => {
   assert.throws(() => parseJsonLoose('no json here at all'), /Model did not return JSON/);
 });
 
-// TODO(bug candidate): parseJsonLoose's regex /\{[\s\S]*\}/ is greedy, so text
-// containing two separate JSON objects gets matched from the first '{' to the
-// LAST '}', producing an invalid JSON.parse() input instead of extracting the
-// first object. Documenting current (arguably buggy) behavior here rather than
-// asserting the "ideal" outcome, per instructions not to fix util.js.
-test('parseJsonLoose: TODO known limitation — greedy regex mis-extracts when two JSON objects are present', () => {
+test('parseJsonLoose: extracts the FIRST object when two JSON objects are present', () => {
   const text = 'first: {"a":1} and second: {"b":2}';
-  assert.throws(() => parseJsonLoose(text), SyntaxError);
+  assert.deepEqual(parseJsonLoose(text), { a: 1 });
+});
+
+test('parseJsonLoose: braces inside string values do not break the balance scan', () => {
+  const text = 'note {"msg":"has a } brace and a \\" quote","ok":true} trailing';
+  assert.deepEqual(parseJsonLoose(text), { msg: 'has a } brace and a " quote', ok: true });
+});
+
+test('parseJsonLoose: nested objects are extracted whole', () => {
+  const text = 'x {"outer":{"inner":[1,2]}} y {"other":0}';
+  assert.deepEqual(parseJsonLoose(text), { outer: { inner: [1, 2] } });
 });
 
 // ---------------------------------------------------------------------------

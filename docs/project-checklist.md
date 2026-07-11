@@ -39,37 +39,40 @@
 - [x] `--text-muted` undefined CSS variable fixed (`--text-tertiary`)
 - [x] `.gitignore` added
 
+## ✅ Done in the 2026-07 roadmap pass (multi-agent)
+
+- [x] **Modular split** — `index.html` + `css/styles.css` + `js/{util,api,app,swarm,experiment}.js` as classic scripts (file:// keeps working); Node export shim on util
+- [x] **Structured outputs** for all five JSON surfaces (analysis, critique, planner, critic, judge) — schema-guaranteed JSON, regex extraction demoted to fallback; `parseJsonLoose` rewritten as a balanced-brace scanner
+- [x] **Streaming rewrites** — `streamClaude` (SSE) fills variant cards live; retry only before first byte
+- [x] **Experiment: cached baseline pool → noise distribution** — baselines cached per (source, model) in localStorage (cap 8), noise = all pairwise diff ratios, percentile-based verdicts that state sample counts; 2–3 calls per run
+- [x] **Experiment: one-knob isolation** (Test selector) + adaptive modal width
+- [x] **Swarm: per-role models** (Haiku for critic/judge) + **cost readout** on the token meter
+- [x] **Undo for card deletion** (toast action, persists correctly)
+- [x] **Toasts replace every `alert()`/`confirm()`** (incl. two-step Clear confirmation)
+- [x] **API key hardening** — "Remember key on this device" checkbox; unchecked = sessionStorage only
+- [x] **Unit tests** — `tests/util.test.js`, 30 tests via `node --test tests/`
+- [x] `CHAT_LOG.md` moved into `docs/`; end-to-end harness grown to 49 checks
+
 ## ⬜ Outstanding
-
-### Pre-existing bugs from the initial review (not yet fixed)
-- [ ] Fragile regex + `JSON.parse` for analysis/critique — prefer structured output / tool use
-
-### High-impact improvements
-- [ ] API key hardening (sessionStorage option + in-UI warning)
-- [ ] **Streaming** responses
-- [ ] Undo for card deletion
 
 ### UX
 - [ ] Mobile / responsive layout + touch pan-zoom
 - [ ] Batch / parametric sweep generation
-- [ ] Replace `alert()` / `confirm()` with inline styled messaging
-
-### Code health
-- [ ] Split inline CSS/JS into separate files
-- [ ] Tests for `lcsParts` / `computeDiffStats` and JSON extraction; linting
-- [ ] Remove or relocate root `CHAT_LOG.md`; drop the unused large `logo.png`
+- [ ] Redo / broader undo (currently deletion only)
 
 ### Swarm — next steps
 - [ ] Model-tool-use loop (agents call `create_card` / `read_card` themselves)
-- [ ] Streaming + cheaper models for Critic/Judge (Haiku)
-- [ ] Cost-estimate readout on the token meter
+- [ ] Streaming for swarm writers/editor
 - [ ] Observability L1: expandable per-agent I/O traces
 - [ ] Config-as-data (declarative swarm definition) + graph visualization + single-step mode
 
 ### Controlled Experiment — next steps
-- [ ] One-knob isolation (vary a single parameter; let the user pick which)
-- [ ] N-sample distributions / effect size for a more trustworthy verdict (cache baseline samples per source to accumulate a noise distribution cheaply)
-- [ ] Adaptive modal width (narrow for intro/loading, wide for results)
+- [ ] Sensitivity map — accumulate per-knob impact across experiments (thesis §7)
+- [ ] Pool inspection UI (view/evict cached baselines)
+
+### Code health
+- [ ] Linting
+- [ ] `logo.png` is large for a favicon — compress or replace
 
 ### Verification
 - [ ] **Smoke-test the Swarm and Controlled Experiment against the live API** — not yet

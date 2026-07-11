@@ -93,10 +93,26 @@ Provide ONLY the rewritten text, no explanations or preamble.`;
       return { added, removed, same, changed, ratio: changed / denom };
     }
 
+    // Extract the first complete JSON object from prose. A greedy regex fails
+    // when the text contains more than one object, so scan for the first
+    // balanced {...} span (string- and escape-aware) and parse that.
     function parseJsonLoose(text) {
-      const match = text.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error('Model did not return JSON');
-      return JSON.parse(match[0]);
+      const start = text.indexOf('{');
+      if (start === -1) throw new Error('Model did not return JSON');
+      let depth = 0, inString = false, escaped = false;
+      for (let i = start; i < text.length; i++) {
+        const ch = text[i];
+        if (escaped) { escaped = false; continue; }
+        if (ch === '\\') { if (inString) escaped = true; continue; }
+        if (ch === '"') { inString = !inString; continue; }
+        if (inString) continue;
+        if (ch === '{') depth++;
+        else if (ch === '}') {
+          depth--;
+          if (depth === 0) return JSON.parse(text.slice(start, i + 1));
+        }
+      }
+      throw new Error('Model did not return JSON');
     }
 
     // Parse model output that should be JSON. With structured outputs the text

@@ -185,7 +185,7 @@
 
     async function runSwarm({ goal, writerCount, rounds, useResearch }) {
       const source = (currentSourceCard ? getCardText(currentSourceCard) : sourceText.value).trim();
-      if (!source) { alert('Add some source text first.'); return; }
+      if (!source) { showToast('Add some source text first.', { tone: 'error' }); return; }
 
       swarm.running = true;
       swarm.controller = new AbortController();

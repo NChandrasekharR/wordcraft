@@ -1285,7 +1285,7 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
     function exportToMarkdown() {
       const cards = canvas.querySelectorAll('.card');
       if (cards.length === 0) {
-        alert('No cards to export. Add some text to the canvas first.');
+        showToast('No cards to export. Add some text to the canvas first.', { tone: 'error' });
         return;
       }
 

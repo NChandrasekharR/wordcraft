@@ -9,11 +9,11 @@ Wordcraft is a **parametric writing studio** — a spatial tool for exploring te
 
 ## Architecture
 
-### Single-File Design
-- **One HTML file** (~3300 lines) containing all CSS and JavaScript inline
-- **No build step** — open `index.html` directly in browser
+### Modular No-Build Design
+- **index.html** (markup) + **css/styles.css** + five classic scripts loaded in order: `js/util.js` (pure helpers, Node-testable), `js/api.js` (API/storage layer: retries, streaming, structured outputs), `js/app.js` (canvas, cards, panels, persistence, toasts/undo), `js/swarm.js`, `js/experiment.js`
+- **No build step** — classic script tags (not ES modules), so opening `index.html` via `file://` still works
 - **No backend** — client-side only, requests go directly to Anthropic API
-- **BYOK (Bring Your Own Key)** — users provide their own Anthropic API key
+- **BYOK (Bring Your Own Key)** — users provide their own Anthropic API key (localStorage, or sessionStorage-only via the modal checkbox)
 
 ### Key Technical Decisions
 - Uses `anthropic-dangerous-direct-browser-access` header for direct browser API calls
@@ -82,57 +82,42 @@ Wordcraft is a **parametric writing studio** — a spatial tool for exploring te
 
 ```
 wordcraft/
-├── index.html      # Main application (all-in-one)
-├── logo.png        # App icon (terracotta branching arrows)
-├── README.md       # User-facing documentation
-└── DEVELOPMENT.md  # This file
+├── index.html          # Markup only (panels, modals, toolbar)
+├── css/styles.css      # All styles
+├── js/util.js          # Pure helpers (escapeHtml, LCS diff, labels, prompt
+│                       #   builder, JSON extraction) — Node-testable
+├── js/api.js           # API/storage layer: model + key storage, retrying
+│                       #   request core, callClaude/callClaudeJson/streamClaude
+├── js/app.js           # Canvas, cards, panels, generate flows, persistence,
+│                       #   toasts, undo, API-key modal wiring
+├── js/swarm.js         # Agent Swarm (planner/researcher/writers/critic/
+│                       #   editor/judge, per-role models, cost readout)
+├── js/experiment.js    # Controlled Experiment (baseline pool, verdicts,
+│                       #   one-knob isolation)
+├── tests/util.test.js  # Unit tests (node --test tests/)
+├── logo.png            # App icon (terracotta branching arrows)
+├── README.md           # User-facing documentation
+├── DEVELOPMENT.md      # This file
+└── docs/               # Design thesis, talk, related work, checklist, logs
 ```
-
-## Code Organization (within index.html)
-
-### CSS Sections (~1100 lines)
-- CSS variables (color palette, fonts)
-- Layout (sidebar, canvas container)
-- Components (cards, buttons, sliders, modals)
-- Card variants (source, variant, critique, generating, error)
-- Comparison panel styles
-- Responsive adjustments
-
-### HTML Structure (~100 lines)
-- Sidebar with logo, source input, parameters, actions
-- Canvas container with zoom controls
-- Comparison panel (hidden by default)
-- API key modal
-- Canvas toolbar (API key, Export buttons)
-
-### JavaScript (~2100 lines)
-- State variables (scale, pan, connections, selectedCard, etc.)
-- Canvas transform and zoom functions
-- Card creation and management
-- Drag, resize, and selection handling
-- Multi-select and comparison panel
-- API calls to Claude (callClaude function)
-- Diff computation (LCS algorithm)
-- Export functions (Markdown generation)
-- Event listeners
 
 ## Key Functions Reference
 
-| Function | Purpose |
-|----------|---------|
-| `createCard(tags, content, type)` | Creates and positions a new card |
-| `callClaude(prompt)` | Makes API request to Anthropic |
-| `computeDiff(original, modified)` | LCS-based diff with HTML markup |
-| `generateVariant()` | Main generation flow |
-| `analyzeSource()` | Analyzes source text structure |
-| `critiqueCard(card)` | Generates critique for selected card |
-| `toggleMultiSelect(card)` | Adds/removes card from comparison |
-| `renderCompareColumns()` | Updates comparison panel content |
-| `exportToMarkdown()` | Exports full session |
-| `downloadCardAsMarkdown(card)` | Exports single card |
-| `requireApiKey(action)` | Deferred API key pattern |
-| `zoomToFit()` | Auto-frames all cards in view |
-| `updateConnections()` | Redraws SVG arrows |
+| Function | Where | Purpose |
+|----------|-------|---------|
+| `createCard(tags, content, type, opts)` | app.js | Creates/positions a card (opts for restore) |
+| `deleteCard(card)` / `undoDeleteCard(...)` | app.js | Delete with toast-based undo |
+| `materializeCard(data)` | app.js | Rehydrate a card from a snapshot (restore + undo) |
+| `showToast(message, opts)` | app.js | Inline notifications (replaces alert/confirm) |
+| `callClaude(prompt, opts)` | api.js | Non-streaming text request (retry/backoff/abort) |
+| `callClaudeJson(prompt, {schema})` | api.js | Structured outputs → parsed JSON |
+| `streamClaude(prompt, {onText})` | api.js | SSE streaming rewrite |
+| `computeDiff` / `computeDiffStats` / `lcsParts` | util.js | LCS diff rendering + magnitude |
+| `generateVariant()` | app.js | Main generation flow (streams into the card) |
+| `runSwarm(config)` | swarm.js | Multi-agent orchestration |
+| `runControlledExperiment()` | experiment.js | Signal-vs-noise run against the baseline pool |
+| `serializeCanvas()` / `restoreCanvasState()` | app.js | localStorage persistence |
+| `requireApiKey(action)` | app.js | Deferred API key pattern |
 
 ## Styling Details
 
@@ -162,33 +147,31 @@ df27536 Add source-first workflow with auto-analysis
 
 ## Next Steps / Future Ideas
 
+Done in the 2026-07 passes: persistence (save/load), undo for deletion,
+streaming with live card fill, retry/backoff error recovery, modular split,
+unit tests, structured outputs, experiment noise distributions + one-knob
+isolation, per-role swarm models + cost readout, toasts, API-key session
+option, model picker. Still open (see also docs/project-checklist.md):
+
 ### High Priority
 - [ ] **Keyboard shortcuts** — More shortcuts beyond Cmd+click and Escape
-- [ ] **Undo/Redo** — State history for canvas operations
-- [ ] **Save/Load sessions** — Persist canvas state to localStorage or file
-- [ ] **Mobile responsiveness** — Current design is desktop-focused
+- [ ] **Redo / broader undo** — Undo currently covers card deletion only
+- [ ] **Mobile responsiveness** — Current design is desktop/mouse-focused
 
 ### Features to Consider
+- [ ] **Sensitivity map** — Accumulate experiment results into a per-knob impact overlay (thesis §7)
 - [ ] **Card linking** — Manually connect any two cards
 - [ ] **Branching variants** — Generate variant from variant (not just source)
 - [ ] **Custom parameters** — User-defined sliders/options
 - [ ] **Prompt templates** — Save and reuse parameter combinations
-- [ ] **Batch generation** — Generate multiple variants at once
-- [ ] **Version history per card** — Track edits within a card
-- [ ] **Collaborative editing** — Real-time multiplayer (would need backend)
+- [ ] **Batch generation** — Parametric sweeps across parameter values
+- [ ] **Swarm as data** — Declarative swarm config + graph view + single-step mode
 
 ### Polish
-- [ ] **Loading states** — Better skeleton/shimmer while generating
-- [ ] **Error recovery** — Retry failed generations
 - [ ] **Card search** — Find cards by content or tags
 - [ ] **Canvas minimap** — Overview navigation for large canvases
 - [ ] **Themes** — Dark mode, custom color schemes
 - [ ] **Accessibility** — Screen reader support, keyboard navigation
-
-### Technical Debt
-- [ ] Consider breaking into modules if file grows much larger
-- [ ] Add TypeScript for better maintainability
-- [ ] Unit tests for diff algorithm and core functions
 
 ## Development Notes
 
