@@ -25,29 +25,38 @@
   - [x] Per-step progress loading UX (PR #3)
 - [x] **README** updated; **PR #2** and **PR #3** merged to `main`
 
+## ✅ Fixed in the 2026-07 hardening pass
+
+- [x] **XSS / escaping:** all user text and model output now routed through `escapeHtml` (`createCard` content + tags, critique/analysis rendering, compare-panel tags, error messages, diff output incl. `&`)
+- [x] Unguarded `data.content[0].text` — `callClaude` now extracts all text blocks and throws on empty responses; warns on `max_tokens` truncation
+- [x] **Canvas persistence** to localStorage (cards, connections, diffs, source text; restored on load) + **Clear** toolbar button
+- [x] **Card deletion** (per-card delete button with connection/cache/selection cleanup)
+- [x] **Model picker** (Opus 4.8 default / Sonnet 5 / Haiku 4.5) in the API key modal; deprecated hardcoded `claude-sonnet-4-20250514` removed
+- [x] Rate-limit / 429 / 5xx / network retry with exponential backoff, shared by `callClaude` and `callClaudeRaw`
+- [x] Real cancel mid-run for the Controlled Experiment (`AbortController`; closing the modal aborts in-flight calls)
+- [x] Verdict copy no longer overclaims — labels/explanations note the single-sample basis
+- [x] Deduplicated: single LCS core (`lcsParts`) behind `computeDiff`/`computeDiffStats`; shared slider-label fns; `buildParamPrompt` reused by Generate Variant; shared `finishVariantCard`/`addDiffToggle` (swarm-revised cards now get the Diff toggle too)
+- [x] `--text-muted` undefined CSS variable fixed (`--text-tertiary`)
+- [x] `.gitignore` added
+
 ## ⬜ Outstanding
 
 ### Pre-existing bugs from the initial review (not yet fixed)
-- [ ] **XSS / escaping:** source content injected via `innerHTML` in `createCard` — escape it
-- [ ] Tags injected unescaped (latent XSS)
-- [ ] Unguarded `data.content[0].text` in the single-shot `callClaude` (fixed only in `callClaudeRaw`)
 - [ ] Fragile regex + `JSON.parse` for analysis/critique — prefer structured output / tool use
 
 ### High-impact improvements
-- [ ] **Canvas persistence** to localStorage (biggest UX gap — work is lost on refresh)
 - [ ] API key hardening (sessionStorage option + in-UI warning)
-- [ ] **Model picker** (Opus/Sonnet/Haiku) + **streaming** responses
-- [ ] Rate-limit / 429 / 529 handling with exponential backoff
+- [ ] **Streaming** responses
+- [ ] Undo for card deletion
 
 ### UX
-- [ ] Delete / undo for cards
 - [ ] Mobile / responsive layout + touch pan-zoom
 - [ ] Batch / parametric sweep generation
-- [ ] Replace `alert()` with inline styled messaging
+- [ ] Replace `alert()` / `confirm()` with inline styled messaging
 
 ### Code health
 - [ ] Split inline CSS/JS into separate files
-- [ ] Tests for `computeDiff` / `computeDiffStats` and JSON extraction; linting; `.gitignore`
+- [ ] Tests for `lcsParts` / `computeDiffStats` and JSON extraction; linting
 - [ ] Remove or relocate root `CHAT_LOG.md`; drop the unused large `logo.png`
 
 ### Swarm — next steps
@@ -59,8 +68,7 @@
 
 ### Controlled Experiment — next steps
 - [ ] One-knob isolation (vary a single parameter; let the user pick which)
-- [ ] N-sample distributions / effect size for a more trustworthy verdict
-- [ ] Real cancel mid-run (`AbortController` for `callClaude`)
+- [ ] N-sample distributions / effect size for a more trustworthy verdict (cache baseline samples per source to accumulate a noise distribution cheaply)
 - [ ] Adaptive modal width (narrow for intro/loading, wide for results)
 
 ### Verification
