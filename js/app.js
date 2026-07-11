@@ -31,6 +31,58 @@
     // Multi-select state
     let multiSelectedCards = []; // Array of card elements in selection order
 
+    // Structured-output JSON schemas (Anthropic structured outputs). Every
+    // object needs additionalProperties:false and a required list; only basic
+    // JSON Schema types are supported (no minLength/minimum constraints).
+    const ANALYSIS_SCHEMA = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['tone', 'audience', 'intent', 'summary', 'suggestions'],
+      properties: {
+        tone: { type: 'string' },
+        audience: { type: 'string' },
+        intent: { type: 'string' },
+        summary: { type: 'string' },
+        suggestions: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['action', 'detail', 'prompt_instruction'],
+            properties: {
+              action: { type: 'string' },
+              detail: { type: 'string' },
+              prompt_instruction: { type: 'string' }
+            }
+          }
+        }
+      }
+    };
+    const CRITIQUE_SCHEMA = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['verdict', 'verdict_summary', 'strengths', 'weaknesses', 'suggestions', 'best_fix'],
+      properties: {
+        verdict: { type: 'string', enum: ['good', 'needs-work', 'poor'] },
+        verdict_summary: { type: 'string' },
+        strengths: { type: 'array', items: { type: 'string' } },
+        weaknesses: { type: 'array', items: { type: 'string' } },
+        suggestions: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['action', 'detail'],
+            properties: {
+              action: { type: 'string' },
+              detail: { type: 'string' }
+            }
+          }
+        },
+        best_fix: { type: 'string' }
+      }
+    };
+
     // Elements
     const canvasContainer = document.getElementById('canvasContainer');
     const canvas = document.getElementById('canvas');
@@ -489,34 +541,15 @@
       `;
       currentCritique = null;
 
-      const prompt = `Analyze this text and provide a critique. Respond in JSON format only:
-
-{
-  "verdict": "good" | "needs-work" | "poor",
-  "verdict_summary": "One sentence overall assessment",
-  "strengths": ["strength 1", "strength 2"],
-  "weaknesses": ["weakness 1", "weakness 2"],
-  "suggestions": [
-    {"action": "brief action description", "detail": "how to implement it"},
-    {"action": "brief action description", "detail": "how to implement it"},
-    {"action": "brief action description", "detail": "how to implement it"}
-  ],
-  "best_fix": "The single most impactful rewritten version of the text"
-}
+      const prompt = `Analyze this text and provide a critique. Give an overall verdict (good, needs-work, or poor), a one-sentence verdict summary, the key strengths, the weaknesses, concrete suggestions (each with a brief action and a detail on how to implement it), and best_fix — the single most impactful fully rewritten version of the text.
 
 Text to analyze:
 ${content}`;
 
       try {
-        const result = await callClaude(prompt);
-        const jsonMatch = result.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          currentCritique = JSON.parse(jsonMatch[0]);
-          critiqueCache.set(card.id, currentCritique); // Cache the result
-          renderCritique(currentCritique);
-        } else {
-          throw new Error('Invalid response format');
-        }
+        currentCritique = await callClaudeJson(prompt, { schema: CRITIQUE_SCHEMA });
+        critiqueCache.set(card.id, currentCritique); // Cache the result
+        renderCritique(currentCritique);
       } catch (err) {
         critiqueContent.innerHTML = `<p style="color: var(--accent-error); padding: 20px;">Error: ${escapeHtml(err.message)}</p>`;
       }
@@ -871,31 +904,13 @@ ${content}`;
 
       // Analyze the source text
       try {
-        const prompt = `Analyze this text and provide feedback. Respond in JSON format only:
-
-{
-  "tone": "casual" | "neutral" | "formal",
-  "audience": "who this seems written for",
-  "intent": "inform" | "persuade" | "entertain" | "instruct" | "inspire",
-  "summary": "One sentence describing what this text is about",
-  "suggestions": [
-    {"action": "Brief improvement title", "detail": "How to implement this improvement", "prompt_instruction": "Specific instruction for rewriting"},
-    {"action": "Brief improvement title", "detail": "How to implement this improvement", "prompt_instruction": "Specific instruction for rewriting"},
-    {"action": "Brief improvement title", "detail": "How to implement this improvement", "prompt_instruction": "Specific instruction for rewriting"}
-  ]
-}
+        const prompt = `Analyze this text and provide feedback. Identify the tone (casual, neutral, or formal), the audience it seems written for, the intent (inform, persuade, entertain, instruct, or inspire), a one-sentence summary of what it is about, and three concrete improvement suggestions — each with a brief action title, a detail on how to implement it, and a specific prompt_instruction for rewriting.
 
 Text to analyze:
 ${text}`;
 
-        const result = await callClaude(prompt);
-        const jsonMatch = result.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          currentAnalysis = JSON.parse(jsonMatch[0]);
-          renderAnalysis(currentAnalysis);
-        } else {
-          throw new Error('Invalid response format');
-        }
+        currentAnalysis = await callClaudeJson(prompt, { schema: ANALYSIS_SCHEMA });
+        renderAnalysis(currentAnalysis);
       } catch (err) {
         analysisContent.innerHTML = `<p style="color: var(--accent-error); padding: 20px;">Error: ${escapeHtml(err.message)}</p>`;
       } finally {
@@ -1029,7 +1044,10 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
       generateFromSuggestionBtn.disabled = true;
 
       try {
-        const result = await callClaude(prompt);
+        const contentEl = card.querySelector('.card-content');
+        const result = await streamClaude(prompt, {
+          onText: (soFar) => { contentEl.textContent = soFar; }
+        });
         finishVariantCard(card, text, result);
 
         requestAnimationFrame(() => {
@@ -1116,7 +1134,11 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
       generateBtn.disabled = true;
 
       try {
-        const result = await callClaude(prompt, { maxTokens });
+        const contentEl = card.querySelector('.card-content');
+        const result = await streamClaude(prompt, {
+          maxTokens,
+          onText: (soFar) => { contentEl.textContent = soFar; }
+        });
         finishVariantCard(card, text, result);
 
         // Update connection arrows after card content is set

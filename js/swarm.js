@@ -20,22 +20,45 @@
     const agentClose = document.getElementById('agentClose');
     const agentCancelBtn = document.getElementById('agentCancelBtn');
 
-    const swarm = { running: false, controller: null, steps: 0, tokensIn: 0, tokensOut: 0 };
+    const swarm = { running: false, controller: null, steps: 0, tokensIn: 0, tokensOut: 0, usage: {} };
+
+    // Per-role model selection. Critic and judge only score/rank, so a cheap
+    // fast model is sufficient; the generative roles use the user's chosen
+    // model. roleModel() is a function so it always reflects the current pick.
+    function roleModel(role) {
+      if (role === 'critic' || role === 'judge') return 'claude-haiku-4-5';
+      return getModel();
+    }
+
+    // Pricing per million tokens (input / output), used for the cost estimate.
+    const SWARM_PRICING = {
+      'claude-opus-4-8': { in: 5, out: 25 },
+      'claude-sonnet-5': { in: 3, out: 15 },
+      'claude-haiku-4-5': { in: 1, out: 5 }
+    };
 
     // Multi-turn / tool-capable API call used by the swarm; goes through the
-    // same retrying request core as callClaude() and tracks swarm usage.
-    async function callClaudeRaw({ system, messages, tools, model, maxTokens, signal }) {
+    // same retrying request core as callClaude() and tracks swarm usage
+    // (overall and per model, for the cost readout).
+    async function callClaudeRaw({ system, messages, tools, model, maxTokens, signal, outputSchema }) {
+      const usedModel = model || getModel();
       const body = {
-        model: model || getModel(),
+        model: usedModel,
         max_tokens: maxTokens || 2048,
         messages
       };
       if (system) body.system = system;
       if (tools) body.tools = tools;
+      if (outputSchema) body.output_config = { format: { type: 'json_schema', schema: outputSchema } };
       const data = await anthropicRequest(body, signal);
       if (data.usage) {
-        swarm.tokensIn += data.usage.input_tokens || 0;
-        swarm.tokensOut += data.usage.output_tokens || 0;
+        const tin = data.usage.input_tokens || 0;
+        const tout = data.usage.output_tokens || 0;
+        swarm.tokensIn += tin;
+        swarm.tokensOut += tout;
+        const u = swarm.usage[usedModel] || (swarm.usage[usedModel] = { in: 0, out: 0 });
+        u.in += tin;
+        u.out += tout;
       }
       swarm.steps++;
       updateSwarmStats();
@@ -51,20 +74,43 @@
     }
 
     // One agent turn that returns text.
-    async function agentText({ system, prompt, tools, maxTokens }) {
+    async function agentText({ system, prompt, tools, maxTokens, model }) {
       if (swarm.controller?.signal.aborted) throw new Error('Swarm stopped');
       const data = await callClaudeRaw({
         system,
         messages: [{ role: 'user', content: prompt }],
         tools,
         maxTokens,
+        model,
         signal: swarm.controller?.signal
       });
       return extractText(data);
     }
 
+    // One agent turn that returns parsed JSON via structured outputs.
+    async function agentJson({ system, prompt, maxTokens, model, schema }) {
+      if (swarm.controller?.signal.aborted) throw new Error('Swarm stopped');
+      const data = await callClaudeRaw({
+        system,
+        messages: [{ role: 'user', content: prompt }],
+        maxTokens,
+        model,
+        signal: swarm.controller?.signal,
+        outputSchema: schema
+      });
+      return parseJson(extractText(data));
+    }
+
     function updateSwarmStats() {
-      agentStats.textContent = `${swarm.steps} steps · ${(swarm.tokensIn + swarm.tokensOut).toLocaleString()} tokens`;
+      let cost = 0;
+      for (const model in swarm.usage) {
+        const p = SWARM_PRICING[model];
+        if (!p) continue;
+        const u = swarm.usage[model];
+        cost += (u.in / 1e6) * p.in + (u.out / 1e6) * p.out;
+      }
+      const total = swarm.tokensIn + swarm.tokensOut;
+      agentStats.textContent = `${swarm.steps} steps · ${total.toLocaleString()} tokens · ~$${cost.toFixed(2)}`;
     }
 
     // Append an entry to the live activity log; returns a handle to update it.
@@ -86,20 +132,55 @@
     }
 
     const ROLES = {
-      planner: `You are the Planner in a writing swarm. Given a creative brief and source text, produce a concise JSON plan. Choose DISTINCT angles for each writer so the variants meaningfully differ. Respond with JSON ONLY:
-{
-  "summary": "one sentence describing the strategy",
-  "research_query": "a web search query if external facts would help, else empty string",
-  "writers": [ { "angle": "short label", "instruction": "specific guidance for this writer" } ]
-}
-Produce exactly N writer entries where N is given.`,
+      planner: `You are the Planner in a writing swarm. Given a creative brief and source text, produce a concise plan. Choose DISTINCT angles for each writer so the variants meaningfully differ. Provide: a one-sentence summary of the strategy, a research_query (a web search query if external facts would help, else an empty string), and a writers list with one entry per writer, each giving a short angle label and specific instruction. Produce exactly N writer entries where N is given.`,
       researcher: `You are the Researcher. Use web search to gather current, relevant facts for the brief. Return a tight bulleted brief of findings, each with its source. Be factual and concise.`,
       writer: `You are a Writer in a swarm. Write the BEST version of the text for the given brief and angle. Output ONLY the finished prose — no preamble, no explanation, no surrounding quotes.`,
-      critic: `You are the Critic — adversarial and rigorous. Press and probe the draft against the brief: find the weakest claim, the vaguest sentence, unsupported assertions, tonal mismatches, and structural gaps. Respond with JSON ONLY:
-{ "score": <1-10>, "weaknesses": ["..."], "fix_instructions": ["concrete, actionable edits"] }`,
+      critic: `You are the Critic — adversarial and rigorous. Press and probe the draft against the brief: find the weakest claim, the vaguest sentence, unsupported assertions, tonal mismatches, and structural gaps. Provide a score from 1 to 10, a list of weaknesses, and a list of concrete, actionable fix_instructions.`,
       editor: `You are the Editor. Revise the draft so it resolves every fix instruction while honoring the brief and any research provided. Output ONLY the revised prose — no preamble.`,
-      judge: `You are the Judge. Compare the candidate variants against the brief and pick the strongest. Respond with JSON ONLY:
-{ "winner": <1-based index>, "rationale": "2-3 sentences", "ranking": [indices best-to-worst] }`
+      judge: `You are the Judge. Compare the candidate variants against the brief and pick the strongest. Provide the winner (1-based index), a 2-3 sentence rationale, and a ranking of all candidate indices from best to worst.`
+    };
+
+    // Structured-output schemas for the swarm's JSON roles.
+    const PLANNER_SCHEMA = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['summary', 'research_query', 'writers'],
+      properties: {
+        summary: { type: 'string' },
+        research_query: { type: 'string' },
+        writers: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['angle', 'instruction'],
+            properties: {
+              angle: { type: 'string' },
+              instruction: { type: 'string' }
+            }
+          }
+        }
+      }
+    };
+    const CRITIC_SCHEMA = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['score', 'weaknesses', 'fix_instructions'],
+      properties: {
+        score: { type: 'integer' },
+        weaknesses: { type: 'array', items: { type: 'string' } },
+        fix_instructions: { type: 'array', items: { type: 'string' } }
+      }
+    };
+    const JUDGE_SCHEMA = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['winner', 'rationale', 'ranking'],
+      properties: {
+        winner: { type: 'integer' },
+        rationale: { type: 'string' },
+        ranking: { type: 'array', items: { type: 'integer' } }
+      }
     };
 
     async function runSwarm({ goal, writerCount, rounds, useResearch }) {
@@ -108,7 +189,7 @@ Produce exactly N writer entries where N is given.`,
 
       swarm.running = true;
       swarm.controller = new AbortController();
-      swarm.steps = 0; swarm.tokensIn = 0; swarm.tokensOut = 0;
+      swarm.steps = 0; swarm.tokensIn = 0; swarm.tokensOut = 0; swarm.usage = {};
       agentLog.innerHTML = '';
       agentPanel.classList.add('visible');
       agentCancelBtn.style.display = '';
@@ -125,12 +206,13 @@ Produce exactly N writer entries where N is given.`,
         const planLog = logAgent('Planner', 'Decomposing the brief…');
         let plan;
         try {
-          const raw = await agentText({
+          plan = await agentJson({
             system: ROLES.planner,
             prompt: `Brief/goal:\n${goal || '(none given — produce strong, distinct general variations)'}\n\nSource text:\n${source}\n\nProduce exactly ${writerCount} writer entries.`,
-            maxTokens: 1024
+            maxTokens: 1024,
+            model: roleModel('planner'),
+            schema: PLANNER_SCHEMA
           });
-          plan = parseJsonLoose(raw);
         } catch (e) {
           plan = { summary: 'Using default plan', research_query: '', writers: [] };
         }
@@ -147,13 +229,16 @@ Produce exactly N writer entries where N is given.`,
           agentPhase.textContent = 'Researching';
           const rLog = logAgent('Researcher', `Searching: ${query}`);
           try {
+            const researcherModel = roleModel('researcher');
             research = await agentText({
               system: ROLES.researcher,
               prompt: `Brief: ${goal}\nSearch focus: ${query}\nGather and summarize the most useful findings.`,
+              model: researcherModel,
               // Haiku only supports the basic web-search variant; newer models
-              // get the version with dynamic filtering.
+              // get the version with dynamic filtering. Branch on the model
+              // actually used for this call.
               tools: [{
-                type: getModel() === 'claude-haiku-4-5' ? 'web_search_20250305' : 'web_search_20260209',
+                type: researcherModel === 'claude-haiku-4-5' ? 'web_search_20250305' : 'web_search_20260209',
                 name: 'web_search',
                 max_uses: 4
               }],
@@ -182,6 +267,7 @@ Produce exactly N writer entries where N is given.`,
             const draft = await agentText({
               system: ROLES.writer,
               prompt: `Brief/goal:\n${goal}\n\nYour angle: ${w.angle}\nGuidance: ${w.instruction}${ctx}\n\nSource text:\n${source}`,
+              model: roleModel('writer'),
               maxTokens: 1500
             });
             card.classList.remove('generating'); card.classList.add('variant');
@@ -207,12 +293,13 @@ Produce exactly N writer entries where N is given.`,
             const cLog = logAgent('Critic', `Pressing "${v.angle}"…`);
             let critique;
             try {
-              const raw = await agentText({
+              critique = await agentJson({
                 system: ROLES.critic,
                 prompt: `Brief:\n${goal}\n\nDraft:\n${v.text}`,
-                maxTokens: 800
+                maxTokens: 800,
+                model: roleModel('critic'),
+                schema: CRITIC_SCHEMA
               });
-              critique = parseJsonLoose(raw);
             } catch (e) { cLog.update(`Critic error: ${e.message}`, 'fail'); return; }
             cLog.update(`Score ${critique.score}/10 · ${(critique.weaknesses || []).length} weaknesses`, 'done');
 
@@ -223,6 +310,7 @@ Produce exactly N writer entries where N is given.`,
               const revised = await agentText({
                 system: ROLES.editor,
                 prompt: `Brief:\n${goal}\n\nFix instructions:\n- ${fixes}${ctx}\n\nCurrent draft:\n${v.text}`,
+                model: roleModel('editor'),
                 maxTokens: 1500
               });
               const diffHtml = computeDiff(v.text, revised);
@@ -244,11 +332,13 @@ Produce exactly N writer entries where N is given.`,
           const jLog = logAgent('Judge', 'Ranking variants…');
           try {
             const list = variants.map((v, i) => `[${i + 1}] (${v.angle})\n${v.text}`).join('\n\n');
-            const verdict = parseJsonLoose(await agentText({
+            const verdict = await agentJson({
               system: ROLES.judge,
               prompt: `Brief:\n${goal}\n\nCandidates:\n${list}`,
-              maxTokens: 600
-            }));
+              maxTokens: 600,
+              model: roleModel('judge'),
+              schema: JUDGE_SCHEMA
+            });
             const winner = variants[(verdict.winner || 1) - 1];
             if (winner) winner.card.classList.add('winner');
             const winnerLabel = winner ? winner.angle : `#${verdict.winner}`;

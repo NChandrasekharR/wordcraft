@@ -99,4 +99,15 @@ Provide ONLY the rewritten text, no explanations or preamble.`;
       return JSON.parse(match[0]);
     }
 
-    if (typeof module !== 'undefined' && module.exports) { module.exports = { escapeHtml, toneLabel, lengthLabel, complexityLabel, buildParamPrompt, lcsParts, computeDiff, computeDiffStats, parseJsonLoose }; }
+    // Parse model output that should be JSON. With structured outputs the text
+    // is guaranteed valid JSON, so JSON.parse is the fast path; parseJsonLoose
+    // is only a fallback for older/unstructured responses.
+    function parseJson(text) {
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        return parseJsonLoose(text);
+      }
+    }
+
+    if (typeof module !== 'undefined' && module.exports) { module.exports = { escapeHtml, toneLabel, lengthLabel, complexityLabel, buildParamPrompt, lcsParts, computeDiff, computeDiffStats, parseJsonLoose, parseJson }; }
