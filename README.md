@@ -23,11 +23,11 @@ Click **Swarm** in the toolbar to launch a multi-agent run from a single brief:
 A live activity panel shows each agent's progress, running step/token counts, and a **Stop Swarm** button to cancel mid-run.
 
 ### Controlled Experiment (Signal vs. Noise)
-Click **Controlled Experiment** in the generation panel to test whether your parameter changes actually move the output — or whether you're just seeing the model's randomness. It runs your current settings once and re-runs a neutral baseline twice, then shows two diffs side by side:
-- **Noise** — baseline vs. a second baseline sample (how much changes from chance alone)
-- **Signal** — baseline vs. your settings (how much your edit changed)
+Click **Controlled Experiment** in the generation panel to test whether your parameter changes actually move the output — or whether you're just seeing the model's randomness. It runs your chosen configuration against a pool of neutral-baseline samples that is **cached across runs** (2–3 API calls per run), so the noise estimate is a real distribution over all baseline pairs rather than a single sample:
+- **Noise** — how much pooled baseline samples differ from each other (min–max, median, pair count)
+- **Signal** — how much your candidate differs from the pooled baselines (mean)
 
-A verdict tells you whether your change is a *real effect*, *marginal*, or *within the noise*. This is a working prototype of the "control group for agents" idea explored in the design docs below.
+A percentile-based verdict tells you whether your change is a *likely real effect*, *marginal*, or *within the noise*, always stating how many samples back it. A **Test** selector isolates a single knob (tone, length, complexity, audience, or intent) against the neutral baseline. This is a working implementation of the "control group for agents" idea explored in the design docs below.
 
 ### Design Notes
 The `docs/` folder contains a design exploration on agentic UX:
@@ -76,7 +76,7 @@ The `docs/` folder contains a design exploration on agentic UX:
 Visit [nchandrasekharr.github.io/wordcraft](https://nchandrasekharr.github.io/wordcraft/) or open `index.html` locally.
 
 ### 2. Add Your API Key
-Click the **API Key** button in the top-right toolbar. Enter your Anthropic API key. The key is stored locally in your browser and never sent anywhere except directly to Anthropic's API.
+Click the **API Key** button in the top-right toolbar. Enter your Anthropic API key and pick a model (Claude Opus 4.8, Sonnet 5, or Haiku 4.5). The key is stored only in your browser and never sent anywhere except directly to Anthropic's API — uncheck "Remember key on this device" on shared machines to keep it for the current tab session only.
 
 > **Get an API key:** Visit [console.anthropic.com](https://console.anthropic.com/) to create an account and generate an API key.
 
@@ -115,7 +115,7 @@ Click **Generate Variant**. A new card appears on the canvas with your transform
 
 ## Local Development
 
-Wordcraft is a single HTML file with no build step required.
+Wordcraft has no build step — plain HTML, CSS, and classic scripts.
 
 ```bash
 # Clone the repository
@@ -133,10 +133,11 @@ python -m http.server 8000  # then visit localhost:8000
 Wordcraft uses the Anthropic Claude API directly from the browser using the `anthropic-dangerous-direct-browser-access` header. Your API key is stored in localStorage and requests go directly to Anthropic's servers—no backend required.
 
 ### Architecture
-- **Single HTML file** — All CSS and JavaScript inline
+- **No build step** — `index.html` + `css/styles.css` + five plain scripts under `js/` (util, api, app, swarm, experiment); open the file or serve the folder
 - **No dependencies** — Pure vanilla JavaScript
 - **BYOK (Bring Your Own Key)** — Uses your Anthropic API key
-- **Local storage** — API key persists between sessions
+- **Structured outputs + streaming** — analysis/critique/swarm roles get schema-guaranteed JSON; rewrites stream into their cards live
+- **Local storage** — API key (opt-out to session-only), canvas, and experiment baselines persist in your browser
 - **Client-side only** — No server, no tracking, no data collection
 
 ## Privacy
