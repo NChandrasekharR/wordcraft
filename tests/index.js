@@ -13,3 +13,4 @@
 
 require('./util.test.js');
 require('./measure.test.js');
+require('./sensitivity.test.js');

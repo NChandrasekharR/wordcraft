@@ -133,6 +133,13 @@
               </svg>
               Controlled Experiment
             </button>
+            <button class="btn btn-sensitivity" id="sensitivityBtn" title="Sweep every knob against the neutral baseline to see which ones actually move the output for this text">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3v18h18"></path>
+                <path d="M7 15l4-6 3 4 4-8"></path>
+              </svg>
+              Sensitivity Map
+            </button>
           </div>
         </div>
       </div>
@@ -404,11 +411,39 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="sensitivityModal">
+    <div class="modal sensitivity-modal">
+      <h2>Sensitivity Map</h2>
+      <p id="sensIntro">Which knobs actually move the output for this text? This sweeps every generation knob against the neutral baseline and charts each one’s impact — meaning (model-judged) and wording — against the model’s own noise floor.</p>
+      <div class="sens-stored-note" id="sensStoredNote" style="display:none;"></div>
+      <div class="sens-result" id="sensResult" style="display:none;">
+        <div class="sens-summary" id="sensSummary"></div>
+        <div class="sens-chart" id="sensChart"></div>
+        <div class="sens-chart-foot" id="sensChartFoot"></div>
+      </div>
+      <div class="sens-loading" id="sensLoading" style="display:none;">
+        <div class="sens-progress-head">
+          <div class="spinner"></div>
+          <div>
+            <div class="sens-progress-title">Mapping sensitivity…</div>
+            <div class="sens-progress-sub" id="sensProgressSub">Sweeping knob settings against the neutral baseline.</div>
+          </div>
+        </div>
+        <ul class="sens-steps" id="sensSteps"></ul>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="sensClose">Close</button>
+        <button class="btn btn-primary" id="sensRun">Run Sensitivity Map</button>
+      </div>
+    </div>
+  </div>
+
   <script src="js/util.js"></script>
   <script src="js/api.js"></script>
   <script src="js/measure.js"></script>
   <script src="js/app.js"></script>
   <script src="js/swarm.js"></script>
   <script src="js/experiment.js"></script>
+  <script src="js/sensitivity.js"></script>
 </body>
 </html>

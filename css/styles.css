@@ -2076,3 +2076,226 @@
       color: var(--text-tertiary);
       line-height: 1.5;
     }
+
+    /* =====================================================================
+       Sensitivity Map — sidebar button, modal, and the DOM/CSS bar chart.
+       Appended so parallel edits elsewhere don't conflict.
+       ===================================================================== */
+    .btn.btn-sensitivity {
+      margin-top: 8px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-medium);
+      color: var(--text-secondary);
+    }
+
+    .sensitivity-modal {
+      width: 560px;
+      max-width: 94vw;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+      transition: width 0.28s ease;
+    }
+    /* Widen once the chart is on screen so knob rows have room. */
+    .sensitivity-modal.has-results { width: 860px; }
+    .sensitivity-modal .modal-actions { margin-top: 16px; }
+
+    .sens-stored-note {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-tertiary);
+      margin: -8px 0 14px;
+    }
+
+    .sens-result {
+      flex: 1;
+      min-height: 0;
+      flex-direction: column;
+      display: flex;
+      overflow-y: auto;
+    }
+    .sens-summary {
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      border: 1px solid var(--accent-warm);
+      background: var(--accent-warm-dim);
+      color: var(--text-primary);
+    }
+
+    /* --- the chart --- */
+    .sens-chart {
+      position: relative;
+      --sens-label-w: 190px;
+    }
+    /* Chart-wide noise reference: a shaded band out to the noise max and a line
+       at the noise median, spanning the plot column behind every row's bar. */
+    .sens-noise-overlay {
+      position: absolute;
+      left: var(--sens-label-w);
+      right: 92px;
+      top: 34px;
+      bottom: 8px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .sens-noise-band {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      background: rgba(122, 117, 114, 0.12);
+      border-right: 1px dashed var(--border-medium);
+    }
+    .sens-noise-tag {
+      position: absolute;
+      top: -2px;
+      right: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+    .sens-noise-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      border-left: 2px solid var(--accent-error);
+      opacity: 0.55;
+    }
+
+    .sens-knob-group {
+      position: relative;
+      z-index: 1;
+      margin-bottom: 12px;
+    }
+    .sens-knob-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .sens-knob-name {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+    .sens-knob-group.sens-strong .sens-knob-name { color: var(--accent-warm); font-weight: 700; }
+    .sens-badge {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #fff;
+      background: var(--accent-warm);
+      border-radius: 5px;
+      padding: 1px 6px;
+    }
+
+    .sens-row {
+      display: grid;
+      grid-template-columns: var(--sens-label-w) 1fr 84px;
+      align-items: center;
+      gap: 8px;
+      padding: 3px 0;
+    }
+    .sens-row-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sens-track {
+      position: relative;
+      height: 16px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 5px;
+      overflow: visible;
+    }
+    .sens-bar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      min-width: 2px;
+      background: var(--accent-warm);
+      border-radius: 5px 0 0 5px;
+    }
+    .sens-bar.sens-bar-surface-only { background: var(--text-tertiary); }
+    .sens-surf-tick {
+      position: absolute;
+      top: -2px;
+      bottom: -2px;
+      width: 0;
+      border-left: 2px solid var(--accent-purple);
+    }
+    .sens-row-value {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      color: var(--text-tertiary);
+      text-align: right;
+      white-space: nowrap;
+    }
+    .sens-chart-foot {
+      margin-top: 10px;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-tertiary);
+      line-height: 1.5;
+    }
+
+    /* --- progress (mirrors the experiment's) --- */
+    .sens-loading {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 24px 4px 8px;
+    }
+    .sens-progress-head { display: flex; align-items: center; gap: 14px; }
+    .sens-progress-title { font-size: 0.95rem; font-weight: 600; color: var(--text-primary); }
+    .sens-progress-sub { font-size: 0.8rem; color: var(--text-tertiary); margin-top: 2px; line-height: 1.4; }
+    .sens-steps {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-left: 38px;
+      margin: 0;
+    }
+    .sens-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-tertiary);
+      transition: color 0.2s ease;
+    }
+    .sens-step-icon {
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid var(--border-medium);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      color: #fff;
+    }
+    .sens-step.pending .sens-step-icon { animation: blink 1.1s infinite; }
+    .sens-step.done { color: var(--text-secondary); }
+    .sens-step.done .sens-step-icon {
+      background: var(--accent-success);
+      border-color: var(--accent-success);
+    }
+    .sens-step.done .sens-step-icon::after { content: '✓'; }
