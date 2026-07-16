@@ -2077,8 +2077,7 @@
       line-height: 1.5;
     }
 
-    /* =====================================================================
-       Sensitivity Map — sidebar button, modal, and the DOM/CSS bar chart.
+    /* ==============================================================       Sensitivity Map — sidebar button, modal, and the DOM/CSS bar chart.
        Appended so parallel edits elsewhere don't conflict.
        ===================================================================== */
     .btn.btn-sensitivity {
@@ -2299,3 +2298,124 @@
       border-color: var(--accent-success);
     }
     .sens-step.done .sens-step-icon::after { content: '✓'; }
+=======
+    /* ===================================================================
+       Ablation Lab — config modal cost line + results (win bars, verdict,
+       per-pair reasons). Appended; touches nothing above.
+       =================================================================== */
+    .abl-cost {
+      margin: 4px 0 0;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-tertiary);
+      line-height: 1.5;
+    }
+
+    .abl-results {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .abl-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .abl-bar-row {
+      display: grid;
+      grid-template-columns: 120px 1fr auto;
+      align-items: center;
+      gap: 10px;
+    }
+    .abl-bar-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      text-align: right;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .abl-bar-track {
+      position: relative;
+      height: 16px;
+      background: var(--bg-hover);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .abl-bar-fill {
+      height: 100%;
+      background: var(--border-medium);
+      border-radius: 8px 0 0 8px;
+      transition: width 0.35s ease;
+      min-width: 2px;
+    }
+    .abl-bar-fill.win {
+      background: var(--accent-success);
+    }
+    .abl-bar-count {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      min-width: 46px;
+      text-align: right;
+    }
+
+    .abl-verdict-line {
+      font-size: 0.82rem;
+      line-height: 1.55;
+      color: var(--text-secondary);
+      padding: 10px 12px;
+      border-radius: 8px;
+      border-left: 3px solid var(--border-medium);
+      background: var(--bg-elevated);
+    }
+    .abl-verdict-line strong { color: var(--text-primary); }
+    .abl-verdict-line.strong {
+      border-left-color: var(--accent-success);
+      background: var(--accent-success-dim);
+    }
+    .abl-verdict-line.moderate {
+      border-left-color: var(--accent-warm);
+      background: var(--accent-warm-dim);
+    }
+    .abl-verdict-line.suggestive {
+      border-left-color: var(--accent-warning);
+      background: var(--accent-warning-dim);
+    }
+    .abl-verdict-line.tie {
+      border-left-color: var(--text-tertiary);
+    }
+
+    .abl-pairs {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+    .abl-pairs > summary {
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-tertiary);
+      padding: 4px 0;
+      user-select: none;
+    }
+    .abl-pair {
+      padding: 8px 0;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .abl-pair-head {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-primary);
+      margin-bottom: 3px;
+    }
+    .abl-pair-reason {
+      font-size: 0.78rem;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }

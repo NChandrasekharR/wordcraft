@@ -169,6 +169,14 @@
           </svg>
           Swarm
         </button>
+        <button class="toolbar-btn" id="ablBtn" title="Ablation Lab — run two pipeline variants N times and judge them blind to see if a stage earns its cost">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 3v6l-5 9a2 2 0 0 0 1.8 3h12.4a2 2 0 0 0 1.8-3l-5-9V3"></path>
+            <path d="M8 3h8"></path>
+            <path d="M6.5 15h11"></path>
+          </svg>
+          Ablate
+        </button>
         <button class="toolbar-btn" id="exportBtn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -355,6 +363,45 @@
     </div>
   </div>
 
+  <!-- Ablation Lab Modal (does a pipeline stage earn its cost?) -->
+  <div class="modal-overlay" id="ablModal">
+    <div class="modal swarm-config">
+      <h2>Ablation Lab</h2>
+      <p>Run the same brief through two pipeline variants N times each, judge the outputs <strong>blind</strong> in randomized pairs, and see whether the extra stage actually earns its cost — not process theater, a win rate.</p>
+      <div class="field">
+        <label class="field-label">Goal / Brief</label>
+        <textarea id="ablGoal" class="source-textarea" style="min-height:80px;" placeholder="e.g. Turn this into a punchy landing-page paragraph that persuades skeptical engineers"></textarea>
+      </div>
+      <div class="field config-row">
+        <div>
+          <label class="field-label">Factor under test</label>
+          <select id="ablFactor">
+            <option value="critic" selected>Critic + Editor round: with vs without</option>
+            <option value="research">Web research: with vs without</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Trials per arm</label>
+          <select id="ablTrials">
+            <option value="3" selected>3 (fast)</option>
+            <option value="5">5</option>
+            <option value="8">8 (thorough)</option>
+          </select>
+        </div>
+      </div>
+      <p class="abl-cost" id="ablCost"></p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="ablCancel">Cancel</button>
+        <button class="btn btn-primary" id="ablStart">Run Ablation</button>
+      </div>
+      <div class="abl-results" id="ablResults" style="display:none;">
+        <div class="abl-bars" id="ablBars"></div>
+        <div class="abl-verdict-line" id="ablVerdictLine"></div>
+        <details class="abl-pairs" id="ablPairs"></details>
+      </div>
+    </div>
+  </div>
+
   <!-- Controlled Experiment Modal (signal vs. noise) -->
   <div class="modal-overlay" id="experimentModal">
     <div class="modal experiment-modal">
@@ -443,6 +490,7 @@
   <script src="js/measure.js"></script>
   <script src="js/app.js"></script>
   <script src="js/swarm.js"></script>
+  <script src="js/ablation.js"></script>
   <script src="js/experiment.js"></script>
   <script src="js/sensitivity.js"></script>
 </body>
