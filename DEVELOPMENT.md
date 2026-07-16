@@ -90,11 +90,15 @@ wordcraft/
 │                       #   request core, callClaude/callClaudeJson/streamClaude
 ├── js/app.js           # Canvas, cards, panels, generate flows, persistence,
 │                       #   toasts, undo, API-key modal wiring
+├── js/measure.js       # Semantic-distance measurement layer (batched
+│                       #   Haiku judge + order-normalized cache)
 ├── js/swarm.js         # Agent Swarm (planner/researcher/writers/critic/
 │                       #   editor/judge, per-role models, cost readout)
-├── js/experiment.js    # Controlled Experiment (baseline pool, verdicts,
-│                       #   one-knob isolation)
-├── tests/util.test.js  # Unit tests (node --test tests/)
+├── js/experiment.js    # Controlled Experiment (baseline pool, Meaning +
+│                       #   Wording verdicts, one-knob isolation)
+├── js/sensitivity.js   # Sensitivity Map (per-knob impact vs noise floor)
+├── js/ablation.js      # Ablation Lab (blind A/B pipeline-stage comparison)
+├── tests/              # Unit tests (node --test tests/)
 ├── logo.png            # App icon (terracotta branching arrows)
 ├── README.md           # User-facing documentation
 ├── DEVELOPMENT.md      # This file

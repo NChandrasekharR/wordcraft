@@ -28,12 +28,16 @@ node --test tests/    # js/util.js via its module.exports shim
   `chromium.launch({ executablePath: '/opt/pw-browsers/chromium-<rev>/chrome-linux/chrome' })`
   (find it with `ls /opt/pw-browsers`).
 - A maintained harness usually exists at the session scratchpad as `verify.js`
-  (49 checks). It reads `WORDCRAFT_REPO` (repo/worktree to serve) and
+  (100 checks incl. experiment two-track verdicts, sensitivity map, ablation lab). It reads `WORDCRAFT_REPO` (repo/worktree to serve) and
   `WORDCRAFT_PORT` env vars, so parallel runs don't collide.
 - **Mock the API** with `context.route('**/api.anthropic.com/**', ...)`:
   - Request kind is detected from the structured-output schema:
-    `body.output_config.format.schema.properties.tone` → analysis,
-    `...properties.verdict` → critique; everything else is a rewrite.
+    `properties.tone` → analysis, `properties.verdict` → critique,
+    `properties.scores` → semantic judge (return one {pair, distance} per
+    "=== Pair N ===" in the prompt), `properties.winner && properties.reason
+    && !properties.ranking` → ablation blind judge, `properties.score &&
+    properties.fix_instructions` → critic; ablation writer/editor carry an
+    "ablation trial" system prompt; everything else is a rewrite.
   - Rewrites are requested with `body.stream === true` → respond with
     `contentType: 'text/event-stream'` and a proper SSE body
     (message_start, content_block_start, several content_block_delta

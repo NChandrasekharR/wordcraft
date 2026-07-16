@@ -27,7 +27,13 @@ Click **Controlled Experiment** in the generation panel to test whether your par
 - **Noise** — how much pooled baseline samples differ from each other (min–max, median, pair count)
 - **Signal** — how much your candidate differs from the pooled baselines (mean)
 
-A percentile-based verdict tells you whether your change is a *likely real effect*, *marginal*, or *within the noise*, always stating how many samples back it. A **Test** selector isolates a single knob (tone, length, complexity, audience, or intent) against the neutral baseline. This is a working implementation of the "control group for agents" idea explored in the design docs below.
+A percentile-based verdict tells you whether your change is a *likely real effect*, *marginal*, or *within the noise*, always stating how many samples back it — on **two tracks**: *Meaning* (a cheap model judges semantic distance, so a flipped "not" counts and reshuffled wording doesn't) and *Wording* (surface word-diff). A **Test** selector isolates a single knob (tone, length, complexity, audience, or intent) against the neutral baseline. This is a working implementation of the "control group for agents" idea explored in the design docs below.
+
+### Sensitivity Map
+Click **Sensitivity Map** to sweep every knob against the neutral baseline for your current text (~12 generations) and see a per-knob impact chart drawn against the noise floor: which knobs actually move *meaning*, which only move *wording*, and which sit inside the noise band. Results are cached per text, so reopening is free — the tool learns, and shows you, its own transfer function.
+
+### Ablation Lab
+Click **Ablate** in the toolbar to answer the question agent tools never answer: *does a pipeline stage actually earn its cost?* It runs the same brief through two arms (e.g. with vs. without the critic→editor round, or with vs. without web research), N trials each, then judges the outputs **blind** in randomized pairs and reports the win rate — with sample sizes stated and no significance theater.
 
 ### Design Notes
 The `docs/` folder contains a design exploration on agentic UX:
