@@ -12,3 +12,6 @@
 // directly), as does `node --test tests/util.test.js`.
 
 require('./util.test.js');
+require('./measure.test.js');
+require('./sensitivity.test.js');
+require('./ablation.test.js');

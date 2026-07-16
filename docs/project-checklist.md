@@ -53,22 +53,40 @@
 - [x] **Unit tests** — `tests/util.test.js`, 30 tests via `node --test tests/`
 - [x] `CHAT_LOG.md` moved into `docs/`; end-to-end harness grown to 49 checks
 
+## ✅ Done in the Tier 1 pass (2026-07, multi-agent)
+
+- [x] **Semantic distance track** (`js/measure.js`) — batched Haiku-judged meaning
+      distance with an order-normalized localStorage cache; the experiment now
+      renders a **Meaning** verdict (primary) alongside the **Wording** (surface
+      LCS) verdict, degrading gracefully to surface-only if the judge fails
+- [x] **Sensitivity Map** (`js/sensitivity.js`, thesis §7) — 10-point sweep across
+      all five knobs vs the cached baseline pool; semantic-primary bar chart with
+      the noise band drawn in; mechanical summary line ("Length moves meaning;
+      Tone is mostly wording"); persisted per (source, model) with zero-API reopen
+- [x] **Ablation Lab** (`js/ablation.js`) — the thesis's answer to process
+      theater: same brief through two pipeline arms (critic→editor on/off, or
+      research on/off), N blind randomized pairwise judgments, win-rate verdict
+      in the honest house voice; two best-of cards + a verdict card on canvas
+- [x] Harness grown to **100 end-to-end checks**; unit suite to **106 tests**
+
 ## ⬜ Outstanding
 
 ### UX
 - [ ] Mobile / responsive layout + touch pan-zoom
-- [ ] Batch / parametric sweep generation
+- [ ] Batch / parametric sweep generation (generate the sweep variants as cards)
 - [ ] Redo / broader undo (currently deletion only)
 
-### Swarm — next steps
+### Swarm / Ablation — next steps
+- [ ] More ablation factors (writer count, model tier, revise-round count)
 - [ ] Model-tool-use loop (agents call `create_card` / `read_card` themselves)
 - [ ] Streaming for swarm writers/editor
 - [ ] Observability L1: expandable per-agent I/O traces
 - [ ] Config-as-data (declarative swarm definition) + graph visualization + single-step mode
 
-### Controlled Experiment — next steps
-- [ ] Sensitivity map — accumulate per-knob impact across experiments (thesis §7)
-- [ ] Pool inspection UI (view/evict cached baselines)
+### Experiment / Sensitivity — next steps
+- [ ] Sensitivity history: track per-knob impact ACROSS sources (generalization,
+      not just this text) and feed one-knob experiment results into the map
+- [ ] Pool inspection UI (view/evict cached baselines and semantic-cache entries)
 
 ### Code health
 - [ ] Linting

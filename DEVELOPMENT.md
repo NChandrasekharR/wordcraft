@@ -10,7 +10,7 @@ Wordcraft is a **parametric writing studio** — a spatial tool for exploring te
 ## Architecture
 
 ### Modular No-Build Design
-- **index.html** (markup) + **css/styles.css** + five classic scripts loaded in order: `js/util.js` (pure helpers, Node-testable), `js/api.js` (API/storage layer: retries, streaming, structured outputs), `js/app.js` (canvas, cards, panels, persistence, toasts/undo), `js/swarm.js`, `js/experiment.js`
+- **index.html** (markup) + **css/styles.css** + eight classic scripts loaded in order: `js/util.js`, `js/api.js`, `js/measure.js`, `js/app.js`, `js/swarm.js`, `js/experiment.js`, `js/sensitivity.js`, `js/ablation.js` (see File Structure below)
 - **No build step** — classic script tags (not ES modules), so opening `index.html` via `file://` still works
 - **No backend** — client-side only, requests go directly to Anthropic API
 - **BYOK (Bring Your Own Key)** — users provide their own Anthropic API key (localStorage, or sessionStorage-only via the modal checkbox)
@@ -90,11 +90,15 @@ wordcraft/
 │                       #   request core, callClaude/callClaudeJson/streamClaude
 ├── js/app.js           # Canvas, cards, panels, generate flows, persistence,
 │                       #   toasts, undo, API-key modal wiring
+├── js/measure.js       # Semantic-distance measurement layer (batched
+│                       #   Haiku judge + order-normalized cache)
 ├── js/swarm.js         # Agent Swarm (planner/researcher/writers/critic/
 │                       #   editor/judge, per-role models, cost readout)
-├── js/experiment.js    # Controlled Experiment (baseline pool, verdicts,
-│                       #   one-knob isolation)
-├── tests/util.test.js  # Unit tests (node --test tests/)
+├── js/experiment.js    # Controlled Experiment (baseline pool, Meaning +
+│                       #   Wording verdicts, one-knob isolation)
+├── js/sensitivity.js   # Sensitivity Map (per-knob impact vs noise floor)
+├── js/ablation.js      # Ablation Lab (blind A/B pipeline-stage comparison)
+├── tests/              # Unit tests (node --test tests/)
 ├── logo.png            # App icon (terracotta branching arrows)
 ├── README.md           # User-facing documentation
 ├── DEVELOPMENT.md      # This file
@@ -159,7 +163,6 @@ option, model picker. Still open (see also docs/project-checklist.md):
 - [ ] **Mobile responsiveness** — Current design is desktop/mouse-focused
 
 ### Features to Consider
-- [ ] **Sensitivity map** — Accumulate experiment results into a per-knob impact overlay (thesis §7)
 - [ ] **Card linking** — Manually connect any two cards
 - [ ] **Branching variants** — Generate variant from variant (not just source)
 - [ ] **Custom parameters** — User-defined sliders/options
