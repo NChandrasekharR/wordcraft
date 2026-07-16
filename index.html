@@ -352,7 +352,7 @@
   <div class="modal-overlay" id="experimentModal">
     <div class="modal experiment-modal">
       <h2>Controlled Experiment</h2>
-      <p id="expIntro">Signal vs. noise: this runs your <strong>current settings</strong> once and re-runs a <strong>neutral baseline</strong> — so you can see how much of the change is your edit versus the model's randomness. Baselines are cached across runs to build a real noise distribution (2–3 API calls per run).</p>
+      <p id="expIntro">Signal vs. noise: this runs your <strong>current settings</strong> once and re-runs a <strong>neutral baseline</strong> — so you can see how much of the change is your edit versus the model's randomness. Baselines are cached across runs to build a real noise distribution, and a cheap judge scores how much the <strong>meaning</strong> moved, not just the wording (2–3 generations + 1–2 cheap judge calls per run).</p>
       <div class="exp-test-row" id="expTestRow">
         <label class="exp-test-label" for="expTest">Test</label>
         <select id="expTest">
@@ -371,6 +371,7 @@
             <div class="exp-col-head">
               <div class="exp-label">Noise · same config, re-run</div>
               <div class="exp-metric" id="expNoiseMetric"></div>
+              <div class="exp-metric-sem" id="expNoiseSemMetric"></div>
               <div class="exp-sub" id="expNoiseSub">How much the output changes from randomness alone</div>
             </div>
             <div class="exp-diff" id="expNoiseDiff"></div>
@@ -379,6 +380,7 @@
             <div class="exp-col-head">
               <div class="exp-label">Signal · your settings</div>
               <div class="exp-metric" id="expSignalMetric"></div>
+              <div class="exp-metric-sem" id="expSignalSemMetric"></div>
               <div class="exp-sub" id="expSignalSub">How much the output changes with your edit</div>
             </div>
             <div class="exp-diff" id="expSignalDiff"></div>
@@ -404,6 +406,7 @@
 
   <script src="js/util.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/measure.js"></script>
   <script src="js/app.js"></script>
   <script src="js/swarm.js"></script>
   <script src="js/experiment.js"></script>

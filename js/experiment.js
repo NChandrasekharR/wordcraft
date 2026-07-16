@@ -23,6 +23,8 @@
     const expSignalDiff = document.getElementById('expSignalDiff');
     const expNoiseMetric = document.getElementById('expNoiseMetric');
     const expSignalMetric = document.getElementById('expSignalMetric');
+    const expNoiseSemMetric = document.getElementById('expNoiseSemMetric');
+    const expSignalSemMetric = document.getElementById('expSignalSemMetric');
     const expNoiseSub = document.getElementById('expNoiseSub');
     const expSignalSub = document.getElementById('expSignalSub');
     const expProgressSub = document.getElementById('expProgressSub');
@@ -88,6 +90,7 @@
         addExpStep('base' + i, `Baseline · fresh sample ${i + 1} (cached pool)`);
       }
       addExpStep('cand', candLabel);
+      addExpStep('judge', 'Judging meaning distance');
     }
     function addExpStep(id, label) {
       const li = document.createElement('li');
@@ -105,7 +108,10 @@
     }
 
     // --- verdict -------------------------------------------------------------
-    // Percentile of the signal within the noise-pair distribution.
+    // Percentile of the signal within the noise-pair distribution. PURE: takes
+    // the signal mean and the noise-pair ratios, returns the classification and
+    // an honest one-sentence stat. Applied identically to BOTH tracks (meaning
+    // and wording) so the two verdicts are computed the same way.
     // Thresholds (shipped):
     //   < 3 noise pairs  → hedge. 'real' only if signal > max(pairs) + 0.10,
     //                      else 'marginal'.
@@ -113,41 +119,70 @@
     //                                   signal - median(pairs) > 0.05
     //                      'noise'   if signal <= median(pairs)
     //                      'marginal' otherwise.
-    function renderVerdict(signal, pairRatios, nSamples) {
+    function verdictFor(signal, pairRatios) {
       const pairs = pairRatios.length;
       const mx = pairs ? Math.max(...pairRatios) : 0;
       const mn = pairs ? Math.min(...pairRatios) : 0;
       const med = expMedian(pairRatios);
-      const s = pct(signal);
       const band = `${pct(mn)}–${pct(mx)}%`;
-      const stat = `Signal ${s}% vs noise ${band} across ${pairs} baseline pair${pairs === 1 ? '' : 's'} (${nSamples} cached sample${nSamples === 1 ? '' : 's'}).`;
+      const statSentence = `Signal ${pct(signal)}% vs noise ${band} across ${pairs} baseline pair${pairs === 1 ? '' : 's'}.`;
 
-      let cls, label, msg;
+      let cls, label, tail;
       if (pairs < 3) {
         if (signal > mx + 0.10) {
           cls = 'real'; label = 'Likely real effect';
-          msg = `${stat} Early signal — run again to tighten the noise estimate.`;
+          tail = 'Early signal — run again to tighten the noise estimate.';
         } else {
           cls = 'marginal'; label = 'Marginal';
-          msg = `${stat} Too few baseline pairs to be sure — run again to grow the noise distribution.`;
+          tail = 'Too few baseline pairs to be sure — run again to grow the noise distribution.';
         }
       } else if (signal >= mx && (signal - med) > 0.05) {
         cls = 'real'; label = 'Likely real effect';
-        msg = `${stat} Your edit clears the whole noise band and beats its median by more than 5 points — re-run to keep it honest.`;
+        tail = 'Clears the whole noise band and beats its median by more than 5 points.';
       } else if (signal <= med) {
         cls = 'noise'; label = 'Within the noise';
-        msg = `${stat} It sits at or below the median of pure randomness — treat this as noise, not your edit.`;
+        tail = 'At or below the median of pure randomness — treat this as noise, not your edit.';
       } else {
         cls = 'marginal'; label = 'Marginal';
-        msg = `${stat} It rises above the noise median but not clear of the band — weak evidence, add more samples.`;
+        tail = 'Above the noise median but not clear of the band — weak evidence, add more samples.';
       }
-      expVerdict.className = `exp-verdict ${cls}`;
+      return { cls, label, statSentence, tail, pairs };
+    }
+
+    // Build one verdict line (track name + label + honest stat) with all text
+    // set via textContent.
+    function verdictLineEl(track, cls, v) {
+      const line = document.createElement('div');
+      line.className = `exp-verdict-line ${cls}`;
+      const name = document.createElement('span');
+      name.className = 'exp-verdict-track';
+      name.textContent = track;
+      const label = document.createElement('span');
+      label.className = 'exp-verdict-label';
+      label.textContent = v.label;
+      line.appendChild(name);
+      line.appendChild(label);
+      line.appendChild(document.createTextNode(` — ${v.statSentence} ${v.tail}`));
+      return line;
+    }
+
+    // Render both tracks. semanticV may be null (judge unavailable) — then only
+    // the surface line shows, plus a quiet note. Overall colour follows the
+    // semantic verdict when we have one, else the surface verdict.
+    function renderVerdicts(surfaceV, semanticV, note) {
+      const overall = semanticV || surfaceV;
+      expVerdict.className = `exp-verdict ${overall.cls}`;
       expVerdict.textContent = '';
-      const strong = document.createElement('strong');
-      strong.textContent = label;
-      expVerdict.appendChild(strong);
-      expVerdict.appendChild(document.createElement('br'));
-      expVerdict.appendChild(document.createTextNode(msg));
+      if (semanticV) {
+        expVerdict.appendChild(verdictLineEl('Meaning', 'meaning', semanticV));
+      }
+      expVerdict.appendChild(verdictLineEl('Wording', 'wording', surfaceV));
+      if (note) {
+        const n = document.createElement('div');
+        n.className = 'exp-verdict-note';
+        n.textContent = note;
+        expVerdict.appendChild(n);
+      }
     }
 
     function postExperimentCard(source, text, tags) {
@@ -239,16 +274,40 @@
         let pool = existingPool.slice();
         freshBaselines.forEach(b => { pool = addBaselineToPool(key, b); });
 
-        // Noise distribution: ratio over ALL pairs of pooled baselines.
+        // SURFACE track (word-level LCS). Noise = ratio over ALL pairs of
+        // pooled baselines; the same pairs feed the semantic judge below.
         const pairRatios = [];
+        const noisePairs = [];
         for (let i = 0; i < pool.length; i++) {
           for (let j = i + 1; j < pool.length; j++) {
             pairRatios.push(computeDiffStats(pool[i], pool[j]).ratio);
+            noisePairs.push([pool[i], pool[j]]);
           }
         }
         // Signal: mean ratio of candidate vs each pooled baseline.
         const signalRatios = pool.map(b => computeDiffStats(cand, b).ratio);
         const signalMean = expMean(signalRatios);
+        const candPairs = pool.map(b => [cand, b]);
+
+        // SEMANTIC track (model-judged meaning distance). Noise is cached
+        // across runs (baselines are stable); signal is never cached (the
+        // candidate changes every run). Both judge calls run in parallel and
+        // share the run's AbortController. The experiment must never fail
+        // because the judge did, so a non-abort failure degrades to surface
+        // only.
+        let semantic = null;
+        let judgeUnavailable = false;
+        try {
+          const [noiseSem, signalSem] = await Promise.all([
+            cachedSemanticDistance(noisePairs, { signal }),
+            semanticDistancePairs(candPairs, { signal }),
+          ]);
+          semantic = { noiseRatios: noiseSem, signalMean: expMean(signalSem) };
+        } catch (err) {
+          if (err.name === 'AbortError') throw err; // cancellation → outer catch
+          judgeUnavailable = true;
+        }
+        markExpStep('judge');
 
         // Rendered diffs: noise = newest two baselines; signal = candidate vs newest.
         const newest = pool[pool.length - 1];
@@ -261,10 +320,24 @@
         const med = expMedian(pairRatios);
         expNoiseMetric.textContent = `${pct(mn)}–${pct(mx)}% · median ${pct(med)}% · ${pairRatios.length} pair${pairRatios.length === 1 ? '' : 's'}`;
         expSignalMetric.textContent = `${pct(signalMean)}% mean vs ${pool.length} baseline${pool.length === 1 ? '' : 's'}`;
+        if (semantic) {
+          const snoise = semantic.noiseRatios;
+          const smn = snoise.length ? Math.min(...snoise) : 0;
+          const smx = snoise.length ? Math.max(...snoise) : 0;
+          const smed = expMedian(snoise);
+          expNoiseSemMetric.textContent = `meaning ${pct(smn)}–${pct(smx)}% · median ${pct(smed)}%`;
+          expSignalSemMetric.textContent = `meaning ${pct(semantic.signalMean)}% mean`;
+        } else {
+          expNoiseSemMetric.textContent = 'meaning · judging unavailable';
+          expSignalSemMetric.textContent = 'meaning · judging unavailable';
+        }
         expNoiseSub.textContent = `Cached across runs · noise estimated from ${pool.length} sample${pool.length === 1 ? '' : 's'}`;
         expSignalSub.textContent = 'Your candidate vs the pooled baselines';
 
-        renderVerdict(signalMean, pairRatios, pool.length);
+        // Both tracks share the same verdict logic; meaning is primary.
+        const surfaceV = verdictFor(signalMean, pairRatios);
+        const semanticV = semantic ? verdictFor(semantic.signalMean, semantic.noiseRatios) : null;
+        renderVerdicts(surfaceV, semanticV, judgeUnavailable ? 'Meaning-level judging unavailable for this run.' : '');
         expLoading.style.display = 'none';
         expResult.style.display = 'flex';
         experimentBox.classList.add('has-results');
@@ -299,7 +372,7 @@
       experimentBox.classList.remove('has-results');
       expTestRow.style.display = 'flex';
       expIntro.style.display = 'block';
-      expIntro.innerHTML = 'Signal vs. noise: this runs your <strong>chosen configuration</strong> once and re-runs a <strong>neutral baseline</strong>, comparing it against a pool of baselines cached across runs — so the noise estimate is a real distribution, not one sample. (2–3 API calls per run.)';
+      expIntro.innerHTML = 'Signal vs. noise: this runs your <strong>chosen configuration</strong> once and re-runs a <strong>neutral baseline</strong>, comparing it against a pool of baselines cached across runs — so the noise estimate is a real distribution, not one sample. A cheap judge also scores how much the <strong>meaning</strong> moved, not just the wording. (2–3 generations + 1–2 cheap judge calls per run.)';
       experimentModal.classList.add('visible');
     }
     function closeExperimentModal() {

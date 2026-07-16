@@ -1124,6 +1124,19 @@
     .exp-verdict.marginal { border-color: var(--accent-warning); background: var(--accent-warning-dim); }
     .exp-verdict.noise { border-color: var(--accent-error); background: var(--accent-error-dim); }
     .exp-verdict strong { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.72rem; }
+    .exp-verdict-line { margin-bottom: 6px; }
+    .exp-verdict-line:last-child { margin-bottom: 0; }
+    .exp-verdict-line .exp-verdict-track {
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.66rem;
+      color: var(--text-tertiary);
+      margin-right: 6px;
+    }
+    .exp-verdict-line.meaning .exp-verdict-track { color: var(--text-secondary); }
+    .exp-verdict-line .exp-verdict-label { font-weight: 600; }
+    .exp-verdict-note { margin-top: 6px; font-size: 0.78rem; color: var(--text-tertiary); font-style: italic; }
 
     .exp-columns {
       display: grid;
@@ -1153,6 +1166,7 @@
     .exp-col.noise .exp-label { color: var(--accent-error); }
     .exp-col.signal .exp-label { color: var(--accent-success); }
     .exp-col-head .exp-metric { font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px; }
+    .exp-col-head .exp-metric-sem { font-size: 0.76rem; color: var(--text-tertiary); margin-top: 2px; }
     .exp-col-head .exp-sub { font-size: 0.72rem; color: var(--text-tertiary); margin-top: 2px; }
     .exp-diff {
       padding: 14px;

@@ -12,3 +12,4 @@
 // directly), as does `node --test tests/util.test.js`.
 
 require('./util.test.js');
+require('./measure.test.js');
