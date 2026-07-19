@@ -93,6 +93,15 @@ Provide ONLY the rewritten text, no explanations or preamble.`;
       return { added, removed, same, changed, ratio: changed / denom };
     }
 
+    // Namespaced console logging. On by default; silence with
+    // localStorage.setItem('wordcraft_debug', '0').
+    function wlog(...args) {
+      try {
+        if (typeof localStorage !== 'undefined' && localStorage.getItem('wordcraft_debug') === '0') return;
+      } catch (e) { /* storage unavailable — still log */ }
+      console.log('%c[wordcraft]', 'color:#c4703c;font-weight:bold', ...args);
+    }
+
     // Extract the first complete JSON object from prose. A greedy regex fails
     // when the text contains more than one object, so scan for the first
     // balanced {...} span (string- and escape-aware) and parse that.
@@ -126,4 +135,4 @@ Provide ONLY the rewritten text, no explanations or preamble.`;
       }
     }
 
-    if (typeof module !== 'undefined' && module.exports) { module.exports = { escapeHtml, toneLabel, lengthLabel, complexityLabel, buildParamPrompt, lcsParts, computeDiff, computeDiffStats, parseJsonLoose, parseJson }; }
+    if (typeof module !== 'undefined' && module.exports) { module.exports = { escapeHtml, toneLabel, lengthLabel, complexityLabel, buildParamPrompt, lcsParts, computeDiff, computeDiffStats, parseJsonLoose, parseJson, wlog }; }

@@ -28,7 +28,9 @@ node --test tests/    # js/util.js via its module.exports shim
   `chromium.launch({ executablePath: '/opt/pw-browsers/chromium-<rev>/chrome-linux/chrome' })`
   (find it with `ls /opt/pw-browsers`).
 - A maintained harness usually exists at the session scratchpad as `verify.js`
-  (100 checks incl. experiment two-track verdicts, sensitivity map, ablation lab). It reads `WORDCRAFT_REPO` (repo/worktree to serve) and
+  (111 checks incl. experiment two-track verdicts, sensitivity map, ablation
+  lab, persistent analysis, composed suggestions+parameters, critique
+  truncation-retry; mock knobs: failNext/failJudge/truncCritiques/delayMs). It reads `WORDCRAFT_REPO` (repo/worktree to serve) and
   `WORDCRAFT_PORT` env vars, so parallel runs don't collide.
 - **Mock the API** with `context.route('**/api.anthropic.com/**', ...)`:
   - Request kind is detected from the structured-output schema:
@@ -75,3 +77,10 @@ node --test tests/    # js/util.js via its module.exports shim
    count; modal narrow → wide; cancel mid-run adds no card and no pool entry.
 6. Clear via two-step toast → canvas + storage empty.
 7. API key: checkbox checked → localStorage; unchecked → sessionStorage only.
+8. Analysis persistence: reselecting a source card (or reloading) reopens its
+   analysis with ZERO analysis API calls; suggestions compose with the sliders
+   ("Additionally, apply ALL" + parameter lines in one rewrite prompt).
+9. Critique truncation: a stop_reason=max_tokens critique is retried once at a
+   doubled budget (16000) and renders complete.
+10. Console: the app emits '%c[wordcraft]' logs (silence with
+    localStorage.wordcraft_debug='0').

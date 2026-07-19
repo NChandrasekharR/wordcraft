@@ -57,10 +57,14 @@
 
     async function anthropicRequest(body, signal) {
       const headers = anthropicHeaders();
+      const started = Date.now();
 
       let lastError;
       for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-        if (attempt > 0) await backoffDelay(attempt, signal);
+        if (attempt > 0) {
+          wlog(`retrying request (attempt ${attempt + 1}/${MAX_RETRIES + 1})`, lastError && lastError.message);
+          await backoffDelay(attempt, signal);
+        }
 
         let response;
         try {
@@ -71,15 +75,21 @@
             signal
           });
         } catch (err) {
-          if (err.name === 'AbortError') throw err;
+          if (err.name === 'AbortError') { wlog('request aborted', body.model); throw err; }
           lastError = new Error('Network error — check your connection');
           continue;
         }
 
-        if (response.ok) return response.json();
+        if (response.ok) {
+          const data = await response.json();
+          wlog(`${body.model} → ${data.stop_reason} in ${Date.now() - started}ms`,
+            data.usage ? `(${data.usage.input_tokens} in / ${data.usage.output_tokens} out)` : '');
+          return data;
+        }
 
         const error = await response.json().catch(() => ({}));
         lastError = new Error(error.error?.message || `API request failed (${response.status})`);
+        wlog(`request failed: HTTP ${response.status}`, lastError.message);
         if (!RETRYABLE_STATUSES.includes(response.status)) throw lastError;
       }
       throw lastError;
@@ -103,21 +113,33 @@
     // Structured-output sibling of callClaude(): pass opts.schema and get the
     // parsed object back. The response's first text block is guaranteed valid
     // JSON, so JSON.parse is the fast path (parseJson falls back to a loose
-    // extraction only if parsing fails).
+    // extraction only if parsing fails). A response cut off by max_tokens is
+    // retried once with double the budget — a truncated JSON body is useless.
     async function callClaudeJson(prompt, opts = {}) {
-      const body = applyOutputSchema({
-        model: opts.model || getModel(),
-        max_tokens: opts.maxTokens || 4096,
-        messages: [{ role: 'user', content: prompt }]
-      }, opts.schema);
+      const baseTokens = opts.maxTokens || 4096;
 
-      const data = await anthropicRequest(body, opts.signal);
-      const text = extractText(data);
-      if (!text) throw new Error('The model returned an empty response');
-      if (data.stop_reason === 'max_tokens') {
-        console.warn('Wordcraft: the response hit the token limit and may be truncated');
+      const attempt = async (tokens) => {
+        const body = applyOutputSchema({
+          model: opts.model || getModel(),
+          max_tokens: tokens,
+          messages: [{ role: 'user', content: prompt }]
+        }, opts.schema);
+        const data = await anthropicRequest(body, opts.signal);
+        const text = extractText(data);
+        if (!text) throw new Error('The model returned an empty response');
+        return { text, truncated: data.stop_reason === 'max_tokens' };
+      };
+
+      let result = await attempt(baseTokens);
+      if (result.truncated) {
+        const retryTokens = Math.min(baseTokens * 2, 16000);
+        wlog(`JSON response truncated at ${baseTokens} tokens — retrying with ${retryTokens}`);
+        result = await attempt(retryTokens);
+        if (result.truncated) {
+          wlog('JSON response still truncated after retry — parsing may fail');
+        }
       }
-      return parseJson(text);
+      return parseJson(result.text);
     }
 
     // Streaming rewrite call. Streams Server-Sent Events, invoking
@@ -204,6 +226,7 @@
         }
 
         if (!full) throw new Error('The model returned an empty response');
+        wlog(`stream complete: ${full.length} chars`);
         return full;
       }
       throw lastError;

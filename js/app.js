@@ -26,6 +26,7 @@
     const MIN_CARD_HEIGHT = 100;
     let currentCritique = null;
     const critiqueCache = new Map(); // Cache critiques by card ID
+    const analysisByCard = new Map(); // Persistent source-text analysis by card ID
     const connections = []; // Track card connections {from: cardId, to: cardId}
 
     // Multi-select state
@@ -433,10 +434,20 @@
 
       // Different behavior for source vs generated cards
       if (card.classList.contains('source')) {
-        // For source cards, re-show the analysis panel if we have analysis
+        // Source cards always surface their analysis: from the persistent
+        // store when we have it (no API call), generated on the spot if not.
         critiquePanel.classList.remove('visible');
-        if (currentAnalysis && currentSourceCard === card) {
+        currentSourceCard = card;
+        const storedAnalysis = analysisByCard.get(card.id);
+        if (storedAnalysis) {
+          wlog('analysis served from store for', card.id);
+          currentAnalysis = storedAnalysis;
+          selectedSuggestions = []; // fresh render — no stale selections
+          generateFromSuggestionBtn.disabled = true;
+          renderAnalysis(storedAnalysis);
           analysisPanel.classList.add('visible');
+        } else {
+          analyzeSource(card);
         }
       } else {
         // For generated/variant cards, show the critique panel
@@ -446,6 +457,7 @@
         // Check cache first
         const cachedCritique = critiqueCache.get(card.id);
         if (cachedCritique) {
+          wlog('critique served from cache for', card.id);
           currentCritique = cachedCritique;
           renderCritique(cachedCritique);
         } else {
@@ -623,7 +635,7 @@ Text to analyze:
 ${content}`;
 
       try {
-        currentCritique = await callClaudeJson(prompt, { schema: CRITIQUE_SCHEMA });
+        currentCritique = await callClaudeJson(prompt, { schema: CRITIQUE_SCHEMA, maxTokens: 8192 });
         critiqueCache.set(card.id, currentCritique); // Cache the result
         renderCritique(currentCritique);
       } catch (err) {
@@ -870,7 +882,8 @@ ${content}`;
         x: parseInt(card.style.left) || 0,
         y: parseInt(card.style.top) || 0,
         width: card.style.width ? parseInt(card.style.width) : null,
-        height: card.style.height ? parseInt(card.style.height) : null
+        height: card.style.height ? parseInt(card.style.height) : null,
+        analysis: analysisByCard.get(card.id) || null
       };
       const removedConnections = connections
         .filter(conn => conn.from === card.id || conn.to === card.id)
@@ -885,6 +898,7 @@ ${content}`;
       }
       if (currentSourceCard === card) currentSourceCard = null;
       critiqueCache.delete(card.id);
+      analysisByCard.delete(card.id);
       for (let i = connections.length - 1; i >= 0; i--) {
         if (connections[i].from === card.id || connections[i].to === card.id) {
           connections.splice(i, 1);
@@ -1003,17 +1017,28 @@ ${content}`;
       currentSourceCard = createCard(['Source'], text, 'source');
       zoomToFit();
 
-      // Show generation panel in sidebar and analysis panel on right
+      // Show generation panel in sidebar; analysis panel comes via analyzeSource
       generationPanel.classList.add('visible');
-      analysisPanel.classList.add('visible');
 
-      // Reset analysis state
+      addSourceBtn.disabled = true;
+      try {
+        await analyzeSource(currentSourceCard);
+      } finally {
+        addSourceBtn.disabled = false;
+      }
+    }
+
+    // Analyze a source card's text and store the result persistently on the
+    // card (survives reloads via serializeCanvas). Reused by addSourceToCanvas
+    // and by selecting a source card that has no stored analysis yet.
+    async function analyzeSource(card) {
+      const text = getCardText(card);
+
+      analysisPanel.classList.add('visible');
       currentAnalysis = null;
       selectedSuggestions = [];
       suggestionsList.innerHTML = '';
       generateFromSuggestionBtn.disabled = true;
-
-      // Show loading state
       analysisContent.innerHTML = `
         <div class="critique-loading">
           <div class="spinner"></div>
@@ -1021,22 +1046,22 @@ ${content}`;
         </div>
       `;
 
-      // Disable add button while processing
-      addSourceBtn.disabled = true;
-
-      // Analyze the source text
       try {
         const prompt = `Analyze this text and provide feedback. Identify the tone (casual, neutral, or formal), the audience it seems written for, the intent (inform, persuade, entertain, instruct, or inspire), a one-sentence summary of what it is about, and three concrete improvement suggestions — each with a brief action title, a detail on how to implement it, and a specific prompt_instruction for rewriting.
 
 Text to analyze:
 ${text}`;
 
-        currentAnalysis = await callClaudeJson(prompt, { schema: ANALYSIS_SCHEMA });
-        renderAnalysis(currentAnalysis);
+        const analysis = await callClaudeJson(prompt, { schema: ANALYSIS_SCHEMA });
+        analysisByCard.set(card.id, analysis);
+        wlog('analysis generated and stored for', card.id);
+        if (currentSourceCard === card) {
+          currentAnalysis = analysis;
+          renderAnalysis(analysis);
+        }
+        scheduleSave();
       } catch (err) {
         analysisContent.innerHTML = `<p style="color: var(--accent-error); padding: 20px;">Error: ${escapeHtml(err.message)}</p>`;
-      } finally {
-        addSourceBtn.disabled = false;
       }
     }
 
@@ -1138,25 +1163,37 @@ ${text}`;
       addDiffToggle(card);
     }
 
+    // Build the generation request from the CURRENT sidebar parameters plus any
+    // selected analysis suggestions — the two compose rather than being
+    // either/or, so you can match suggestions AND tone in one variant.
+    function buildGenerationRequest(text) {
+      const tone = parseInt(toneSlider.value);
+      const length = parseInt(lengthSlider.value);
+      const complexity = parseInt(complexitySlider.value);
+
+      let prompt = buildParamPrompt(text, tone, length, complexity, audienceSelect.value, intentSelect.value);
+      let tags = [toneLabel(tone), complexityLabel(complexity), audienceSelect.value];
+
+      if (selectedSuggestions.length > 0) {
+        const instructions = selectedSuggestions.map((s, i) => `${i + 1}. ${s.prompt_instruction}`).join('\n');
+        prompt = prompt.replace(
+          'Provide ONLY the rewritten text, no explanations or preamble.',
+          `Additionally, apply ALL of these improvements in the same coherent rewrite:\n${instructions}\n\nProvide ONLY the rewritten text, no explanations or preamble.`
+        );
+        tags = selectedSuggestions.map(s => s.action).concat(tags).slice(0, 5);
+      }
+
+      return { prompt, tags, maxTokens: length > 20 ? 8192 : 4096 };
+    }
+
     // Generate from selected suggestions (multiple)
     async function generateFromSuggestions() {
       if (selectedSuggestions.length === 0 || !currentSourceCard) return;
 
       const text = sourceText.value.trim();
 
-      // Combine all selected suggestion instructions
-      const instructions = selectedSuggestions.map((s, i) => `${i + 1}. ${s.prompt_instruction}`).join('\n');
-      const prompt = `Rewrite the following text by applying ALL of these improvements:
-
-${instructions}
-
-Original text:
-${text}
-
-Apply all the improvements together in a single coherent rewrite. Provide ONLY the rewritten text, no explanations or preamble.`;
-
-      // Create tags from selected suggestions
-      const tags = selectedSuggestions.map(s => s.action);
+      // Suggestions compose with the current parameter sliders/selects.
+      const { prompt, tags, maxTokens } = buildGenerationRequest(text);
       const card = createCard(tags, 'Generating', 'generating');
 
       // Store connection for arrow
@@ -1168,6 +1205,7 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
       try {
         const contentEl = card.querySelector('.card-content');
         const result = await streamClaude(prompt, {
+          maxTokens,
           onText: (soFar) => { contentEl.textContent = soFar; }
         });
         finishVariantCard(card, text, result);
@@ -1176,9 +1214,6 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
           updateConnections();
           zoomToFit();
         });
-
-        // Close the analysis panel after generating
-        closeAnalysisPanel();
       } catch (err) {
         card.classList.remove('generating');
         card.classList.add('error');
@@ -1218,33 +1253,8 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
       // Use existing source card or create one
       const sourceCard = currentSourceCard || getOrCreateSourceCard(text);
 
-      let prompt;
-      let tags;
-      let maxTokens = 4096;
-
-      // Check if suggestions are selected
-      if (selectedSuggestions.length > 0) {
-        const instructions = selectedSuggestions.map((s, i) => `${i + 1}. ${s.prompt_instruction}`).join('\n');
-        prompt = `Rewrite the following text by applying ALL of these improvements:
-
-${instructions}
-
-Original text:
-${text}
-
-Apply all the improvements together in a single coherent rewrite. Provide ONLY the rewritten text, no explanations or preamble.`;
-
-        tags = selectedSuggestions.map(s => s.action);
-      } else {
-        // Use parameter sliders
-        const tone = parseInt(toneSlider.value);
-        const length = parseInt(lengthSlider.value);
-        const complexity = parseInt(complexitySlider.value);
-
-        prompt = buildParamPrompt(text, tone, length, complexity, audienceSelect.value, intentSelect.value);
-        tags = [toneLabel(tone), complexityLabel(complexity), audienceSelect.value];
-        if (length > 20) maxTokens = 8192; // leave room for "Longer" rewrites
-      }
+      // Parameters and any selected suggestions compose into one request.
+      const { prompt, tags, maxTokens } = buildGenerationRequest(text);
 
       const card = createCard(tags, 'Generating', 'generating');
 
@@ -1414,7 +1424,8 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
           x: parseInt(card.style.left) || 0,
           y: parseInt(card.style.top) || 0,
           width: card.style.width ? parseInt(card.style.width) : null,
-          height: card.style.height ? parseInt(card.style.height) : null
+          height: card.style.height ? parseInt(card.style.height) : null,
+          analysis: analysisByCard.get(card.id) || null
         });
       });
       const cardIds = new Set(cards.map(c => c.id));
@@ -1454,6 +1465,7 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
         id: data.id, x: data.x, y: data.y, width: data.width, height: data.height
       });
       (data.classes || []).slice(1).forEach(c => card.classList.add(c));
+      if (data.analysis) analysisByCard.set(card.id, data.analysis);
       card.dataset.rawText = data.text || '';
       if (data.diffHtml) {
         card.dataset.diffHtml = data.diffHtml;
@@ -1493,6 +1505,14 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
       if (currentSourceCard || sourceText.value.trim()) {
         generationPanel.classList.add('visible');
       }
+      const restoredAnalysis = currentSourceCard && analysisByCard.get(currentSourceCard.id);
+      if (restoredAnalysis) {
+        currentAnalysis = restoredAnalysis;
+        renderAnalysis(restoredAnalysis);
+        analysisPanel.classList.add('visible');
+        wlog('analysis restored from saved session for', currentSourceCard.id);
+      }
+      wlog(`session restored: ${saved.cards.length} cards, ${(saved.connections || []).length} connections`);
 
       requestAnimationFrame(() => {
         updateConnections();
