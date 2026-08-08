@@ -1030,6 +1030,7 @@
       padding: 16px 18px 12px;
       display: flex;
       flex-wrap: wrap;
+      align-items: center;
       gap: 6px;
       border-bottom: 1px solid var(--card-border);
     }
@@ -1069,10 +1070,6 @@
       text-decoration: line-through;
       padding: 2px 4px;
       border-radius: 3px;
-    }
-
-    .card-header {
-      position: relative;
     }
 
     /* Controlled Experiment (noise-baseline) modal */
@@ -1255,15 +1252,14 @@
       color: var(--text-secondary);
     }
 
+    /* In-flow at the end of the header row so tags wrap around the
+       controls instead of sliding underneath them. */
     .card-actions {
-      position: absolute;
-      top: 14px;
-      right: 10px;
+      margin-left: auto;
       display: flex;
       gap: 4px;
       opacity: 0;
       transition: opacity 0.15s ease;
-      z-index: 10;
       pointer-events: none;
     }
 
@@ -1314,20 +1310,11 @@
     }
 
     .view-toggle {
-      position: absolute;
-      top: 50%;
-      right: 14px;
-      transform: translateY(-50%);
       display: flex;
       background: rgba(42,40,38,0.08);
       border-radius: 5px;
       padding: 2px;
       gap: 1px;
-      transition: right 0.15s ease;
-    }
-
-    .card:hover .view-toggle {
-      right: 108px; /* clear the three hover action buttons */
     }
 
     .view-toggle button {
