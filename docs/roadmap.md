@@ -24,16 +24,17 @@ names the audit ID and, where one exists, the harness probe that proves it
 - [x] **M2 (part)** Empty key + Save = forget the key (with a toast) · probe X12
 - [x] **H11** Deferred action after first key entry never ran (found while fixing M2) · probe X19
 
-P0 landed in the commit after `83136a4` (see `git log`); results in `tests/e2e/results/2026-09-25-after-p0/` — 11 PASS, 12 FIXED, 7 CONFIRMED (all P1/P2).
+P0 landed in `721e89c`; results in `tests/e2e/results/2026-09-25-after-p0/` — 11 PASS, 12 FIXED, 7 CONFIRMED (all P1/P2).
 
 ## P1 — statistics & trust (confirm copy with owner)
 
 - [ ] **H2** Ablation verdict from an exact one-sided sign test (binomial tail), not from N
 - [ ] **H3** Experiment verdict: compare like with like (leave-one-out mean distance of each baseline vs the rest) or a permutation / energy-distance test with ≥3 candidates; export `verdictFor` for unit tests
 - [ ] **H4** Sensitivity Map hedges below 3 noise pairs (or draws a 3rd baseline)
-- [ ] **H5** Ablation aborts (or labels the run invalid) when research fails · probe X07
-- [ ] **M1** Pools abort siblings on first error; Clear aborts in-flight requests · probes X09, X10
-- [ ] **M8** Single pricing table in `api.js` with Sonnet 5 at $2/$10; retry 408/504, honour `retry-after`, add a request timeout; handle `refusal` / `pause_turn`
+- [x] **H5** Ablation stops with an explanation (no verdict, no cards) when research fails or returns nothing · probe X07
+- [x] **M1** Pools abort siblings on first error (Ablation: 28 → 6 calls on a failure); Clear aborts every in-flight flow via a request registry in `app.js` · probes X09, X10, X20
+- [x] **M8** `MODEL_PRICING` in `api.js` (Sonnet 5 $2/$10); retry 408/504 and honour `retry-after` (capped 30s); 180s timeout on non-streaming calls; `refusal` is an error (streaming + non-streaming)
+- [ ] **M8b** Handle `pause_turn` for the web-search researcher (resume the turn)
 - [ ] **M9** Scale judge `max_tokens` with pair count or chunk batches (verify with a live key)
 - [ ] **H10 (part)** Cap the baseline store (LRU by text)
 

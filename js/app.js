@@ -194,6 +194,22 @@
       return { dismiss };
     }
 
+    /* In-flight request registry. Every long-running flow (variant
+       generation, swarm, ablation, experiment, sensitivity map) takes its
+       AbortController from here so Clear can cancel all of them — otherwise
+       cleared work keeps running and billing the user's key. */
+    const activeRequests = new Set();
+    function trackedController() {
+      const c = new AbortController();
+      activeRequests.add(c);
+      return c;
+    }
+    function releaseController(c) { if (c) activeRequests.delete(c); }
+    function abortAllRequests() {
+      activeRequests.forEach(c => c.abort());
+      activeRequests.clear();
+    }
+
     // Pending action to run after API key is set
     let pendingApiAction = null;
 
@@ -1190,10 +1206,12 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
       zoomToFit();
 
       generateFromSuggestionBtn.disabled = true;
+      const controller = trackedController();
 
       try {
         const contentEl = card.querySelector('.card-content');
         const result = await streamClaude(prompt, {
+          signal: controller.signal,
           onText: (soFar) => { contentEl.textContent = soFar; }
         });
         finishVariantCard(card, text, result);
@@ -1211,6 +1229,7 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
         card.querySelector('.card-content').textContent = `Error: ${err.message}`;
         requestAnimationFrame(updateConnections);
       } finally {
+        releaseController(controller);
         generateFromSuggestionBtn.disabled = selectedSuggestions.length === 0;
       }
     }
@@ -1286,10 +1305,12 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
       zoomToFit();
 
       generateBtn.disabled = true;
+      const controller = trackedController();
 
       try {
         const contentEl = card.querySelector('.card-content');
         const result = await streamClaude(prompt, {
+          signal: controller.signal,
           maxTokens,
           onText: (soFar) => { contentEl.textContent = soFar; }
         });
@@ -1307,6 +1328,7 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
         // Still update arrows even on error
         requestAnimationFrame(updateConnections);
       } finally {
+        releaseController(controller);
         generateBtn.disabled = false;
       }
     }
@@ -1552,6 +1574,7 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
     }
 
     function performClearCanvas() {
+      abortAllRequests();
       deselectCard();
       clearMultiSelect();
       canvas.querySelectorAll('.card').forEach(card => card.remove());

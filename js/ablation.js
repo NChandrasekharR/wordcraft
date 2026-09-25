@@ -254,13 +254,20 @@
       }
 
       // -- bounded-concurrency pool over task thunks -----------------------
-      async function ablPool(tasks, limit) {
+      // onError fires on the first failure so the caller can abort the shared
+      // signal; otherwise the remaining workers keep calling (and billing).
+      async function ablPool(tasks, limit, onError) {
         const results = new Array(tasks.length);
         let next = 0;
         async function worker() {
           while (next < tasks.length) {
             const idx = next++;
-            results[idx] = await tasks[idx]();
+            try {
+              results[idx] = await tasks[idx]();
+            } catch (e) {
+              if (onError) onError(e);
+              throw e;
+            }
           }
         }
         const n = Math.min(limit, tasks.length) || 0;
@@ -336,12 +343,20 @@
         // controller (swarm.controller) with zero edits to swarm.js — the
         // existing agentCancelBtn handler calls swarm.controller.abort().
         ablState.running = true;
-        ablState.controller = new AbortController();
+        ablState.controller = trackedController();
         swarm.running = true;
         swarm.controller = ablState.controller;
         swarm.steps = 0; swarm.tokensIn = 0; swarm.tokensOut = 0; swarm.usage = {};
         const signal = ablState.controller.signal;
         const aborted = () => signal.aborted;
+        // Set when a call fails (vs. the user pressing Stop), so the catch
+        // below reports the real error instead of "stopped by user".
+        let runFailed = false;
+        const failFast = (e) => {
+          if (e && e.name === 'AbortError') return;
+          runFailed = true;
+          ablState.controller.abort();
+        };
         const useCritic = factor === 'critic';
         const useResearch = factor === 'research';
 
@@ -369,11 +384,18 @@
             const rLog = logAgent('Researcher', `Searching for: ${goal || 'the brief'}`);
             try {
               research = await ablResearch(goal, source, signal);
-              rLog.update('Research brief ready — injected into arm B writers only', 'done');
             } catch (e) {
               if (aborted()) throw e;
               rLog.update(`Research failed: ${e.message}`, 'fail');
+              research = '';
             }
+            // Without research both arms run the identical pipeline, so any
+            // verdict would be noise presented as a finding. Stop instead.
+            if (!research.trim()) {
+              runFailed = true;
+              throw new Error('Web research returned nothing, so the "with research" arm would be identical to the control. No verdict was produced and no cards were posted.');
+            }
+            rLog.update('Research brief ready — injected into arm B writers only', 'done');
           }
 
           // 2. Trials — both arms, one flat pool, concurrency ≤ 4.
@@ -394,7 +416,7 @@
               return { arm: 'B', i: idx, text };
             });
           }
-          const trialResults = await ablPool(trialTasks, 4);
+          const trialResults = await ablPool(trialTasks, 4, failFast);
           if (aborted()) throw new Error('Ablation stopped');
 
           const aByIndex = {}, bByIndex = {};
@@ -417,7 +439,7 @@
               return { i: idx, arm, reason: v.reason || '', aFirst };
             });
           }
-          const judgeResults = await ablPool(judgeTasks, 4);
+          const judgeResults = await ablPool(judgeTasks, 4, failFast);
           if (aborted()) throw new Error('Ablation stopped');
 
           // 4. Tally + verdict.
@@ -457,7 +479,7 @@
           ablAgentPhase.textContent = 'Complete';
           logAgent('Ablation', `${verdict.label}: ${verdict.sentence}`, 'done');
         } catch (e) {
-          if (e.name === 'AbortError' || aborted()) {
+          if (!runFailed && (e.name === 'AbortError' || aborted())) {
             ablAgentPhase.textContent = 'Stopped';
             logAgent('Ablation', 'Run stopped by user — no cards posted.', 'fail');
           } else {
@@ -465,6 +487,7 @@
             logAgent('Ablation', e.message, 'fail');
           }
         } finally {
+          releaseController(ablState.controller);
           ablState.running = false;
           ablState.controller = null;
           swarm.running = false;

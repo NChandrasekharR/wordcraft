@@ -30,12 +30,8 @@
       return getModel();
     }
 
-    // Pricing per million tokens (input / output), used for the cost estimate.
-    const SWARM_PRICING = {
-      'claude-opus-4-8': { in: 5, out: 25 },
-      'claude-sonnet-5': { in: 3, out: 15 },
-      'claude-haiku-4-5': { in: 1, out: 5 }
-    };
+    // Pricing lives in api.js (MODEL_PRICING); alias kept for ablation.js.
+    const SWARM_PRICING = MODEL_PRICING;
 
     // Multi-turn / tool-capable API call used by the swarm; goes through the
     // same retrying request core as callClaude() and tracks swarm usage
@@ -188,7 +184,7 @@
       if (!source) { showToast('Add some source text first.', { tone: 'error' }); return; }
 
       swarm.running = true;
-      swarm.controller = new AbortController();
+      swarm.controller = trackedController();
       swarm.steps = 0; swarm.tokensIn = 0; swarm.tokensOut = 0; swarm.usage = {};
       agentLog.innerHTML = '';
       agentPanel.querySelector('.critique-header h2').textContent = 'Agent Swarm';
@@ -358,6 +354,7 @@
         agentPhase.textContent = 'Error';
         logAgent('Swarm', e.message, 'fail');
       } finally {
+        releaseController(swarm.controller);
         swarm.running = false;
         swarmBtn.disabled = false;
         agentCancelBtn.style.display = 'none';

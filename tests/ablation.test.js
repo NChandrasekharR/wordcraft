@@ -151,7 +151,7 @@ test('ablVerdict: never asserts statistical significance in any branch', () => {
 
 const PRICING = {
   'claude-opus-4-8': { in: 5, out: 25 },
-  'claude-sonnet-5': { in: 3, out: 15 },
+  'claude-sonnet-5': { in: 2, out: 10 },
   'claude-haiku-4-5': { in: 1, out: 5 },
 };
 

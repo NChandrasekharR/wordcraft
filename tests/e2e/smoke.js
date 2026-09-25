@@ -445,12 +445,12 @@ async function scenario(id, name, opts, fn) {
   }, async ({ page, mock }) => {
     await setKey(page); await addSource(page); await closeAnalysis(page);
     await page.click('#ablBtn'); await page.selectOption('#ablFactor', 'research'); await page.click('#ablStart');
-    await page.waitForFunction(() => document.getElementById('ablResults').style.display === '', null, { timeout: 20000 });
+    await page.waitForFunction(() => document.getElementById('ablResults').style.display === '' || /Error|Stopped/.test(document.getElementById('agentPhase').textContent), null, { timeout: 20000 });
     const writerPrompts = new Set(mock.log.filter(e => e.kind === 'abl-writer').map(e => e.prompt));
     const verdictCard = await page.evaluate(() => [...document.querySelectorAll('.card.verdict')].map(c => c.querySelector('.card-content').textContent.split('\n')[0])[0]);
     const armTags = await page.evaluate(() => [...document.querySelectorAll('.card .card-tag')].map(t => t.textContent).filter(t => /research/.test(t)));
     const logFail = await page.evaluate(() => [...document.querySelectorAll('.agent-entry.fail .agent-msg')].map(e => e.textContent));
-    record('X07', 'Ablation with failed research', (writerPrompts.size === 1 && verdictCard && /Web research/.test(verdictCard)) ? 'CONFIRMED' : 'FIXED', { distinctWriterPromptsAcrossBothArms: writerPrompts.size, verdictCard, armTags, agentLogFailures: logFail });
+    record('X07', 'Ablation with failed research', (verdictCard && /Web research/.test(verdictCard)) ? 'CONFIRMED' : 'FIXED', { writerCalls: mock.count('abl-writer'), distinctWriterPrompts: writerPrompts.size, verdictCard: verdictCard || null, armTags, agentLogFailures: logFail, phase: await page.textContent('#agentPhase') });
   });
 
   await scenario('X08', 'Mid-stream SSE error: truncated text is saved as a finished variant', {
@@ -478,12 +478,14 @@ async function scenario(id, name, opts, fn) {
   await scenario('X10', 'Clear during an in-flight generation does not cancel the request', {
     delay: ({ kind }) => kind === 'rewrite-stream' ? 2000 : 0,
   }, async ({ page, mock }) => {
+    const failed = [];
+    page.on('requestfailed', r => { if (/api\.anthropic\.com/.test(r.url())) failed.push(r.failure() && r.failure().errorText); });
     await setKey(page); await addSource(page); await closeAnalysis(page);
     await page.click('#generateBtn'); await page.waitForSelector('.card.generating');
     await page.click('#clearBtn'); await page.click('.toast-action:has-text("Confirm clear")');
     await page.waitForTimeout(2600);
-    const req = mock.log.find(e => e.kind === 'rewrite-stream');
-    record('X10', 'Clear does not abort', (req.done && !req.aborted) ? 'CONFIRMED' : 'FIXED', { requestCompletedAfterClear: req.done, abortedByPage: req.aborted, cardsNow: await page.$$eval('.card', e => e.length) });
+    const abortedByPage = failed.length > 0;
+    record('X10', 'Clear does not abort', abortedByPage ? 'FIXED' : 'CONFIRMED', { abortedByPage, failures: failed, cardsNow: await page.$$eval('.card', e => e.length) });
   });
 
   await scenario('X11', 'Full localStorage: canvas save fails silently and work is lost on reload', {}, async ({ page }) => {
@@ -607,6 +609,21 @@ async function scenario(id, name, opts, fn) {
     await page.waitForTimeout(800);
     const cards = await page.$$eval('.card.source', e => e.length);
     record('X19', 'Deferred action after key entry', (modalOpened && cards === 0) ? 'CONFIRMED' : 'FIXED', { modalOpened, sourceCardsAfterSave: cards });
+  });
+
+
+  await scenario('X20', 'Ablation: one failed call is reported as the error and cancels the remaining calls', {
+    delay: ({ kind }) => /abl-|critic/.test(kind) ? 250 : 0,
+    override: ({ kind, log }) => (kind === 'abl-writer' && log.filter(e => e.kind === 'abl-writer').length === 2) ? { status: 400, errType: 'invalid_request_error', message: 'mock: writer failed' } : null,
+  }, async ({ page, mock }) => {
+    await setKey(page); await addSource(page); await closeAnalysis(page);
+    await page.click('#ablBtn'); await page.selectOption('#ablTrials', '8'); await page.click('#ablStart');
+    await page.waitForFunction(() => /Error|Stopped|Complete/.test(document.getElementById('agentPhase').textContent), null, { timeout: 20000 });
+    const atEnd = mock.log.length; await page.waitForTimeout(2000);
+    const last = await page.evaluate(() => [...document.querySelectorAll('.agent-entry .agent-msg')].pop().textContent);
+    const phase = await page.textContent('#agentPhase');
+    const ok = phase === 'Error' && /writer failed/.test(last) && mock.log.length === atEnd && mock.log.length < 24;
+    record('X20', 'Ablation fail-fast', ok ? 'FIXED' : 'CONFIRMED', { phase, lastLog: last, callsMade: mock.log.length, callsAfterEnd: mock.log.length - atEnd, fullRunWouldBe: 1 + 16 + 8 * 3 });
   });
 
   await browser.close(); server.close();
