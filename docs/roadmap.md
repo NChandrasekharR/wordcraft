@@ -12,16 +12,19 @@ names the audit ID and, where one exists, the harness probe that proves it
 
 ## P0 — mechanical, high-impact (≈1 day)
 
-- [ ] **C1** Layout overflow — `.app { grid-template-rows: minmax(0, 1fr); }` · probe X18
-- [ ] **H1** Wheel over panels zooms canvas — ignore wheel events whose target is inside an overlay panel · probe X02
-- [ ] **L1** Remove the `=======` merge marker and repair the mangled comment · probe X01
-- [ ] **H6/H7** Critiques: render only if the card is still selected; don't critique `generating`/`error` cards · probes X03, X04
-- [ ] **H8** Source card is the single source of truth for Generate Variant / suggestions (textarea edits create a new source card) · probe X05
-- [ ] **H9** Treat SSE `error` events and a stream without `message_stop` as failures · probe X08
-- [ ] **H10** Toast when canvas persistence fails · probe X11
-- [ ] **M7** Restore the agent panel title after Ablation / set it in Swarm · probe X06
-- [ ] **M3** Clear suggestion checkmarks + button state when the Analysis panel closes · probe X13
-- [ ] **M2 (part)** Empty key + Save = forget the key (with a toast) · probe X12
+- [x] **C1** Layout overflow — `.app { grid-template-rows: minmax(0, 1fr); }` · probe X18
+- [x] **H1** Wheel over panels zooms canvas — ignore wheel events whose target is inside an overlay panel · probe X02
+- [x] **L1** Remove the `=======` merge marker and repair the mangled comment · probe X01
+- [x] **H6/H7** Critiques: render only if the card is still selected; don't critique `generating`/`error` cards · probes X03, X04
+- [x] **H8** Source card is the single source of truth for Generate Variant / suggestions (textarea edits create a new source card) · probe X05
+- [x] **H9** Treat SSE `error` events and a stream without `message_stop` as failures · probe X08
+- [x] **H10** Toast when canvas persistence fails · probe X11
+- [x] **M7** Restore the agent panel title after Ablation / set it in Swarm · probe X06
+- [x] **M3** Clear suggestion checkmarks + button state when the Analysis panel closes · probe X13
+- [x] **M2 (part)** Empty key + Save = forget the key (with a toast) · probe X12
+- [x] **H11** Deferred action after first key entry never ran (found while fixing M2) · probe X19
+
+P0 landed in the commit after `83136a4` (see `git log`); results in `tests/e2e/results/2026-09-25-after-p0/` — 11 PASS, 12 FIXED, 7 CONFIRMED (all P1/P2).
 
 ## P1 — statistics & trust (confirm copy with owner)
 

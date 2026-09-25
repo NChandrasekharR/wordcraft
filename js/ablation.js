@@ -473,6 +473,7 @@
           ablBtn.disabled = false;
           ablAgentCancelBtn.style.display = 'none';
           ablAgentCancelBtn.textContent = 'Stop Swarm';
+          if (ablAgentTitle) ablAgentTitle.textContent = 'Agent Swarm';
         }
       }
 

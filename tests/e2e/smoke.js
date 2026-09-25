@@ -388,14 +388,15 @@ async function scenario(id, name, opts, fn) {
     await page.waitForSelector('.card.generating');
     const id = await page.$eval('.card.generating', e => e.id);
     await clickCard(page, id);
-    await page.waitForSelector('#critiqueContent .verdict');
-    const first = await page.textContent('#critiqueContent .verdict-text');
+    await page.waitForTimeout(400);
+    const whileGenerating = (await page.textContent('#critiqueContent')).trim().slice(0, 60);
     await page.waitForFunction(() => !document.querySelector('.card.generating'), null, { timeout: 10000 });
     await page.click('#critiqueClose');
-    await clickCard(page, id); await page.waitForTimeout(300);
-    const second = await page.textContent('#critiqueContent .verdict-text');
+    await clickCard(page, id);
+    await page.waitForSelector('#critiqueContent .verdict', { timeout: 5000 });
+    const shown = await page.textContent('#critiqueContent .verdict-text');
     const realText = await page.$eval(`#${id} .card-content`, e => e.textContent.slice(0, 40));
-    record('X03', 'Critique of in-flight card', (/Generating/.test(second) && mock.count('critique') === 1) ? 'CONFIRMED' : 'FIXED', { critiqueRequests: mock.count('critique'), shownAfterCompletion: second, actualCardText: realText });
+    record('X03', 'Critique of in-flight card', /Generating/.test(shown) ? 'CONFIRMED' : 'FIXED', { critiqueRequests: mock.count('critique'), panelWhileGenerating: whileGenerating, shownAfterCompletion: shown, actualCardText: realText });
   });
 
   await scenario('X04', 'Critique race: slow response for card A overwrites card B\'s panel; Apply Fix uses A', {
@@ -424,7 +425,7 @@ async function scenario(id, name, opts, fn) {
     await page.waitForFunction(() => getComputedStyle(document.getElementById('expResult')).display === 'flex', null, { timeout: 15000 });
     const expPrompt = mock.log.find(e => e.kind === 'rewrite').prompt;
     const ok = /BRAVO/.test(genPrompt) && !/ALPHA/.test(genPrompt) && s.sources.length === 1 && /ALPHA/.test(s.sources[0].text) && s.lineFrom === s.sources[0].id && /ALPHA/.test(expPrompt);
-    record('X05', 'Source lineage', ok ? 'CONFIRMED' : 'FIXED', { generateVariantRewrote: /BRAVO/.test(genPrompt) ? 'BRAVO (textarea)' : '?', arrowFrom: `${s.lineFrom} (${s.sources[0] && s.sources[0].text}…)`, experimentRewrote: /ALPHA/.test(expPrompt) ? 'ALPHA (card)' : '?' });
+    record('X05', 'Source lineage', ok ? 'CONFIRMED' : 'FIXED', { generateVariantRewrote: /BRAVO/.test(genPrompt) ? 'BRAVO (textarea)' : '?', arrowFrom: `${s.lineFrom} (${((s.sources.find(c => c.id === s.lineFrom) || {}).text) || '?'}…)`, sourceCards: s.sources.length, experimentRewrote: /ALPHA/.test(expPrompt) ? 'ALPHA (card)' : '?' });
   });
 
   await scenario('X06', 'Ablation leaves the shared agent panel titled "Ablation Lab" for later Swarm runs', {}, async ({ page }) => {
@@ -516,7 +517,7 @@ async function scenario(id, name, opts, fn) {
     await clickCard(page, src); await page.waitForTimeout(300);
     const s = await page.evaluate(() => ({ panelVisible: document.getElementById('analysisPanel').classList.contains('visible'), itemLooksSelected: document.querySelector('.suggestion-item').classList.contains('selected'), buttonEnabled: !document.getElementById('generateFromSuggestionBtn').disabled }));
     const cardsBefore = await page.$$eval('.card', e => e.length);
-    await page.click('#generateFromSuggestionBtn'); await page.waitForTimeout(500);
+    if (s.buttonEnabled) { await page.click('#generateFromSuggestionBtn'); await page.waitForTimeout(500); }
     const cardsAfter = await page.$$eval('.card', e => e.length);
     record('X13', 'Suggestion desync', (s.panelVisible && s.itemLooksSelected && s.buttonEnabled && cardsAfter === cardsBefore && mock.count('rewrite-stream') === 0) ? 'CONFIRMED' : 'FIXED', { ...s, clickProducedCard: cardsAfter > cardsBefore, requestsSent: mock.count('rewrite-stream') });
   });
@@ -595,6 +596,17 @@ async function scenario(id, name, opts, fn) {
     }
     const broken = Object.values(out).some(v => !v.toast || !v.zoom || !v.compare || !v.sidebarScrollable);
     record('X18', 'Layout overflow', broken ? 'CONFIRMED' : 'FIXED', out);
+  });
+
+
+  await scenario('X19', 'First use: action that prompted for the key does not continue after saving it', {}, async ({ page }) => {
+    await page.fill('#sourceText', SOURCE);
+    await page.click('#addSourceBtn');
+    const modalOpened = await page.$eval('#apiKeyModal', e => e.classList.contains('visible'));
+    await page.fill('#apiKeyInput', 'sk-ant-test-0000'); await page.click('#apiKeySave');
+    await page.waitForTimeout(800);
+    const cards = await page.$$eval('.card.source', e => e.length);
+    record('X19', 'Deferred action after key entry', (modalOpened && cards === 0) ? 'CONFIRMED' : 'FIXED', { modalOpened, sourceCardsAfterSave: cards });
   });
 
   await browser.close(); server.close();

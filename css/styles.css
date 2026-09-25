@@ -52,6 +52,9 @@
     .app {
       display: grid;
       grid-template-columns: 360px 1fr;
+      /* Pin the row to the viewport: an implicit auto row grows to the
+         sidebar's content height and pushes toasts/zoom/compare off-screen. */
+      grid-template-rows: minmax(0, 1fr);
       height: 100vh;
     }
 
@@ -2077,7 +2080,8 @@
       line-height: 1.5;
     }
 
-    /* ==============================================================       Sensitivity Map — sidebar button, modal, and the DOM/CSS bar chart.
+    /* ===================================================================
+       Sensitivity Map — sidebar button, modal, and the DOM/CSS bar chart.
        Appended so parallel edits elsewhere don't conflict.
        ===================================================================== */
     .btn.btn-sensitivity {
@@ -2298,7 +2302,6 @@
       border-color: var(--accent-success);
     }
     .sens-step.done .sens-step-icon::after { content: '✓'; }
-=======
     /* ===================================================================
        Ablation Lab — config modal cost line + results (win bars, verdict,
        per-pair reasons). Appended; touches nothing above.

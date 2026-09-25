@@ -191,6 +191,7 @@
       swarm.controller = new AbortController();
       swarm.steps = 0; swarm.tokensIn = 0; swarm.tokensOut = 0; swarm.usage = {};
       agentLog.innerHTML = '';
+      agentPanel.querySelector('.critique-header h2').textContent = 'Agent Swarm';
       agentPanel.classList.add('visible');
       agentCancelBtn.style.display = '';
       updateSwarmStats();

@@ -164,6 +164,7 @@
         let buffer = '';
         let full = '';
         let receivedBytes = false;
+        let sawMessageStop = false;
 
         try {
           while (true) {
@@ -191,6 +192,14 @@
                 if (onText) onText(full);
               } else if (evt.type === 'message_delta' && evt.delta && evt.delta.stop_reason === 'max_tokens') {
                 console.warn('Wordcraft: the response hit the token limit and may be truncated');
+              } else if (evt.type === 'message_delta' && evt.delta && evt.delta.stop_reason === 'refusal') {
+                throw new Error('The model declined this request');
+              } else if (evt.type === 'message_stop') {
+                sawMessageStop = true;
+              } else if (evt.type === 'error') {
+                // Errors can arrive mid-stream (e.g. overloaded_error) over an
+                // HTTP 200. Partial text must not be passed off as complete.
+                throw new Error(`API error mid-response: ${(evt.error && evt.error.message) || 'unknown error'}`);
               }
             }
           }
@@ -203,6 +212,7 @@
           continue;
         }
 
+        if (!sawMessageStop) throw new Error('The response was cut off before it finished (connection interrupted)');
         if (!full) throw new Error('The model returned an empty response');
         return full;
       }
