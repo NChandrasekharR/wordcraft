@@ -32,7 +32,7 @@ P0 landed in `721e89c`; results in `tests/e2e/results/2026-09-25-after-p0/` — 
 - [ ] **H3** Experiment verdict: compare like with like (leave-one-out mean distance of each baseline vs the rest) or a permutation / energy-distance test with ≥3 candidates; export `verdictFor` for unit tests
 - [ ] **H4** Sensitivity Map hedges below 3 noise pairs (or draws a 3rd baseline)
 - [x] **H5** Ablation stops with an explanation (no verdict, no cards) when research fails or returns nothing · probe X07
-- [x] **M1** Pools abort siblings on first error (Ablation: 28 → 6 calls on a failure); Clear aborts every in-flight flow via a request registry in `app.js` · probes X09, X10, X20
+- [x] **M1** Pools abort siblings on first error (Ablation: 28 → 6 calls on a failure); Clear aborts every in-flight flow via a request registry in `app.js` · probes X09, X10, X20 · `24cdbb0`
 - [x] **M8** `MODEL_PRICING` in `api.js` (Sonnet 5 $2/$10); retry 408/504 and honour `retry-after` (capped 30s); 180s timeout on non-streaming calls; `refusal` is an error (streaming + non-streaming)
 - [ ] **M8b** Handle `pause_turn` for the web-search researcher (resume the turn)
 - [ ] **M9** Scale judge `max_tokens` with pair count or chunk batches (verify with a live key)
