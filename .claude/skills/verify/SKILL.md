@@ -5,7 +5,7 @@ description: Build/launch/drive recipe for verifying Wordcraft (no-build browser
 
 # Verifying Wordcraft
 
-Wordcraft is `index.html` + `css/styles.css` + five classic scripts under `js/`
+Wordcraft is `index.html` + `css/styles.css` + eight classic scripts under `js/`
 (no build step). The surface is a browser GUI that calls
 `https://api.anthropic.com/v1/messages` directly (BYOK).
 
@@ -27,9 +27,11 @@ node --test tests/    # js/util.js via its module.exports shim
   Chromium than the pre-installed one — launch with
   `chromium.launch({ executablePath: '/opt/pw-browsers/chromium-<rev>/chrome-linux/chrome' })`
   (find it with `ls /opt/pw-browsers`).
-- A maintained harness usually exists at the session scratchpad as `verify.js`
-  (100 checks incl. experiment two-track verdicts, sensitivity map, ablation lab). It reads `WORDCRAFT_REPO` (repo/worktree to serve) and
-  `WORDCRAFT_PORT` env vars, so parallel runs don't collide.
+- The maintained harness is committed at `tests/e2e/smoke.js` (core flows `B**`
+  + bug probes `X**`, see CLAUDE.md). It reads `WORDCRAFT_REPO`, `WORDCRAFT_PORT`
+  and `WORDCRAFT_OUT` env vars, so parallel runs don't collide.
+- Layout bugs hide from Playwright because clicks auto-scroll into view:
+  measure `getBoundingClientRect()` against `innerHeight` instead (probe X18).
 - **Mock the API** with `context.route('**/api.anthropic.com/**', ...)`:
   - Request kind is detected from the structured-output schema:
     `properties.tone` → analysis, `properties.verdict` → critique,
