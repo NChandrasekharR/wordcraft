@@ -2,3 +2,4 @@
 node_modules/
 *.log
 .claude/worktrees/
+tests/e2e/results/latest/

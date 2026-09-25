@@ -100,7 +100,6 @@
     const generationPanel = document.getElementById('generationPanel');
     const analysisPanel = document.getElementById('analysisPanel');
     const analysisContent = document.getElementById('analysisContent');
-    const suggestionsSection = document.getElementById('suggestionsSection');
     const suggestionsList = document.getElementById('suggestionsList');
     const analysisClose = document.getElementById('analysisClose');
     const generateFromSuggestionBtn = document.getElementById('generateFromSuggestionBtn');
@@ -195,6 +194,22 @@
       return { dismiss };
     }
 
+    /* In-flight request registry. Every long-running flow (variant
+       generation, swarm, ablation, experiment, sensitivity map) takes its
+       AbortController from here so Clear can cancel all of them — otherwise
+       cleared work keeps running and billing the user's key. */
+    const activeRequests = new Set();
+    function trackedController() {
+      const c = new AbortController();
+      activeRequests.add(c);
+      return c;
+    }
+    function releaseController(c) { if (c) activeRequests.delete(c); }
+    function abortAllRequests() {
+      activeRequests.forEach(c => c.abort());
+      activeRequests.clear();
+    }
+
     // Pending action to run after API key is set
     let pendingApiAction = null;
 
@@ -230,26 +245,37 @@
       pendingApiAction = null;
     }
 
+    function forgetApiKey() {
+      localStorage.removeItem('anthropic_api_key');
+      try { sessionStorage.removeItem('anthropic_api_key'); } catch (e) {}
+    }
+
     function saveApiKey() {
       localStorage.setItem('wordcraft_model', modelSelect.value);
       const key = apiKeyInput.value.trim();
-      if (key) {
-        if (apiKeyRemember.checked) {
-          localStorage.setItem('anthropic_api_key', key);
-          try { sessionStorage.removeItem('anthropic_api_key'); } catch (e) {}
+      if (!key) {
+        if (hasApiKey()) {
+          forgetApiKey();
+          updateApiKeyStatus();
+          hideApiKeyModal();
+          showToast('API key removed from this browser.');
         } else {
-          try { sessionStorage.setItem('anthropic_api_key', key); } catch (e) {}
-          localStorage.removeItem('anthropic_api_key');
+          showToast('Enter an API key to continue.', { tone: 'error' });
         }
-        updateApiKeyStatus();
-        hideApiKeyModal();
-        // Execute pending action if any
-        if (pendingApiAction) {
-          const action = pendingApiAction;
-          pendingApiAction = null;
-          action();
-        }
+        return;
       }
+      if (apiKeyRemember.checked) {
+        localStorage.setItem('anthropic_api_key', key);
+        try { sessionStorage.removeItem('anthropic_api_key'); } catch (e) {}
+      } else {
+        try { sessionStorage.setItem('anthropic_api_key', key); } catch (e) {}
+        localStorage.removeItem('anthropic_api_key');
+      }
+      updateApiKeyStatus();
+      // hideApiKeyModal() clears pendingApiAction, so take it first.
+      const action = pendingApiAction;
+      hideApiKeyModal();
+      if (action) action();
     }
 
     // Ensure API key before running an action
@@ -348,7 +374,10 @@
     document.getElementById('zoomFit').addEventListener('click', zoomToFit);
 
     // Mouse wheel zoom
+    // Overlay panels live inside the canvas container; let them scroll natively.
+    const WHEEL_PASSTHROUGH = '.analysis-panel, .critique-panel, .agent-panel, .compare-panel, .toast-container';
     canvasContainer.addEventListener('wheel', (e) => {
+      if (e.target.closest(WHEEL_PASSTHROUGH)) return;
       e.preventDefault();
       const delta = e.deltaY > 0 ? 0.9 : 1.1;
       const newScale = Math.max(0.25, Math.min(3, scale * delta));
@@ -442,6 +471,12 @@
         // For generated/variant cards, show the critique panel
         analysisPanel.classList.remove('visible');
         critiquePanel.classList.add('visible');
+
+        if (card.classList.contains('generating') || card.classList.contains('error')) {
+          currentCritique = null;
+          critiqueContent.innerHTML = `<p class="critique-empty" style="padding: 20px; color: var(--text-secondary);">${card.classList.contains('generating') ? 'Still generating — select the card again when it finishes.' : 'This card failed to generate, so there is nothing to critique.'}</p>`;
+          return;
+        }
 
         // Check cache first
         const cachedCritique = critiqueCache.get(card.id);
@@ -623,10 +658,14 @@ Text to analyze:
 ${content}`;
 
       try {
-        currentCritique = await callClaudeJson(prompt, { schema: CRITIQUE_SCHEMA });
-        critiqueCache.set(card.id, currentCritique); // Cache the result
-        renderCritique(currentCritique);
+        const critique = await callClaudeJson(prompt, { schema: CRITIQUE_SCHEMA });
+        critiqueCache.set(card.id, critique); // Cache the result
+        // The user may have selected another card while this was in flight.
+        if (selectedCard !== card) return;
+        currentCritique = critique;
+        renderCritique(critique);
       } catch (err) {
+        if (selectedCard !== card) return;
         critiqueContent.innerHTML = `<p style="color: var(--accent-error); padding: 20px;">Error: ${escapeHtml(err.message)}</p>`;
       }
     }
@@ -1044,6 +1083,8 @@ ${text}`;
     function closeAnalysisPanel() {
       analysisPanel.classList.remove('visible');
       selectedSuggestions = [];
+      suggestionsList.querySelectorAll('.suggestion-item.selected').forEach(el => el.classList.remove('selected'));
+      generateFromSuggestionBtn.disabled = true;
     }
 
     analysisClose.addEventListener('click', closeAnalysisPanel);
@@ -1142,7 +1183,8 @@ ${text}`;
     async function generateFromSuggestions() {
       if (selectedSuggestions.length === 0 || !currentSourceCard) return;
 
-      const text = sourceText.value.trim();
+      // Suggestions come from analysing the source card, so rewrite that text.
+      const text = getCardText(currentSourceCard).trim();
 
       // Combine all selected suggestion instructions
       const instructions = selectedSuggestions.map((s, i) => `${i + 1}. ${s.prompt_instruction}`).join('\n');
@@ -1164,10 +1206,12 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
       zoomToFit();
 
       generateFromSuggestionBtn.disabled = true;
+      const controller = trackedController();
 
       try {
         const contentEl = card.querySelector('.card-content');
         const result = await streamClaude(prompt, {
+          signal: controller.signal,
           onText: (soFar) => { contentEl.textContent = soFar; }
         });
         finishVariantCard(card, text, result);
@@ -1185,6 +1229,7 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
         card.querySelector('.card-content').textContent = `Error: ${err.message}`;
         requestAnimationFrame(updateConnections);
       } finally {
+        releaseController(controller);
         generateFromSuggestionBtn.disabled = selectedSuggestions.length === 0;
       }
     }
@@ -1209,21 +1254,27 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
 
     // Generate variant
     async function generateVariant() {
-      const text = sourceText.value.trim();
+      const usingSuggestions = selectedSuggestions.length > 0 && currentSourceCard;
+      // Suggestions rewrite the analysed source card; the sliders rewrite
+      // whatever is in the textarea. Either way the arrow, diff baseline and
+      // export must point at the card holding exactly the text rewritten.
+      const text = usingSuggestions ? getCardText(currentSourceCard).trim() : sourceText.value.trim();
       if (!text) {
         showToast('Please enter some source text', { tone: 'error' });
         return;
       }
 
-      // Use existing source card or create one
-      const sourceCard = currentSourceCard || getOrCreateSourceCard(text);
+      const sourceCard = (currentSourceCard && getCardText(currentSourceCard).trim() === text)
+        ? currentSourceCard
+        : getOrCreateSourceCard(text);
+      currentSourceCard = sourceCard;
 
       let prompt;
       let tags;
       let maxTokens = 4096;
 
       // Check if suggestions are selected
-      if (selectedSuggestions.length > 0) {
+      if (usingSuggestions) {
         const instructions = selectedSuggestions.map((s, i) => `${i + 1}. ${s.prompt_instruction}`).join('\n');
         prompt = `Rewrite the following text by applying ALL of these improvements:
 
@@ -1254,10 +1305,12 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
       zoomToFit();
 
       generateBtn.disabled = true;
+      const controller = trackedController();
 
       try {
         const contentEl = card.querySelector('.card-content');
         const result = await streamClaude(prompt, {
+          signal: controller.signal,
           maxTokens,
           onText: (soFar) => { contentEl.textContent = soFar; }
         });
@@ -1275,6 +1328,7 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
         // Still update arrows even on error
         requestAnimationFrame(updateConnections);
       } finally {
+        releaseController(controller);
         generateBtn.disabled = false;
       }
     }
@@ -1430,11 +1484,20 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
       };
     }
 
+    // Warn once per failure streak (a successful save re-arms the warning).
+    let saveFailureWarned = false;
     function saveCanvasState() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeCanvas()));
+        saveFailureWarned = false;
       } catch (e) {
-        // localStorage may be full or unavailable; persistence is best-effort
+        // localStorage may be full or unavailable. Never fail silently: the
+        // user would lose this work on reload.
+        if (saveFailureWarned) return;
+        saveFailureWarned = true;
+        showToast('Your canvas could not be saved — browser storage is full or blocked. Export to keep this work.', {
+          tone: 'error', duration: 12000, actionLabel: 'Export', onAction: exportToMarkdown
+        });
       }
     }
 
@@ -1511,6 +1574,7 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
     }
 
     function performClearCanvas() {
+      abortAllRequests();
       deselectCard();
       clearMultiSelect();
       canvas.querySelectorAll('.card').forEach(card => card.remove());

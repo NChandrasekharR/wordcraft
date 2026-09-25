@@ -28,11 +28,11 @@
     const SENS_STORE_CAP = 10;
     const SENS_CONCURRENCY = 4;
     const SENS_JUDGE_MODEL = 'claude-haiku-4-5';
-    // Per-MTok pricing (input/output). Local + rough on purpose — do NOT import
-    // swarm.js's table. Only used for the "rough cost" hint in the intro.
-    const SENS_PRICING = {
+    // Per-MTok pricing: api.js's MODEL_PRICING in the browser; the literal is
+    // only a fallback so the pure helpers stay require()-able in Node tests.
+    const SENS_PRICING = (typeof MODEL_PRICING !== 'undefined') ? MODEL_PRICING : {
       'claude-opus-4-8': { in: 5, out: 25 },
-      'claude-sonnet-5': { in: 3, out: 15 },
+      'claude-sonnet-5': { in: 2, out: 10 },
       'claude-haiku-4-5': { in: 1, out: 5 },
     };
     // Rough per-call token assumptions for the cost estimate (labelled "rough").
@@ -292,16 +292,22 @@
 
       // --- concurrency-capped task pool -------------------------------------
       // factories: array of () => Promise. Runs at most `cap` at once, preserves
-      // order in the result array, and fails fast (rejects) on the first error —
-      // callClaude rejects with AbortError when the shared signal aborts.
-      async function sensRunPool(factories, cap, signal) {
+      // order in the result array, and fails fast (rejects) on the first error.
+      // onError fires on that first failure so the caller can abort the shared
+      // signal — otherwise the other workers keep pulling (and billing) tasks.
+      async function sensRunPool(factories, cap, signal, onError) {
         const results = new Array(factories.length);
         let next = 0;
         async function worker() {
           while (next < factories.length) {
             if (signal && signal.aborted) throw new DOMException('Aborted', 'AbortError');
             const idx = next++;
-            results[idx] = await factories[idx]();
+            try {
+              results[idx] = await factories[idx]();
+            } catch (e) {
+              if (onError) onError(e);
+              throw e;
+            }
           }
         }
         const n = Math.max(1, Math.min(cap, factories.length));
@@ -439,7 +445,7 @@
         const points = sensSweepPoints({ toneLabel, lengthLabel, complexityLabel });
         const baselinePrompt = buildParamPrompt(source, 0, 0, 0, 'general', 'inform');
 
-        sensController = new AbortController();
+        sensController = trackedController();
         const signal = sensController.signal;
 
         sensIntro.style.display = 'none';
@@ -462,7 +468,8 @@
           const sweepFactories = points.map(p =>
             () => callClaude(buildParamPrompt(source, p.params.tone, p.params.length, p.params.complexity, p.params.audience, p.params.intent), { signal }));
 
-          const gen = await sensRunPool([...baseFactories, ...sweepFactories], SENS_CONCURRENCY, signal);
+          const controller = sensController;
+          const gen = await sensRunPool([...baseFactories, ...sweepFactories], SENS_CONCURRENCY, signal, () => controller.abort());
           sensMarkStep('sweep');
           const freshBaselines = gen.slice(0, newBaselines);
           const variantTexts = gen.slice(newBaselines);
@@ -540,6 +547,7 @@
             sensIntro.appendChild(span);
           }
         } finally {
+          releaseController(sensController);
           sensController = null;
           sensRun.style.display = '';
           sensRun.disabled = false;

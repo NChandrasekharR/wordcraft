@@ -1,0 +1,69 @@
+{
+  "canvas": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "nodes": 16,
+      "sample": [
+        "#addSourceBtn (ratio 3.66)",
+        ".param-slider:nth-child(1) > .param-slider-header > .param-slider-label (ratio 4.35)"
+      ]
+    },
+    {
+      "id": "label",
+      "impact": "critical",
+      "nodes": 3,
+      "sample": [
+        "#toneSlider",
+        "#lengthSlider"
+      ]
+    },
+    {
+      "id": "select-name",
+      "impact": "critical",
+      "nodes": 2,
+      "sample": [
+        "#audience",
+        "#intent"
+      ]
+    }
+  ],
+  "modal": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "nodes": 16,
+      "sample": [
+        "#addSourceBtn (ratio 3.66)",
+        ".param-slider:nth-child(1) > .param-slider-header > .param-slider-label (ratio 4.35)"
+      ]
+    },
+    {
+      "id": "label",
+      "impact": "critical",
+      "nodes": 3,
+      "sample": [
+        "#toneSlider",
+        "#lengthSlider"
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "nodes": 5,
+      "sample": [
+        "#apiKeyModal > .modal > h2",
+        "#apiKeyModal > .modal > p"
+      ]
+    },
+    {
+      "id": "select-name",
+      "impact": "critical",
+      "nodes": 3,
+      "sample": [
+        "#audience",
+        "#intent"
+      ]
+    }
+  ]
+}

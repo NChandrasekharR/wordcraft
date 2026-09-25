@@ -1,0 +1,398 @@
+[
+  {
+    "id": "B01",
+    "name": "Page load",
+    "status": "PASS",
+    "evidence": {
+      "title": "Wordcraft — Parametric Writing Studio",
+      "scripts": 8,
+      "missingGlobals": [],
+      "errors": []
+    }
+  },
+  {
+    "id": "B02",
+    "name": "API key storage",
+    "status": "PASS",
+    "evidence": {
+      "remembered": {
+        "ls": true,
+        "ss": false,
+        "label": "API Key Set"
+      },
+      "sessionOnly": {
+        "ls": false,
+        "ss": true
+      }
+    }
+  },
+  {
+    "id": "B03",
+    "name": "Add source + analysis",
+    "status": "PASS",
+    "evidence": {
+      "source": 1,
+      "tags": 3,
+      "sugg": 3,
+      "genPanel": true
+    }
+  },
+  {
+    "id": "B04",
+    "name": "Generate+retry+diff+persist",
+    "status": "PASS",
+    "evidence": {
+      "streamRequests": 2,
+      "card": {
+        "cls": "card variant",
+        "text": "neutral-sample Teams learn which setting",
+        "hasToggle": true
+      },
+      "diffSpans": 78,
+      "afterReload": {
+        "cards": 2,
+        "lines": 1,
+        "diffKept": true
+      },
+      "errors": []
+    }
+  },
+  {
+    "id": "B05",
+    "name": "Delete/Undo/Clear",
+    "status": "PASS",
+    "evidence": {
+      "gone": true,
+      "back": {
+        "exists": true,
+        "lines": 1
+      },
+      "beforeConfirm": 2,
+      "cleared": {
+        "cards": 0,
+        "stored": null
+      }
+    }
+  },
+  {
+    "id": "B06",
+    "name": "XSS inert",
+    "status": "PASS",
+    "evidence": {
+      "flags": [],
+      "imgs": 0,
+      "literal": true
+    }
+  },
+  {
+    "id": "B07",
+    "name": "Controlled Experiment",
+    "status": "PASS",
+    "evidence": {
+      "cold": {
+        "gen": 3,
+        "judge": 2,
+        "verdict": "MeaningLikely real effect — Signal 62% vs noise 17–17% across 1 baseline pair. Early signal — run again to tighten the noise estimate.Wordin"
+      },
+      "warm": {
+        "gen": 2,
+        "judge": 2,
+        "verdict": "MeaningLikely real effect — Signal 62% vs noise 15–17% across 3 baseline pairs. Clears the whole noise band and beats its median by more than 5 points.WordingWi"
+      },
+      "experimentCards": 2
+    }
+  },
+  {
+    "id": "B08",
+    "name": "Sensitivity Map",
+    "status": "PASS",
+    "evidence": {
+      "groups": 5,
+      "rows": 10,
+      "summary": "For this text: Tone, Length and Intent move meaning well beyond noise; Complexity and Audience sit inside the noise band.",
+      "foot": "vs 2 baselines · noise from 1 pair",
+      "gens": 12,
+      "judgeCalls": 2,
+      "reopen": {
+        "newCalls": 0,
+        "note": "Last run just now. Re-run to refresh against a fresh baseline draw."
+      }
+    }
+  },
+  {
+    "id": "B09",
+    "name": "Ablation Lab",
+    "status": "PASS",
+    "evidence": {
+      "verdict": "Suggestive, not proof — no critic won 2 of 3 blind comparisons — suggestive, not proof. 3 blind comparisons can't separate a real edge from luck.",
+      "bars": 2,
+      "ablCards": 3,
+      "calls": {
+        "writers": 6,
+        "critics": 3,
+        "editors": 3,
+        "judges": 3
+      }
+    }
+  },
+  {
+    "id": "B10",
+    "name": "Agent Swarm",
+    "status": "PASS",
+    "evidence": {
+      "variants": 3,
+      "verdict": 1,
+      "winner": 1,
+      "stats": "11 steps · 2,200 tokens · ~$0.02",
+      "calls": "planner:1 swarm-writer:3 critic:3 swarm-editor:3 judge-swarm:1"
+    }
+  },
+  {
+    "id": "B11",
+    "name": "Compare + Export",
+    "status": "PASS",
+    "evidence": {
+      "cols": 2,
+      "diffSpans": 84,
+      "file": "wordcraft-export-2026-09-25.md",
+      "variantsInExport": 2
+    }
+  },
+  {
+    "id": "X01",
+    "name": "CSS merge marker",
+    "status": "CONFIRMED",
+    "evidence": {
+      "ruleExists": false,
+      "nextRuleExists": true,
+      "fontFamily": "\"Source Serif 4\", Georgia, serif",
+      "fontSize": "14.4px"
+    }
+  },
+  {
+    "id": "X02",
+    "name": "Wheel over critique panel",
+    "status": "CONFIRMED",
+    "evidence": {
+      "panelOverflowPx": 780,
+      "scrollTopBefore": 0,
+      "scrollTopAfter": 0,
+      "zoomBefore": "90%",
+      "zoomAfter": "81%"
+    }
+  },
+  {
+    "id": "X03",
+    "name": "Critique of in-flight card",
+    "status": "CONFIRMED",
+    "evidence": {
+      "critiqueRequests": 1,
+      "shownAfterCompletion": "Critique of: \"Generating\"",
+      "actualCardText": "neutral-sample The experiment names its "
+    }
+  },
+  {
+    "id": "X04",
+    "name": "Critique race",
+    "status": "CONFIRMED",
+    "evidence": {
+      "selectedCard": "card-3",
+      "selectedCardText": "knob-length The nois",
+      "panelShows": "Critique of: \"knob-tone A good edit changes meaning on\"",
+      "appliedFix": "BEST FIX derived from: \"knob-tone A good edit changes meanin"
+    }
+  },
+  {
+    "id": "X05",
+    "name": "Source lineage",
+    "status": "CONFIRMED",
+    "evidence": {
+      "generateVariantRewrote": "BRAVO (textarea)",
+      "arrowFrom": "card-1 (ALPHA source text ab…)",
+      "experimentRewrote": "ALPHA (card)"
+    }
+  },
+  {
+    "id": "X06",
+    "name": "Stale agent panel title",
+    "status": "CONFIRMED",
+    "evidence": {
+      "panelTitleDuringSwarm": "Ablation Lab"
+    }
+  },
+  {
+    "id": "X07",
+    "name": "Ablation with failed research",
+    "status": "CONFIRMED",
+    "evidence": {
+      "distinctWriterPromptsAcrossBothArms": 1,
+      "verdictCard": "Web research — Suggestive, not proof",
+      "armTags": [
+        "no research",
+        "with research"
+      ],
+      "agentLogFailures": [
+        "Research failed: mock: web search unavailable"
+      ]
+    }
+  },
+  {
+    "id": "X08",
+    "name": "Mid-stream error swallowed",
+    "status": "CONFIRMED",
+    "evidence": {
+      "cardClass": "card variant",
+      "savedText": "ONE two three four five six seven eight ",
+      "anyErrorUi": false,
+      "pageErrors": []
+    }
+  },
+  {
+    "id": "X09",
+    "name": "Pool fail-fast leak",
+    "status": "CONFIRMED",
+    "evidence": {
+      "requestsWhenErrorShown": 7,
+      "requestsAfter3s": 12,
+      "wastedCallsAfterFailure": 5,
+      "uiMessage": "Error: mock: bad request"
+    }
+  },
+  {
+    "id": "X10",
+    "name": "Clear does not abort",
+    "status": "CONFIRMED",
+    "evidence": {
+      "requestCompletedAfterClear": true,
+      "abortedByPage": false,
+      "cardsNow": 0
+    }
+  },
+  {
+    "id": "X11",
+    "name": "Silent persistence failure",
+    "status": "CONFIRMED",
+    "evidence": {
+      "junkKeys": 51,
+      "storedCards": 0,
+      "saveFailures": 1,
+      "cardsOnScreen": 1,
+      "toasts": [],
+      "cardsAfterReload": 0
+    }
+  },
+  {
+    "id": "X12",
+    "name": "No way to forget key",
+    "status": "CONFIRMED",
+    "evidence": {
+      "stillStored": true,
+      "modalStillOpen": true,
+      "status": "API Key Set",
+      "anyFeedback": false
+    }
+  },
+  {
+    "id": "X13",
+    "name": "Suggestion desync",
+    "status": "CONFIRMED",
+    "evidence": {
+      "panelVisible": true,
+      "itemLooksSelected": true,
+      "buttonEnabled": true,
+      "clickProducedCard": false,
+      "requestsSent": 0
+    }
+  },
+  {
+    "id": "X14",
+    "name": "Modal keyboard/a11y",
+    "status": "CONFIRMED",
+    "evidence": {
+      "#swarmModal": {
+        "openAfterEsc": true,
+        "focusLeavesModal": true,
+        "role": null
+      },
+      "#experimentModal": {
+        "openAfterEsc": true,
+        "focusLeavesModal": true,
+        "role": null
+      },
+      "#ablModal": {
+        "openAfterEsc": true,
+        "focusLeavesModal": true,
+        "role": null
+      },
+      "#sensitivityModal": {
+        "openAfterEsc": true,
+        "focusLeavesModal": true,
+        "role": null
+      }
+    }
+  },
+  {
+    "id": "X15",
+    "name": "Selection + clipping",
+    "status": "CONFIRMED",
+    "evidence": {
+      "selectedChars": 0,
+      "userSelect": "none",
+      "cardH": 572,
+      "contentH": 788,
+      "contentOverflowY": "visible",
+      "cardOverflow": "hidden"
+    }
+  },
+  {
+    "id": "X16",
+    "name": "Overlapping cards",
+    "status": "CONFIRMED",
+    "evidence": {
+      "heights": [
+        207,
+        814,
+        790,
+        790,
+        790
+      ],
+      "overlaps": [
+        "card-2×card-5"
+      ]
+    }
+  },
+  {
+    "id": "X17",
+    "name": "axe-core violations",
+    "status": "CONFIRMED",
+    "evidence": {
+      "canvas": "color-contrast[serious]x16, label[critical]x3, select-name[critical]x2",
+      "modal": "color-contrast[serious]x16, label[critical]x3, region[moderate]x5, select-name[critical]x3"
+    }
+  },
+  {
+    "id": "X18",
+    "name": "Layout overflow",
+    "status": "CONFIRMED",
+    "evidence": {
+      "768": {
+        "toast": false,
+        "zoom": false,
+        "compare": false,
+        "sidebarScrollable": false
+      },
+      "900": {
+        "toast": false,
+        "zoom": false,
+        "compare": false,
+        "sidebarScrollable": false
+      },
+      "1080": {
+        "toast": false,
+        "zoom": false,
+        "compare": false,
+        "sidebarScrollable": true
+      }
+    }
+  }
+]

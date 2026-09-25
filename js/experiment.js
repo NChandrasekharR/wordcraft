@@ -246,7 +246,7 @@
       const existingPool = getBaselinePool(key);
       const newBaselines = existingPool.length < 2 ? (2 - existingPool.length) : 1;
 
-      expController = new AbortController();
+      expController = trackedController();
       const signal = expController.signal;
 
       expIntro.style.display = 'none';
@@ -358,6 +358,7 @@
           expIntro.appendChild(span);
         }
       } finally {
+        releaseController(expController);
         expController = null;
         expRun.style.display = '';
         expRun.disabled = false;
