@@ -9,6 +9,7 @@ top-level names per module. Calls the Anthropic API directly from the browser
 ## Start here
 - **What to work on:** `docs/roadmap.md` — prioritized, checkbox list. Work top-down, tick items with the commit hash.
 - **Why:** `docs/audit-2026-09.md` — every finding with evidence and `file:line`.
+- **Picking up cold?** `docs/agent-handoff.md` is a ready-made prompt with open questions.
 - **Product intent:** `docs/agent-lab-thesis.md`. History: `docs/session-transcript*.md`.
 
 ## Tests (run both before and after every change)
