@@ -34,9 +34,13 @@ P0 landed in `721e89c`; results in `tests/e2e/results/2026-09-25-after-p0/` — 
 - [x] **H5** Ablation stops with an explanation (no verdict, no cards) when research fails or returns nothing · probe X07 · `24cdbb0`
 - [x] **M1** Pools abort siblings on first error (Ablation: 28 → 6 calls on a failure); Clear aborts every in-flight flow via a request registry in `app.js` · probes X09, X10, X20 · `24cdbb0`
 - [x] **M8** `MODEL_PRICING` in `api.js` (Sonnet 5 $2/$10); retry 408/504 and honour `retry-after` (capped 30s); 180s timeout on non-streaming calls; `refusal` is an error (streaming + non-streaming) · `24cdbb0`
-- [ ] **M8b** Handle `pause_turn` for the web-search researcher (resume the turn)
-- [ ] **M9** Scale judge `max_tokens` with pair count or chunk batches (verify with a live key)
+- [x] **M8b** Handle `pause_turn` for the web-search researcher (resume the turn) · probe X21 · `1b66f95`
+- [ ] **M9** Scale judge `max_tokens` with pair count or chunk batches (verify with a live key) — scaling landed in `1b66f95` (`judgeMaxTokens`); live-key check still open
 - [ ] **H10 (part)** Cap the baseline store (LRU by text)
+
+## Platform
+
+- [x] **API upgrade** Opus 5.5 / Sonnet 5.5 / Haiku 5.5; one streaming request core; prompt caching (stable prefix first, cache-aware fan-out); effort pinned per route; refusal fallback on Opus/Sonnet; cache-aware pricing · probes B12, B13, X21 · `1b66f95` · results in `tests/e2e/results/2026-10-09-api-upgrade/` — 13 PASS, 17 FIXED, 4 CONFIRMED
 
 ## P2 — safety net & polish
 
