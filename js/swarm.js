@@ -20,93 +20,68 @@
     const agentClose = document.getElementById('agentClose');
     const agentCancelBtn = document.getElementById('agentCancelBtn');
 
-    const swarm = { running: false, controller: null, steps: 0, tokensIn: 0, tokensOut: 0, usage: {} };
+    const swarm = { running: false, controller: null, steps: 0, tokensIn: 0, tokensOut: 0, tokensCached: 0, cost: 0 };
+
+    function resetSwarmUsage() {
+      swarm.steps = 0; swarm.tokensIn = 0; swarm.tokensOut = 0; swarm.tokensCached = 0; swarm.cost = 0;
+    }
 
     // Per-role model selection. Critic and judge only score/rank, so a cheap
     // fast model is sufficient; the generative roles use the user's chosen
     // model. roleModel() is a function so it always reflects the current pick.
     function roleModel(role) {
-      if (role === 'critic' || role === 'judge') return 'claude-haiku-4-5';
+      if (role === 'critic' || role === 'judge') return CHEAP_MODEL;
       return getModel();
     }
 
     // Pricing lives in api.js (MODEL_PRICING); alias kept for ablation.js.
     const SWARM_PRICING = MODEL_PRICING;
 
-    // Multi-turn / tool-capable API call used by the swarm; goes through the
-    // same retrying request core as callClaude() and tracks swarm usage
-    // (overall and per model, for the cost readout).
-    async function callClaudeRaw({ system, messages, tools, model, maxTokens, signal, outputSchema }) {
+    // One swarm/ablation agent call through the shared request core, tracking
+    // usage for the live cost readout. `cached` is the part of the prompt
+    // sibling calls share (brief, source, research); it goes first and is
+    // read from the prompt cache by every call after the first.
+    async function callClaudeRaw({ system, prompt, cached, tools, model, maxTokens, signal, outputSchema, effort }) {
       const usedModel = model || getModel();
-      const body = {
+      const data = await requestMessage({ system, prompt, cached }, {
         model: usedModel,
-        max_tokens: maxTokens || 2048,
-        messages
-      };
-      if (system) body.system = system;
-      if (tools) body.tools = tools;
-      if (outputSchema) body.output_config = { format: { type: 'json_schema', schema: outputSchema } };
-      const data = await anthropicRequest(body, signal);
+        tools,
+        schema: outputSchema,
+        maxTokens: maxTokens || DEFAULT_MAX_TOKENS,
+        effort: effort || EFFORT.standard,
+        signal
+      });
       if (data.usage) {
-        const tin = data.usage.input_tokens || 0;
-        const tout = data.usage.output_tokens || 0;
-        swarm.tokensIn += tin;
-        swarm.tokensOut += tout;
-        const u = swarm.usage[usedModel] || (swarm.usage[usedModel] = { in: 0, out: 0 });
-        u.in += tin;
-        u.out += tout;
+        const u = data.usage;
+        const cachedIn = (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0);
+        swarm.tokensIn += (u.input_tokens || 0) + cachedIn;
+        swarm.tokensCached += u.cache_read_input_tokens || 0;
+        swarm.tokensOut += u.output_tokens || 0;
+        swarm.cost += usageCost(u, data.model || usedModel);
       }
       swarm.steps++;
       updateSwarmStats();
       return data;
     }
 
-    function extractText(data) {
-      return (data.content || [])
-        .filter(b => b.type === 'text')
-        .map(b => b.text)
-        .join('\n')
-        .trim();
-    }
-
     // One agent turn that returns text.
-    async function agentText({ system, prompt, tools, maxTokens, model }) {
+    async function agentText({ system, prompt, cached, tools, maxTokens, model }) {
       if (swarm.controller?.signal.aborted) throw new Error('Swarm stopped');
-      const data = await callClaudeRaw({
-        system,
-        messages: [{ role: 'user', content: prompt }],
-        tools,
-        maxTokens,
-        model,
-        signal: swarm.controller?.signal
-      });
+      const data = await callClaudeRaw({ system, prompt, cached, tools, maxTokens, model, signal: swarm.controller?.signal });
       return extractText(data);
     }
 
     // One agent turn that returns parsed JSON via structured outputs.
-    async function agentJson({ system, prompt, maxTokens, model, schema }) {
+    async function agentJson({ system, prompt, cached, maxTokens, model, schema }) {
       if (swarm.controller?.signal.aborted) throw new Error('Swarm stopped');
-      const data = await callClaudeRaw({
-        system,
-        messages: [{ role: 'user', content: prompt }],
-        maxTokens,
-        model,
-        signal: swarm.controller?.signal,
-        outputSchema: schema
-      });
+      const data = await callClaudeRaw({ system, prompt, cached, maxTokens, model, signal: swarm.controller?.signal, outputSchema: schema });
       return parseJson(extractText(data));
     }
 
     function updateSwarmStats() {
-      let cost = 0;
-      for (const model in swarm.usage) {
-        const p = SWARM_PRICING[model];
-        if (!p) continue;
-        const u = swarm.usage[model];
-        cost += (u.in / 1e6) * p.in + (u.out / 1e6) * p.out;
-      }
       const total = swarm.tokensIn + swarm.tokensOut;
-      agentStats.textContent = `${swarm.steps} steps · ${total.toLocaleString()} tokens · ~$${cost.toFixed(2)}`;
+      const cached = swarm.tokensCached ? ` (${swarm.tokensCached.toLocaleString()} from cache)` : '';
+      agentStats.textContent = `${swarm.steps} steps · ${total.toLocaleString()} tokens${cached} · ~$${swarm.cost.toFixed(2)}`;
     }
 
     // Append an entry to the live activity log; returns a handle to update it.
@@ -135,6 +110,12 @@
       editor: `You are the Editor. Revise the draft so it resolves every fix instruction while honoring the brief and any research provided. Output ONLY the revised prose — no preamble.`,
       judge: `You are the Judge. Compare the candidate variants against the brief and pick the strongest. Provide the winner (1-based index), a 2-3 sentence rationale, and a ranking of all candidate indices from best to worst.`
     };
+
+    // Research prompts carry today's date so the model searches for anything
+    // that may have changed since its training data ends.
+    function researchPrompt(task) {
+      return `Today's date is ${new Date().toISOString().slice(0, 10)}.\n${task}`;
+    }
 
     // Structured-output schemas for the swarm's JSON roles.
     const PLANNER_SCHEMA = {
@@ -185,7 +166,7 @@
 
       swarm.running = true;
       swarm.controller = trackedController();
-      swarm.steps = 0; swarm.tokensIn = 0; swarm.tokensOut = 0; swarm.usage = {};
+      resetSwarmUsage();
       agentLog.innerHTML = '';
       agentPanel.querySelector('.critique-header h2').textContent = 'Agent Swarm';
       agentPanel.classList.add('visible');
@@ -206,7 +187,7 @@
           plan = await agentJson({
             system: ROLES.planner,
             prompt: `Brief/goal:\n${goal || '(none given — produce strong, distinct general variations)'}\n\nSource text:\n${source}\n\nProduce exactly ${writerCount} writer entries.`,
-            maxTokens: 1024,
+            maxTokens: 4096,
             model: roleModel('planner'),
             schema: PLANNER_SCHEMA
           });
@@ -229,17 +210,12 @@
             const researcherModel = roleModel('researcher');
             research = await agentText({
               system: ROLES.researcher,
-              prompt: `Brief: ${goal}\nSearch focus: ${query}\nGather and summarize the most useful findings.`,
+              // Cached so each server-side search iteration (and a resumed
+              // pause_turn) reads the prompt from cache.
+              cached: researchPrompt(`Brief: ${goal}\nSearch focus: ${query}\nGather and summarize the most useful findings.`),
               model: researcherModel,
-              // Haiku only supports the basic web-search variant; newer models
-              // get the version with dynamic filtering. Branch on the model
-              // actually used for this call.
-              tools: [{
-                type: researcherModel === 'claude-haiku-4-5' ? 'web_search_20250305' : 'web_search_20260209',
-                name: 'web_search',
-                max_uses: 4
-              }],
-              maxTokens: 1500
+              tools: [webSearchTool(researcherModel)],
+              maxTokens: 8192
             });
             const rCard = createCard(['Research'], 'Generating', 'generating');
             rCard.classList.remove('generating'); rCard.classList.add('research');
@@ -252,9 +228,11 @@
           }
         }
 
-        // 3. WRITERS (parallel fan-out — the swarm)
+        // 3. WRITERS (parallel fan-out — the swarm). Every writer shares the
+        //    brief, research and source (cached); only the angle differs.
         agentPhase.textContent = 'Writing';
         const ctx = research ? `\n\nResearch brief to draw on:\n${research}` : '';
+        const writerContext = `Brief/goal:\n${goal}${ctx}\n\nSource text:\n${source}`;
         const writerJobs = plan.writers.map((w, i) => (async () => {
           const wLog = logAgent(`Writer ${i + 1}`, `Drafting: ${w.angle}`);
           const card = createCard([w.angle || `Variant ${i + 1}`], 'Generating', 'generating');
@@ -263,9 +241,10 @@
           try {
             const draft = await agentText({
               system: ROLES.writer,
-              prompt: `Brief/goal:\n${goal}\n\nYour angle: ${w.angle}\nGuidance: ${w.instruction}${ctx}\n\nSource text:\n${source}`,
+              cached: writerContext,
+              prompt: `Your angle: ${w.angle}\nGuidance: ${w.instruction}`,
               model: roleModel('writer'),
-              maxTokens: 1500
+              maxTokens: 8192
             });
             card.classList.remove('generating'); card.classList.add('variant');
             card.dataset.rawText = draft;
@@ -292,8 +271,9 @@
             try {
               critique = await agentJson({
                 system: ROLES.critic,
-                prompt: `Brief:\n${goal}\n\nDraft:\n${v.text}`,
-                maxTokens: 800,
+                cached: `Brief:\n${goal}`,
+                prompt: `Draft:\n${v.text}`,
+                maxTokens: 4096,
                 model: roleModel('critic'),
                 schema: CRITIC_SCHEMA
               });
@@ -306,9 +286,10 @@
             try {
               const revised = await agentText({
                 system: ROLES.editor,
-                prompt: `Brief:\n${goal}\n\nFix instructions:\n- ${fixes}${ctx}\n\nCurrent draft:\n${v.text}`,
+                cached: `Brief:\n${goal}${ctx}`,
+                prompt: `Fix instructions:\n- ${fixes}\n\nCurrent draft:\n${v.text}`,
                 model: roleModel('editor'),
-                maxTokens: 1500
+                maxTokens: 8192
               });
               const diffHtml = computeDiff(v.text, revised);
               v.card.dataset.rawText = revised;
@@ -332,7 +313,7 @@
             const verdict = await agentJson({
               system: ROLES.judge,
               prompt: `Brief:\n${goal}\n\nCandidates:\n${list}`,
-              maxTokens: 600,
+              maxTokens: 4096,
               model: roleModel('judge'),
               schema: JUDGE_SCHEMA
             });

@@ -11,18 +11,41 @@
     function lengthLabel(v) { return v <= -60 ? 'Much Shorter' : v <= -20 ? 'Shorter' : v < 20 ? 'Same' : v < 60 ? 'Longer' : 'Much Longer'; }
     function complexityLabel(v) { return v <= -60 ? 'Very Simple' : v <= -20 ? 'Simple' : v < 20 ? 'Moderate' : v < 60 ? 'Elaborate' : 'Very Elaborate'; }
 
-    function buildParamPrompt(text, tone, length, complexity, audience, intent) {
-      return `Rewrite the following text with these parameters:
+    // Rewrite requests are { system, cached, prompt } (see cachedUserTurn in
+    // api.js). The system prompt never varies and the original text goes
+    // first, so every rewrite of the same source (Generate Variant,
+    // suggestions, the Controlled Experiment, the Sensitivity Map) shares one
+    // cached prefix; only the instructions in `prompt` differ.
+    const REWRITE_SYSTEM = 'You rewrite text as instructed. Provide ONLY the rewritten text, no explanations or preamble.';
+
+    function originalTextBlock(text) {
+      return `Original text:\n${text}`;
+    }
+
+    function buildParamRequest(text, tone, length, complexity, audience, intent) {
+      return {
+        system: REWRITE_SYSTEM,
+        cached: originalTextBlock(text),
+        prompt: `Rewrite the original text above with these parameters:
 - Tone: ${toneLabel(tone)} (${tone > 0 ? 'more formal' : tone < 0 ? 'more casual' : 'keep similar'})
 - Length: ${lengthLabel(length)} (${length > 0 ? 'expand and elaborate' : length < 0 ? 'condense and shorten' : 'keep similar length'})
 - Complexity: ${complexityLabel(complexity)} (${complexity > 0 ? 'use more sophisticated vocabulary and elaborate sentence structures' : complexity < 0 ? 'use simpler words and shorter sentences' : 'keep similar complexity'})
 - Audience: ${audience}
-- Intent: ${intent}
+- Intent: ${intent}`
+      };
+    }
 
-Original text:
-${text}
+    // instructions: a numbered list of improvements to apply together.
+    function buildSuggestionRequest(text, instructions) {
+      return {
+        system: REWRITE_SYSTEM,
+        cached: originalTextBlock(text),
+        prompt: `Rewrite the original text above by applying ALL of these improvements:
 
-Provide ONLY the rewritten text, no explanations or preamble.`;
+${instructions}
+
+Apply all the improvements together in a single coherent rewrite.`
+      };
     }
 
     // Simple word-level diff (LCS). lcsParts() is the shared core;
@@ -126,4 +149,4 @@ Provide ONLY the rewritten text, no explanations or preamble.`;
       }
     }
 
-    if (typeof module !== 'undefined' && module.exports) { module.exports = { escapeHtml, toneLabel, lengthLabel, complexityLabel, buildParamPrompt, lcsParts, computeDiff, computeDiffStats, parseJsonLoose, parseJson }; }
+    if (typeof module !== 'undefined' && module.exports) { module.exports = { escapeHtml, toneLabel, lengthLabel, complexityLabel, REWRITE_SYSTEM, buildParamRequest, buildSuggestionRequest, lcsParts, computeDiff, computeDiffStats, parseJsonLoose, parseJson }; }

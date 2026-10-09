@@ -86,8 +86,10 @@ wordcraft/
 ├── css/styles.css      # All styles
 ├── js/util.js          # Pure helpers (escapeHtml, LCS diff, labels, prompt
 │                       #   builder, JSON extraction) — Node-testable
-├── js/api.js           # API/storage layer: model + key storage, retrying
-│                       #   request core, callClaude/callClaudeJson/streamClaude
+├── js/api.js           # API/storage layer: models + pricing, key storage,
+│                       #   streaming request core (retry, prompt-cache
+│                       #   breakpoints + fan-out gates, pinned effort,
+│                       #   refusal fallback, pause_turn resume)
 ├── js/app.js           # Canvas, cards, panels, generate flows, persistence,
 │                       #   toasts, undo, API-key modal wiring
 ├── js/measure.js       # Semantic-distance measurement layer (batched
@@ -113,9 +115,12 @@ wordcraft/
 | `deleteCard(card)` / `undoDeleteCard(...)` | app.js | Delete with toast-based undo |
 | `materializeCard(data)` | app.js | Rehydrate a card from a snapshot (restore + undo) |
 | `showToast(message, opts)` | app.js | Inline notifications (replaces alert/confirm) |
-| `callClaude(prompt, opts)` | api.js | Non-streaming text request (retry/backoff/abort) |
-| `callClaudeJson(prompt, {schema})` | api.js | Structured outputs → parsed JSON |
-| `streamClaude(prompt, {onText})` | api.js | SSE streaming rewrite |
+| `callClaude(spec, opts)` | api.js | Text request; `spec` is a prompt string or `{ system, cached, prompt }` where `cached` is the shared prefix that gets the cache breakpoint. `opts`: `model`, `effort`, `maxTokens`, `signal`, `onText` |
+| `callClaudeJson(spec, {schema})` | api.js | Structured outputs → parsed JSON |
+| `streamClaude(spec, {onText})` | api.js | `callClaude` that streams text into the UI |
+| `requestMessage(spec, opts)` | api.js | Full Message (all content blocks + usage); resumes `pause_turn` |
+| `buildParamRequest(...)` / `buildSuggestionRequest(...)` | util.js | Rewrite requests sharing one system prompt + cached source block |
+| `EFFORT` / `MODEL_PRICING` / `usageCost(usage, model)` | api.js | Per-route effort; $/MTok incl. cache writes/reads |
 | `computeDiff` / `computeDiffStats` / `lcsParts` | util.js | LCS diff rendering + magnitude |
 | `generateVariant()` | app.js | Main generation flow (streams into the card) |
 | `runSwarm(config)` | swarm.js | Multi-agent orchestration |
@@ -198,9 +203,12 @@ python -m http.server 8000
 GitHub Pages is configured to serve from `main` branch root. Push to `main` and changes go live within ~1 minute.
 
 ### Testing
-Unit tests for the pure helpers in `js/util.js` (escaping, diffing, label
-mapping, prompt building, loose JSON parsing) live in `tests/util.test.js`
-and use only Node's built-in test runner — no dependencies, no `package.json`.
+Unit tests for the pure helpers (escaping, diffing, label mapping, prompt
+building and loose JSON parsing in `tests/util.test.js`; request shape, cache
+keys, prefix gates, stream accumulation and pricing in `tests/api.test.js`;
+plus the measure, sensitivity and ablation helpers) use only Node's built-in
+test runner — no dependencies, no `package.json`. The browser suite
+(`node tests/e2e/smoke.js`) covers the network paths against a mocked API.
 
 ```bash
 node --test tests/

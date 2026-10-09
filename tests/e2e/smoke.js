@@ -58,9 +58,12 @@ function makeText(marker, nSent = 4) {
   for (let i = 0; i < nSent; i++) out.push(SENTENCES[Math.floor(rnd() * SENTENCES.length)]);
   return `${marker} ${out.join(' ')}`;
 }
+// System prompts and user turns may be strings or arrays of text blocks
+// (cached prefix + per-request tail).
+function textOf(content) { return typeof content === 'string' ? content : (content || []).map(b => b.text || '').join('\n\n'); }
 function classify(body) {
   const props = (body.output_config && body.output_config.format && body.output_config.format.schema && body.output_config.format.schema.properties) || {};
-  const sys = typeof body.system === 'string' ? body.system : '';
+  const sys = textOf(body.system);
   if (props.tone && props.suggestions) return 'analysis';
   if (props.verdict && props.best_fix) return 'critique';
   if (props.scores) return 'judge-semantic';
@@ -69,14 +72,13 @@ function classify(body) {
   if (props.score && props.fix_instructions) return 'critic';
   if (props.writers) return 'planner';
   if ((body.tools || []).some(t => /web_search/.test(t.type))) return 'research';
-  if (body.stream) return 'rewrite-stream';
   if (/ablation trial/i.test(sys)) return /Editor/.test(sys) ? 'abl-editor' : 'abl-writer';
   if (/Writer in a swarm/.test(sys)) return 'swarm-writer';
   if (/You are the Editor/.test(sys)) return 'swarm-editor';
   return 'rewrite';
 }
 function knobsMoved(prompt) {
-  if (!/Rewrite the following text with these parameters/.test(prompt)) return null;
+  if (!/Rewrite the original text above with these parameters/.test(prompt)) return null;
   const moved = [];
   if (!/Tone: Neutral \(keep similar\)/.test(prompt)) moved.push('tone');
   if (!/Length: Same \(keep similar length\)/.test(prompt)) moved.push('length');
@@ -122,6 +124,22 @@ function sse(text, { midstreamError = false } = {}) {
   s += ev('message_delta', { type: 'message_delta', delta: { stop_reason: 'end_turn', stop_sequence: null }, usage: { output_tokens: 40 } });
   return s + ev('message_stop', { type: 'message_stop' });
 }
+// Any JSON message as an SSE stream (every request streams).
+function sseFromMessage(msg) {
+  const ev = (type, data) => `event: ${type}\ndata: ${JSON.stringify(data)}\n\n`;
+  let s = ev('message_start', { type: 'message_start', message: { ...msg, content: [], stop_reason: null, usage: { ...msg.usage, output_tokens: 1 } } });
+  msg.content.forEach((b, index) => {
+    if (b.type === 'text') {
+      s += ev('content_block_start', { type: 'content_block_start', index, content_block: { type: 'text', text: '' } });
+      s += ev('content_block_delta', { type: 'content_block_delta', index, delta: { type: 'text_delta', text: b.text } });
+    } else {
+      s += ev('content_block_start', { type: 'content_block_start', index, content_block: b });
+    }
+    s += ev('content_block_stop', { type: 'content_block_stop', index });
+  });
+  s += ev('message_delta', { type: 'message_delta', delta: { stop_reason: msg.stop_reason, stop_sequence: null }, usage: { output_tokens: msg.usage.output_tokens } });
+  return s + ev('message_stop', { type: 'message_stop' });
+}
 function defaultResponse(kind, body, prompt, opts) {
   const model = body.model;
   const J = obj => ({ json: jsonMsg(model, JSON.stringify(obj)) });
@@ -141,7 +159,6 @@ function defaultResponse(kind, body, prompt, opts) {
     case 'critic': return J({ score: 6, weaknesses: ['Vague claim in sentence 2'], fix_instructions: ['Make sentence 2 specific.'] });
     case 'planner': { const n = +((prompt.match(/exactly (\d+) writer/) || [])[1] || 3); return J({ summary: `Plan: ${n} distinct angles.`, research_query: '', writers: Array.from({ length: n }, (_, i) => ({ angle: `Angle ${i + 1}`, instruction: `Write angle ${i + 1}.` })) }); }
     case 'research': return { json: jsonMsg(model, '- Finding one (source: example.com)\n- Finding two (source: example.org)') };
-    case 'rewrite-stream': return { sse: sse(opts.rewriteText ? opts.rewriteText(prompt) : makeText(markerFor(prompt), opts.longText ? 22 : 4)) };
     default: return { json: jsonMsg(model, opts.rewriteText ? opts.rewriteText(prompt) : makeText(kind === 'rewrite' ? markerFor(prompt) : kind, opts.longText ? 22 : 4)) };
   }
 }
@@ -154,8 +171,8 @@ function makeMock(opts = {}) {
     let body = {};
     try { body = JSON.parse(req.postData() || '{}'); } catch (e) {}
     const kind = classify(body);
-    const prompt = body.messages && typeof body.messages[0].content === 'string' ? body.messages[0].content : '';
-    const entry = { idx: n++, kind, model: body.model, max_tokens: body.max_tokens, t: Date.now(), prompt, system: typeof body.system === 'string' ? body.system : '', done: false, aborted: false };
+    const prompt = body.messages && body.messages[0] ? textOf(body.messages[0].content) : '';
+    const entry = { idx: n++, kind, model: body.model, max_tokens: body.max_tokens, t: Date.now(), prompt, system: textOf(body.system), body, beta: req.headers()['anthropic-beta'] || null, done: false, aborted: false };
     log.push(entry);
     let resp = opts.override ? await opts.override({ body, kind, entry, prompt, log }) : null;
     if (!resp) resp = defaultResponse(kind, body, prompt, opts);
@@ -164,6 +181,7 @@ function makeMock(opts = {}) {
     try {
       if (resp.status) await route.fulfill({ status: resp.status, headers: { ...CORS, 'content-type': 'application/json' }, body: JSON.stringify({ type: 'error', error: { type: resp.errType || 'api_error', message: resp.message || `mock ${resp.status}` } }) });
       else if (resp.sse) await route.fulfill({ status: 200, headers: { ...CORS, 'content-type': 'text/event-stream' }, body: resp.sse });
+      else if (body.stream) await route.fulfill({ status: 200, headers: { ...CORS, 'content-type': 'text/event-stream' }, body: sseFromMessage(resp.json) });
       else await route.fulfill({ status: 200, headers: { ...CORS, 'content-type': 'application/json' }, body: JSON.stringify(resp.json) });
       entry.done = true;
     } catch (e) { entry.aborted = true; }
@@ -250,7 +268,7 @@ async function scenario(id, name, opts, fn) {
   });
 
   await scenario('B04', 'Generate Variant: 529 retry -> SSE stream -> Text/Diff toggle; reload restores', {
-    override: ({ kind, log }) => (kind === 'rewrite-stream' && log.filter(e => e.kind === 'rewrite-stream').length === 1) ? { status: 529, errType: 'overloaded_error' } : null,
+    override: ({ kind, log }) => (kind === 'rewrite' && log.filter(e => e.kind === 'rewrite').length === 1) ? { status: 529, errType: 'overloaded_error' } : null,
   }, async ({ page, mock, errors }) => {
     await setKey(page); await addSource(page); await closeAnalysis(page);
     const id = await generate(page);
@@ -260,8 +278,8 @@ async function scenario(id, name, opts, fn) {
     await page.waitForTimeout(700);
     await page.reload(); await page.waitForTimeout(500);
     const after = await page.evaluate(id => ({ cards: document.querySelectorAll('.card').length, lines: document.querySelectorAll('svg.connection-arrow line').length, diffKept: !!document.querySelector(`#${id} .card-content span[class^="diff-"]`) }), id);
-    const ok = mock.count('rewrite-stream') === 2 && /variant/.test(card.cls) && card.hasToggle && diffSpans > 0 && after.cards === 2 && after.lines === 1 && after.diffKept;
-    record('B04', 'Generate+retry+diff+persist', ok ? 'PASS' : 'FAIL', { streamRequests: mock.count('rewrite-stream'), card, diffSpans, afterReload: after, errors });
+    const ok = mock.count('rewrite') === 2 && /variant/.test(card.cls) && card.hasToggle && diffSpans > 0 && after.cards === 2 && after.lines === 1 && after.diffKept;
+    record('B04', 'Generate+retry+diff+persist', ok ? 'PASS' : 'FAIL', { streamRequests: mock.count('rewrite'), card, diffSpans, afterReload: after, errors });
   });
 
   await scenario('B05', 'Delete -> Undo restores card + connection; Clear is two-step', {}, async ({ page }) => {
@@ -355,6 +373,62 @@ async function scenario(id, name, opts, fn) {
     record('B11', 'Compare + Export', ok ? 'PASS' : 'FAIL', { cols, diffSpans: spans, file: dl.suggestedFilename(), variantsInExport: (md.match(/^#### /gm) || []).length });
   });
 
+  await scenario('B12', 'API requests: current models, pinned effort, cache breakpoints, refusal-fallback opt-in', {}, async ({ page, mock }) => {
+    await setKey(page); await addSource(page); await closeAnalysis(page);
+    await generate(page);
+    await setSlider(page, 'toneSlider', 80);
+    await page.click('#experimentBtn'); await page.click('#expRun');
+    await page.waitForFunction(() => getComputedStyle(document.getElementById('expResult')).display === 'flex', null, { timeout: 15000 });
+    await page.click('#expClose');
+    await page.click('#swarmBtn'); await page.fill('#swarmGoal', 'Punchy landing-page copy'); await page.click('#swarmStart');
+    await page.waitForFunction(() => document.getElementById('agentPhase').textContent === 'Complete', null, { timeout: 20000 });
+    const CURRENT = ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5'];
+    const bad = [];
+    for (const e of mock.log) {
+      const b = e.body, effort = b.output_config && b.output_config.effort;
+      if (!CURRENT.includes(b.model)) bad.push(`${e.kind}: model ${b.model}`);
+      if (b.stream !== true) bad.push(`${e.kind}: not streamed`);
+      if (!['low', 'medium'].includes(effort)) bad.push(`${e.kind}: effort ${effort}`);
+      for (const k of ['thinking', 'temperature', 'top_p', 'top_k', 'tool_choice']) if (k in b) bad.push(`${e.kind}: sends ${k}`);
+      const fb = b.model !== 'claude-haiku-5-5';
+      if (fb && (b.fallbacks !== 'default' || e.beta !== 'server-side-fallback-2026-07-01')) bad.push(`${e.kind}: no fallback opt-in`);
+      if (!fb && (b.fallbacks || e.beta)) bad.push(`${e.kind}: fallback on Haiku`);
+    }
+    const rewrites = mock.log.filter(e => e.kind === 'rewrite');
+    for (const e of rewrites) {
+      const c = e.body.messages[0].content;
+      if ((e.body.output_config || {}).effort !== 'low') bad.push('rewrite: effort not low');
+      if (!Array.isArray(c) || !c[0].cache_control || !c[0].text.includes('spatial writing studio') || c[1].text.includes('spatial writing studio')) bad.push('rewrite: source not in the cached block');
+    }
+    const prefixes = new Set(rewrites.map(e => JSON.stringify([e.body.system, e.body.messages[0].content[0]])));
+    const writers = mock.log.filter(e => e.kind === 'swarm-writer');
+    const firstBlock = e => (Array.isArray(e.body.messages[0].content) ? e.body.messages[0].content[0] : {});
+    const writerPrefixes = new Set(writers.map(e => JSON.stringify(firstBlock(e))));
+    const cheap = ['critic', 'judge-swarm', 'judge-semantic'].map(k => mock.log.filter(e => e.kind === k).every(e => e.model === 'claude-haiku-5-5'));
+    const judgeLow = mock.log.filter(e => e.kind === 'judge-semantic').every(e => (e.body.output_config || {}).effort === 'low');
+    if (prefixes.size !== 1) bad.push(`rewrites use ${prefixes.size} distinct cached prefixes`);
+    if (writers.length !== 3 || writerPrefixes.size !== 1 || !writers.every(e => firstBlock(e).cache_control)) bad.push('swarm writers do not share one cached prefix');
+    if (cheap.includes(false)) bad.push('scoring roles not on Haiku 5.5');
+    if (!judgeLow) bad.push('semantic judge effort not low');
+    record('B12', 'API request shape', bad.length === 0 ? 'PASS' : 'FAIL', { requests: mock.log.length, rewrites: rewrites.length, models: [...new Set(mock.log.map(e => e.model))], problems: bad.slice(0, 8) });
+  });
+
+  await scenario('B13', 'Cache fan-out: rewrites sharing a long cached source wait for the first to start streaming', {
+    delay: ({ kind }) => kind === 'rewrite' ? 700 : 0,
+  }, async ({ page, mock }) => {
+    const LONG_SOURCE = (SOURCE + ' ').repeat(14).trim(); // ~2,800 chars: above the cacheable minimum
+    await setKey(page); await addSource(page, LONG_SOURCE); await closeAnalysis(page);
+    await setSlider(page, 'toneSlider', 80);
+    await page.click('#experimentBtn'); await page.click('#expRun');
+    await page.waitForFunction(() => getComputedStyle(document.getElementById('expResult')).display === 'flex', null, { timeout: 20000 });
+    const gens = mock.log.filter(e => e.kind === 'rewrite');
+    const t0 = gens[0].t;
+    const followerGaps = gens.slice(1).map(e => e.t - t0);
+    const shared = new Set(gens.map(e => JSON.stringify([e.body.system, e.body.messages[0].content[0]]))).size === 1;
+    const ok = gens.length === 3 && shared && followerGaps.every(g => g >= 600);
+    record('B13', 'Cache fan-out', ok ? 'PASS' : 'FAIL', { generations: gens.length, sharedPrefix: shared, followerStartMsAfterLeader: followerGaps, leaderResponseDelayMs: 700 });
+  });
+
   // ======================= BUG PROBES (expect CONFIRMED) =======================
   await scenario('X01', 'Leftover merge-conflict marker drops the .abl-cost CSS rule', {}, async ({ page }) => {
     const s = await page.evaluate(() => {
@@ -381,7 +455,7 @@ async function scenario(id, name, opts, fn) {
   });
 
   await scenario('X03', 'Clicking an in-flight card critiques the placeholder and caches it', {
-    delay: ({ kind }) => kind === 'rewrite-stream' ? 1500 : 0,
+    delay: ({ kind }) => kind === 'rewrite' ? 1500 : 0,
   }, async ({ page, mock }) => {
     await setKey(page); await addSource(page); await closeAnalysis(page);
     await page.click('#generateBtn');
@@ -420,10 +494,11 @@ async function scenario(id, name, opts, fn) {
     await page.fill('#sourceText', 'BRAVO a completely different paragraph about bridges.');
     const id = await generate(page);
     const s = await page.evaluate(id => ({ lineFrom: document.querySelector(`svg.connection-arrow line[data-to="${id}"]`)?.dataset.from, sources: [...document.querySelectorAll('.card.source')].map(c => ({ id: c.id, text: c.querySelector('.card-content').textContent.slice(0, 20) })) }), id);
-    const genPrompt = mock.log.find(e => e.kind === 'rewrite-stream').prompt;
+    const genPrompt = mock.log.find(e => e.kind === 'rewrite').prompt;
+    const beforeExp = mock.log.length;
     await page.click('#experimentBtn'); await page.click('#expRun');
     await page.waitForFunction(() => getComputedStyle(document.getElementById('expResult')).display === 'flex', null, { timeout: 15000 });
-    const expPrompt = mock.log.find(e => e.kind === 'rewrite').prompt;
+    const expPrompt = mock.log.slice(beforeExp).find(e => e.kind === 'rewrite').prompt;
     const ok = /BRAVO/.test(genPrompt) && !/ALPHA/.test(genPrompt) && s.sources.length === 1 && /ALPHA/.test(s.sources[0].text) && s.lineFrom === s.sources[0].id && /ALPHA/.test(expPrompt);
     record('X05', 'Source lineage', ok ? 'CONFIRMED' : 'FIXED', { generateVariantRewrote: /BRAVO/.test(genPrompt) ? 'BRAVO (textarea)' : '?', arrowFrom: `${s.lineFrom} (${((s.sources.find(c => c.id === s.lineFrom) || {}).text) || '?'}…)`, sourceCards: s.sources.length, experimentRewrote: /ALPHA/.test(expPrompt) ? 'ALPHA (card)' : '?' });
   });
@@ -454,7 +529,7 @@ async function scenario(id, name, opts, fn) {
   });
 
   await scenario('X08', 'Mid-stream SSE error: truncated text is saved as a finished variant', {
-    override: ({ kind, prompt }) => kind === 'rewrite-stream' ? { sse: sse('ONE two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty END', { midstreamError: true }) } : null,
+    override: ({ kind, prompt }) => kind === 'rewrite' ? { sse: sse('ONE two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty END', { midstreamError: true }) } : null,
   }, async ({ page, errors }) => {
     await setKey(page); await addSource(page); await closeAnalysis(page);
     const id = await generate(page);
@@ -476,7 +551,7 @@ async function scenario(id, name, opts, fn) {
   });
 
   await scenario('X10', 'Clear during an in-flight generation does not cancel the request', {
-    delay: ({ kind }) => kind === 'rewrite-stream' ? 2000 : 0,
+    delay: ({ kind }) => kind === 'rewrite' ? 2000 : 0,
   }, async ({ page, mock }) => {
     const failed = [];
     page.on('requestfailed', r => { if (/api\.anthropic\.com/.test(r.url())) failed.push(r.failure() && r.failure().errorText); });
@@ -521,7 +596,7 @@ async function scenario(id, name, opts, fn) {
     const cardsBefore = await page.$$eval('.card', e => e.length);
     if (s.buttonEnabled) { await page.click('#generateFromSuggestionBtn'); await page.waitForTimeout(500); }
     const cardsAfter = await page.$$eval('.card', e => e.length);
-    record('X13', 'Suggestion desync', (s.panelVisible && s.itemLooksSelected && s.buttonEnabled && cardsAfter === cardsBefore && mock.count('rewrite-stream') === 0) ? 'CONFIRMED' : 'FIXED', { ...s, clickProducedCard: cardsAfter > cardsBefore, requestsSent: mock.count('rewrite-stream') });
+    record('X13', 'Suggestion desync', (s.panelVisible && s.itemLooksSelected && s.buttonEnabled && cardsAfter === cardsBefore && mock.count('rewrite') === 0) ? 'CONFIRMED' : 'FIXED', { ...s, clickProducedCard: cardsAfter > cardsBefore, requestsSent: mock.count('rewrite') });
   });
 
   await scenario('X14', 'Modals: Escape does not close them; focus is not trapped; no dialog semantics', {}, async ({ page }) => {
@@ -624,6 +699,25 @@ async function scenario(id, name, opts, fn) {
     const phase = await page.textContent('#agentPhase');
     const ok = phase === 'Error' && /writer failed/.test(last) && mock.log.length === atEnd && mock.log.length < 24;
     record('X20', 'Ablation fail-fast', ok ? 'FIXED' : 'CONFIRMED', { phase, lastLog: last, callsMade: mock.log.length, callsAfterEnd: mock.log.length - atEnd, fullRunWouldBe: 1 + 16 + 8 * 3 });
+  });
+
+
+  await scenario('X21', 'Researcher: a web-search turn the API pauses (pause_turn) is cut short instead of resumed', {
+    override: ({ kind, body }) => {
+      if (kind !== 'research') return null;
+      if (body.messages.length > 1) return { json: jsonMsg(body.model, '- FINAL finding after resuming (source: example.com)') };
+      return { json: jsonMsg(body.model, '', { stop_reason: 'pause_turn', content: [{ type: 'text', text: 'Searching first…' }, { type: 'server_tool_use', id: 'srvtoolu_1', name: 'web_search', input: { query: 'landing pages' } }] }) };
+    },
+  }, async ({ page, mock }) => {
+    await setKey(page); await addSource(page); await closeAnalysis(page);
+    await page.click('#swarmBtn'); await page.fill('#swarmGoal', 'Punchy landing-page copy');
+    await page.check('#swarmResearch'); await page.click('#swarmStart');
+    await page.waitForFunction(() => /Complete|Error|Stopped/.test(document.getElementById('agentPhase').textContent), null, { timeout: 20000 });
+    const research = mock.log.filter(e => e.kind === 'research');
+    const resumedTurn = research[1] ? research[1].body.messages.map(m => m.role).join('>') : null;
+    const card = await page.evaluate(() => { const c = document.querySelector('.card.research'); return c ? c.querySelector('.card-content').textContent : null; });
+    const fixed = research.length === 2 && resumedTurn === 'user>assistant' && /FINAL finding/.test(card || '');
+    record('X21', 'Researcher pause_turn', fixed ? 'FIXED' : 'CONFIRMED', { researchRequests: research.length, resumedTurn, researchCard: card && card.slice(0, 80) });
   });
 
   await browser.close(); server.close();

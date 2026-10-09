@@ -11,7 +11,9 @@ const {
   toneLabel,
   lengthLabel,
   complexityLabel,
-  buildParamPrompt,
+  REWRITE_SYSTEM,
+  buildParamRequest,
+  buildSuggestionRequest,
   lcsParts,
   computeDiff,
   computeDiffStats,
@@ -305,38 +307,53 @@ test('complexityLabel: boundary values map to the labels defined in util.js', ()
 });
 
 // ---------------------------------------------------------------------------
-// buildParamPrompt
+// buildParamRequest / buildSuggestionRequest
 // ---------------------------------------------------------------------------
 
-test('buildParamPrompt: includes original text, labels, and audience/intent', () => {
-  const prompt = buildParamPrompt('Hello world', 50, -50, 0, 'general readers', 'inform');
+test('buildParamRequest: original text in the cached block, labels and audience/intent in the prompt', () => {
+  const req = buildParamRequest('Hello world', 50, -50, 0, 'general readers', 'inform');
 
-  // Original text is included verbatim.
-  assert.match(prompt, /Hello world/);
+  // Original text goes in the cached prefix, not the per-request prompt.
+  assert.match(req.cached, /Hello world/);
+  assert.doesNotMatch(req.prompt, /Hello world/);
 
   // Correct label words for the given slider values.
-  assert.match(prompt, /Tone: Formal/);
-  assert.match(prompt, /Length: Shorter/);
-  assert.match(prompt, /Complexity: Moderate/);
+  assert.match(req.prompt, /Tone: Formal/);
+  assert.match(req.prompt, /Length: Shorter/);
+  assert.match(req.prompt, /Complexity: Moderate/);
 
   // Audience/intent values are included.
-  assert.match(prompt, /Audience: general readers/);
-  assert.match(prompt, /Intent: inform/);
+  assert.match(req.prompt, /Audience: general readers/);
+  assert.match(req.prompt, /Intent: inform/);
 });
 
-test('buildParamPrompt: directive phrasing follows the sign of each slider', () => {
-  const positive = buildParamPrompt('x', 10, 10, 10, 'a', 'i');
+test('buildParamRequest: directive phrasing follows the sign of each slider', () => {
+  const positive = buildParamRequest('x', 10, 10, 10, 'a', 'i').prompt;
   assert.match(positive, /more formal/);
   assert.match(positive, /expand and elaborate/);
   assert.match(positive, /use more sophisticated vocabulary/);
 
-  const negative = buildParamPrompt('x', -10, -10, -10, 'a', 'i');
+  const negative = buildParamRequest('x', -10, -10, -10, 'a', 'i').prompt;
   assert.match(negative, /more casual/);
   assert.match(negative, /condense and shorten/);
   assert.match(negative, /use simpler words/);
 
-  const zero = buildParamPrompt('x', 0, 0, 0, 'a', 'i');
+  const zero = buildParamRequest('x', 0, 0, 0, 'a', 'i').prompt;
   assert.match(zero, /keep similar\)/);
   assert.match(zero, /keep similar length/);
   assert.match(zero, /keep similar complexity/);
+});
+
+test('rewrite requests for the same source share system + cached block byte for byte', () => {
+  const a = buildParamRequest('Same source.', 0, 0, 0, 'general', 'inform');
+  const b = buildParamRequest('Same source.', 80, -40, 20, 'technical', 'persuade');
+  const c = buildSuggestionRequest('Same source.', '1. Lead with the benefit.');
+  assert.equal(a.system, REWRITE_SYSTEM);
+  assert.equal(b.system, a.system);
+  assert.equal(c.system, a.system);
+  assert.equal(b.cached, a.cached);
+  assert.equal(c.cached, a.cached);
+  assert.notEqual(b.prompt, a.prompt);
+  assert.match(c.prompt, /Lead with the benefit/);
+  assert.match(REWRITE_SYSTEM, /ONLY the rewritten text/);
 });

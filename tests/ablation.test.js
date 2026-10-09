@@ -150,32 +150,32 @@ test('ablVerdict: never asserts statistical significance in any branch', () => {
 // ---------------------------------------------------------------------------
 
 const PRICING = {
-  'claude-opus-4-8': { in: 5, out: 25 },
-  'claude-sonnet-5': { in: 2, out: 10 },
-  'claude-haiku-4-5': { in: 1, out: 5 },
+  'claude-opus-5-5': { in: 4, out: 20 },
+  'claude-sonnet-5-5': { in: 2, out: 10 },
+  'claude-haiku-5-5': { in: 0.1, out: 0.5 },
 };
 
 test('ablCostEstimate: returns a positive number', () => {
-  const c = ablCostEstimate(PRICING, 'claude-sonnet-5', 3, 'critic');
+  const c = ablCostEstimate(PRICING, 'claude-sonnet-5-5', 3, 'critic');
   assert.equal(typeof c, 'number');
   assert.ok(c > 0);
 });
 
 test('ablCostEstimate: the critic factor costs more than the research factor (extra per-trial stages)', () => {
-  const critic = ablCostEstimate(PRICING, 'claude-sonnet-5', 3, 'critic');
-  const research = ablCostEstimate(PRICING, 'claude-sonnet-5', 3, 'research');
+  const critic = ablCostEstimate(PRICING, 'claude-sonnet-5-5', 3, 'critic');
+  const research = ablCostEstimate(PRICING, 'claude-sonnet-5-5', 3, 'research');
   assert.ok(critic > research, `critic ${critic} should exceed research ${research}`);
 });
 
 test('ablCostEstimate: cost scales up with more trials', () => {
-  const three = ablCostEstimate(PRICING, 'claude-sonnet-5', 3, 'critic');
-  const eight = ablCostEstimate(PRICING, 'claude-sonnet-5', 8, 'critic');
+  const three = ablCostEstimate(PRICING, 'claude-sonnet-5-5', 3, 'critic');
+  const eight = ablCostEstimate(PRICING, 'claude-sonnet-5-5', 8, 'critic');
   assert.ok(eight > three);
 });
 
 test('ablCostEstimate: a pricier model costs more for the same run', () => {
-  const sonnet = ablCostEstimate(PRICING, 'claude-sonnet-5', 3, 'critic');
-  const opus = ablCostEstimate(PRICING, 'claude-opus-4-8', 3, 'critic');
+  const sonnet = ablCostEstimate(PRICING, 'claude-sonnet-5-5', 3, 'critic');
+  const opus = ablCostEstimate(PRICING, 'claude-opus-5-5', 3, 'critic');
   assert.ok(opus > sonnet);
 });
 

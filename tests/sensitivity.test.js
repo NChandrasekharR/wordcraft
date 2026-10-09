@@ -40,8 +40,8 @@ test('sensHash: replicates the djb2 the experiment pool uses', () => {
     for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) >>> 0;
     return h.toString(36);
   };
-  assert.equal(sensHash('claude-opus-4-8\0hello'), djb2('claude-opus-4-8\0hello'));
-  assert.equal(sensPoolKey('claude-opus-4-8', 'hello'), djb2('claude-opus-4-8\0hello'));
+  assert.equal(sensHash('claude-opus-5-5\0hello'), djb2('claude-opus-5-5\0hello'));
+  assert.equal(sensPoolKey('claude-opus-5-5', 'hello'), djb2('claude-opus-5-5\0hello'));
 });
 
 // ---------------------------------------------------------------------------
@@ -289,18 +289,18 @@ test('sensRelativeTime: buckets seconds/minutes/hours/days', () => {
 // ---------------------------------------------------------------------------
 
 test('sensCostEstimate: scales with generation count and is model-sensitive', () => {
-  const opus = sensCostEstimate('claude-opus-4-8', 12, 2);
-  const haiku = sensCostEstimate('claude-haiku-4-5', 12, 2);
+  const opus = sensCostEstimate('claude-opus-5-5', 12, 2);
+  const haiku = sensCostEstimate('claude-haiku-5-5', 12, 2);
   assert.ok(opus > haiku, 'opus costs more than haiku');
-  assert.ok(sensCostEstimate('claude-opus-4-8', 24, 2) > opus, 'more gens cost more');
+  assert.ok(sensCostEstimate('claude-opus-5-5', 24, 2) > opus, 'more gens cost more');
   assert.ok(opus > 0);
 });
 
 test('sensCostEstimate: judge model is haiku regardless of gen model', () => {
-  assert.equal(SENS_JUDGE_MODEL, 'claude-haiku-4-5');
+  assert.equal(SENS_JUDGE_MODEL, 'claude-haiku-5-5');
   // Two runs differing only in judge count differ by the haiku judge cost.
-  const one = sensCostEstimate('claude-opus-4-8', 12, 1);
-  const two = sensCostEstimate('claude-opus-4-8', 12, 2);
+  const one = sensCostEstimate('claude-opus-5-5', 12, 1);
+  const two = sensCostEstimate('claude-opus-5-5', 12, 2);
   assert.ok(two > one);
 });
 

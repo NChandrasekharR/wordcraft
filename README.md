@@ -83,7 +83,7 @@ The `docs/` folder contains a design exploration on agentic UX:
 Visit [nchandrasekharr.github.io/wordcraft](https://nchandrasekharr.github.io/wordcraft/) or open `index.html` locally.
 
 ### 2. Add Your API Key
-Click the **API Key** button in the top-right toolbar. Enter your Anthropic API key and pick a model (Claude Opus 4.8, Sonnet 5, or Haiku 4.5). The key is stored only in your browser and never sent anywhere except directly to Anthropic's API — uncheck "Remember key on this device" on shared machines to keep it for the current tab session only.
+Click the **API Key** button in the top-right toolbar. Enter your Anthropic API key and pick a model (Claude Opus 5.5, Sonnet 5.5, or Haiku 5.5). Scoring roles (the semantic judge, the swarm critic and judge) always run on Haiku 5.5. The key is stored only in your browser and never sent anywhere except directly to Anthropic's API — uncheck "Remember key on this device" on shared machines to keep it for the current tab session only.
 
 > **Get an API key:** Visit [console.anthropic.com](https://console.anthropic.com/) to create an account and generate an API key.
 
@@ -140,10 +140,13 @@ python -m http.server 8000  # then visit localhost:8000
 Wordcraft uses the Anthropic Claude API directly from the browser using the `anthropic-dangerous-direct-browser-access` header. Your API key is stored in localStorage and requests go directly to Anthropic's servers—no backend required.
 
 ### Architecture
-- **No build step** — `index.html` + `css/styles.css` + five plain scripts under `js/` (util, api, app, swarm, experiment); open the file or serve the folder
+- **No build step** — `index.html` + `css/styles.css` + eight plain scripts under `js/` (util, api, measure, app, swarm, ablation, experiment, sensitivity); open the file or serve the folder
 - **No dependencies** — Pure vanilla JavaScript
 - **BYOK (Bring Your Own Key)** — Uses your Anthropic API key
-- **Structured outputs + streaming** — analysis/critique/swarm roles get schema-guaranteed JSON; rewrites stream into their cards live
+- **Streaming + structured outputs** — every request streams (rewrites fill their cards live); analysis, critique, judge and planner roles get schema-guaranteed JSON
+- **Prompt caching** — stable content comes first: the system prompt and your source text (or the swarm's brief) form a cached prefix that every rewrite of the same text reads at a fraction of the input price. When several requests share that prefix (an experiment, a sensitivity sweep, swarm writers), the first goes out alone and the rest wait until it starts streaming, so they read its cache entry instead of each paying full price
+- **Token budget** — effort is pinned per kind of call (`low` for rewrites and scoring, `medium` elsewhere), since thinking counts toward output tokens; the swarm panel shows tokens, how many came from cache, and the running cost
+- **Refusal fallback** — Opus 5.5 and Sonnet 5.5 requests opt into server-side fallback, so a safety-classifier false positive is re-run on another model instead of failing
 - **Local storage** — API key (opt-out to session-only), canvas, and experiment baselines persist in your browser
 - **Client-side only** — No server, no tracking, no data collection
 

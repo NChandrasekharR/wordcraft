@@ -15,6 +15,8 @@ const {
   buildJudgePrompt,
   normalizeJudgeScores,
   JUDGE_MAX_CHARS,
+  JUDGE_MODEL,
+  judgeMaxTokens,
 } = require('../js/measure.js');
 
 // ---------------------------------------------------------------------------
@@ -173,4 +175,18 @@ test('normalizeJudgeScores: ignores extra pairs as long as required ones are pre
     2
   );
   assert.deepEqual(out, [0.2, 0.4]);
+});
+
+// ---------------------------------------------------------------------------
+// judge model + max_tokens scaling
+// ---------------------------------------------------------------------------
+
+test('judge runs on Haiku 5.5', () => {
+  assert.equal(JUDGE_MODEL, 'claude-haiku-5-5');
+});
+
+test('judgeMaxTokens: grows with the batch, leaves room for thinking, stays capped', () => {
+  assert.ok(judgeMaxTokens(1) >= 2048);
+  assert.ok(judgeMaxTokens(30) > judgeMaxTokens(3));
+  assert.equal(judgeMaxTokens(100000), 16000);
 });
