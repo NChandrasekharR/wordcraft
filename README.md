@@ -41,6 +41,7 @@ The `docs/` folder contains a design exploration on agentic UX:
 - [`agent-lab-talk.md`](docs/agent-lab-talk.md) — a talk-length version (slides + speaker notes)
 - [`agent-lab-related-work.md`](docs/agent-lab-related-work.md) — how shipping agent products compare
 - [`agent-lab-deck.html`](docs/agent-lab-deck.html) — a self-contained slide deck (open in a browser; ← / → to navigate)
+- [`teaser.html`](docs/teaser.html) — a 50-second motion teaser of the app's capabilities, with a scrubbable storyboard (open in a browser; Space plays or pauses)
 
 ### Parametric Text Generation
 - **Tone** — Slide from casual to formal
