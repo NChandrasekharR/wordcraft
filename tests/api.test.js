@@ -10,6 +10,7 @@ const assert = require('node:assert/strict');
 
 const {
   MODEL_OPTIONS, DEFAULT_MODEL, CHEAP_MODEL, MODEL_PRICING, EFFORT, FALLBACK_BETA,
+  WORKSPACE_ID_RE, explainApiError,
   resolveModel, webSearchTool, usageCost, extractText,
   cachedUserTurn, buildRequestBody, anthropicHeaders, cachePrefixInfo, prefixGateKey,
   apiGateFor, createMessageAccumulator, mergeSegments,
@@ -76,20 +77,47 @@ test('buildRequestBody: refusal fallback on Opus/Sonnet 5.5 only', () => {
   assert.ok(!('fallbacks' in mk('claude-haiku-5-5')));
 });
 
+// Minimal Web Storage stand-ins for the browser-only getters.
+function withStorage(local, session, fn) {
+  global.localStorage = { getItem: k => (k in local ? local[k] : null) };
+  global.sessionStorage = { getItem: k => (k in session ? session[k] : null) };
+  try { return fn(); } finally { delete global.localStorage; delete global.sessionStorage; }
+}
+
 test('anthropicHeaders: beta header only when the body opts into fallbacks', () => {
-  global.localStorage = { getItem: () => 'sk-ant-test' };
-  global.sessionStorage = { getItem: () => null };
-  try {
+  withStorage({ anthropic_api_key: 'sk-ant-test' }, {}, () => {
     const withFb = anthropicHeaders(buildRequestBody({ model: 'claude-opus-5-5', messages: [], maxTokens: 1 }));
     const without = anthropicHeaders(buildRequestBody({ model: 'claude-haiku-5-5', messages: [], maxTokens: 1 }));
     assert.equal(withFb['anthropic-beta'], FALLBACK_BETA);
     assert.equal(FALLBACK_BETA, 'server-side-fallback-2026-07-01');
     assert.ok(!('anthropic-beta' in without));
     assert.equal(withFb['x-api-key'], 'sk-ant-test');
-  } finally {
-    delete global.localStorage;
-    delete global.sessionStorage;
+    assert.ok(!('anthropic-workspace-id' in withFb), 'no workspace header without a workspace ID');
+  });
+});
+
+test('anthropicHeaders: sends the stored workspace ID (session copy wins, like the key)', () => {
+  const body = buildRequestBody({ model: 'claude-haiku-5-5', messages: [], maxTokens: 1 });
+  withStorage({ anthropic_api_key: 'k', anthropic_workspace_id: 'wrkspc_01Local' }, {}, () => {
+    assert.equal(anthropicHeaders(body)['anthropic-workspace-id'], 'wrkspc_01Local');
+  });
+  withStorage({ anthropic_api_key: 'k', anthropic_workspace_id: 'wrkspc_01Local' }, { anthropic_workspace_id: 'wrkspc_01Session' }, () => {
+    assert.equal(anthropicHeaders(body)['anthropic-workspace-id'], 'wrkspc_01Session');
+  });
+});
+
+test('WORKSPACE_ID_RE: accepts wrkspc_ IDs, rejects typos and whitespace', () => {
+  assert.ok(WORKSPACE_ID_RE.test('wrkspc_01XFDUDYJgAACzvnptvVoYEL'));
+  for (const bad of ['', 'wrkspc_', 'wrkspc_01 abc', ' wrkspc_01abc', 'workspace_01abc', 'sk-ant-api03-x']) {
+    assert.ok(!WORKSPACE_ID_RE.test(bad), bad);
   }
+});
+
+test('explainApiError: workspace errors become in-app instructions; others pass through', () => {
+  const unscoped = explainApiError('This API key is not scoped to a workspace, so this request must include the anthropic-workspace-id header with the ID of the workspace to use. Add the header, or use an API key that is scoped to a workspace.');
+  assert.match(unscoped, /Open API Key and add your workspace ID/);
+  assert.match(explainApiError('anthropic-workspace-id header must be a valid workspace ID.'), /workspace ID isn't valid/);
+  assert.equal(explainApiError('Overloaded'), 'Overloaded');
 });
 
 test('cachedUserTurn: shared text first with the breakpoint, tail after it', () => {

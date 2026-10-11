@@ -122,6 +122,7 @@
     const apiKeyCancel = document.getElementById('apiKeyCancel');
     const apiKeySave = document.getElementById('apiKeySave');
     const apiKeyRemember = document.getElementById('apiKeyRemember');
+    const workspaceIdInput = document.getElementById('workspaceIdInput');
     const modelSelect = document.getElementById('modelSelect');
 
     // Comparison Panel elements
@@ -229,6 +230,7 @@
 
     function showApiKeyModal() {
       apiKeyInput.value = getApiKey();
+      workspaceIdInput.value = getWorkspaceId();
       modelSelect.value = getModel();
       // Reflect where the current key lives: unchecked only if it's a
       // session-only key; checked (the default) if it's in localStorage or
@@ -245,9 +247,15 @@
       pendingApiAction = null;
     }
 
+    function forgetWorkspaceId() {
+      localStorage.removeItem('anthropic_workspace_id');
+      try { sessionStorage.removeItem('anthropic_workspace_id'); } catch (e) {}
+    }
+
     function forgetApiKey() {
       localStorage.removeItem('anthropic_api_key');
       try { sessionStorage.removeItem('anthropic_api_key'); } catch (e) {}
+      forgetWorkspaceId();
     }
 
     function saveApiKey() {
@@ -264,12 +272,21 @@
         }
         return;
       }
+      const workspaceId = workspaceIdInput.value.trim();
+      if (workspaceId && !WORKSPACE_ID_RE.test(workspaceId)) {
+        showToast('That doesn\'t look like a workspace ID. Workspace IDs start with wrkspc_.', { tone: 'error' });
+        workspaceIdInput.focus();
+        return;
+      }
+      forgetWorkspaceId();
       if (apiKeyRemember.checked) {
         localStorage.setItem('anthropic_api_key', key);
         try { sessionStorage.removeItem('anthropic_api_key'); } catch (e) {}
+        if (workspaceId) localStorage.setItem('anthropic_workspace_id', workspaceId);
       } else {
         try { sessionStorage.setItem('anthropic_api_key', key); } catch (e) {}
         localStorage.removeItem('anthropic_api_key');
+        try { if (workspaceId) sessionStorage.setItem('anthropic_workspace_id', workspaceId); } catch (e) {}
       }
       updateApiKeyStatus();
       // hideApiKeyModal() clears pendingApiAction, so take it first.
@@ -295,6 +312,10 @@
     apiKeyBtn.addEventListener('click', showApiKeyModal);
     apiKeyCancel.addEventListener('click', hideApiKeyModal);
     apiKeySave.addEventListener('click', saveApiKey);
+    workspaceIdInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') saveApiKey();
+      if (e.key === 'Escape') hideApiKeyModal();
+    });
     apiKeyInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') saveApiKey();
       if (e.key === 'Escape') hideApiKeyModal();

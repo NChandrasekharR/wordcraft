@@ -85,6 +85,31 @@
       return localStorage.getItem('anthropic_api_key') || '';
     }
 
+    // Workspace ID for keys that aren't scoped to one workspace: the API then
+    // requires an anthropic-workspace-id header. Stored next to the key, with
+    // the same remember-on-this-device choice.
+    const WORKSPACE_ID_RE = /^wrkspc_[A-Za-z0-9]+$/;
+    function getWorkspaceId() {
+      try {
+        const sessionId = sessionStorage.getItem('anthropic_workspace_id');
+        if (sessionId) return sessionId;
+      } catch (e) {
+        // sessionStorage may be unavailable (e.g. private browsing); fall through
+      }
+      return localStorage.getItem('anthropic_workspace_id') || '';
+    }
+
+    // Turn API errors the user can fix in Wordcraft into instructions.
+    function explainApiError(message) {
+      if (/not scoped to a workspace/i.test(message)) {
+        return 'This API key isn\'t tied to a workspace. Open API Key and add your workspace ID (it starts with wrkspc_), or use a key created inside a workspace.';
+      }
+      if (/anthropic-workspace-id/i.test(message) && /valid workspace ID/i.test(message)) {
+        return 'The workspace ID isn\'t valid. Open API Key and check it; it starts with wrkspc_01.';
+      }
+      return message;
+    }
+
     // Cost of one response's usage in dollars. Cache writes and reads are
     // priced separately from uncached input. For a server-side fallback the
     // top-level usage covers the attempt that produced the message, priced at
@@ -158,6 +183,8 @@
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       };
+      const workspaceId = getWorkspaceId();
+      if (workspaceId) headers['anthropic-workspace-id'] = workspaceId;
       if (body && body.fallbacks) headers['anthropic-beta'] = FALLBACK_BETA;
       return headers;
     }
@@ -426,7 +453,7 @@
             ctl.done();
             gate.failed();
             const error = await response.json().catch(() => ({}));
-            lastError = new Error((error.error && error.error.message) || `API request failed (${response.status})`);
+            lastError = new Error(explainApiError((error.error && error.error.message) || `API request failed (${response.status})`));
             if (!RETRYABLE_STATUSES.includes(response.status)) throw lastError;
             waitMs = retryAfterMs(response);
             continue;
@@ -552,6 +579,7 @@
     if (typeof module !== 'undefined' && module.exports) {
       module.exports = {
         MODEL_OPTIONS, DEFAULT_MODEL, CHEAP_MODEL, MODEL_PRICING, EFFORT, FALLBACK_BETA,
+        WORKSPACE_ID_RE, explainApiError,
         resolveModel, webSearchTool, usageCost, extractText,
         cachedUserTurn, buildRequestBody, anthropicHeaders, cachePrefixInfo, prefixGateKey,
         apiGateFor, createMessageAccumulator, mergeSegments

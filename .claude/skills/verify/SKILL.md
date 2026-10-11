@@ -49,8 +49,10 @@ node --test tests/    # js/util.js via its module.exports shim
     prefix (source text / brief, with `cache_control`) comes first and the
     per-request instructions after it. Join the block texts before matching.
 - Set a fake key via the API Key modal (`#apiKeyBtn` → `#apiKeyInput` →
-  `#apiKeySave`) before any generation. The modal also has `#modelSelect` and
-  the `#apiKeyRemember` checkbox (unchecked → sessionStorage).
+  `#apiKeySave`) before any generation. The modal also has `#modelSelect`,
+  the optional `#workspaceIdInput` (sent as `anthropic-workspace-id`; must
+  match `wrkspc_…`) and the `#apiKeyRemember` checkbox (unchecked →
+  sessionStorage, for the workspace ID too).
 
 ## Gotchas
 
@@ -60,7 +62,8 @@ node --test tests/    # js/util.js via its module.exports shim
   transitions: hover `.card .card-header`, `waitForTimeout(500)`, then click.
 - Persistence saves are debounced ~400ms — wait ~700ms before reloading.
   localStorage keys: `wordcraft_canvas_v1`, `wordcraft_model`,
-  `wordcraft_exp_baselines_v1`, `anthropic_api_key` (+ sessionStorage).
+  `wordcraft_exp_baselines_v1`, `anthropic_api_key`, `anthropic_workspace_id`
+  (+ sessionStorage).
 - There are NO native dialogs anymore — Clear and errors use toasts
   (`.toast`, `.toast-message`, `.toast-action`). Clear is two-step: click
   `#clearBtn`, then the toast's "Confirm clear" action.

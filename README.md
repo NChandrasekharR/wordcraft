@@ -83,7 +83,7 @@ The `docs/` folder contains a design exploration on agentic UX:
 Visit [nchandrasekharr.github.io/wordcraft](https://nchandrasekharr.github.io/wordcraft/) or open `index.html` locally.
 
 ### 2. Add Your API Key
-Click the **API Key** button in the top-right toolbar. Enter your Anthropic API key and pick a model (Claude Opus 5.5, Sonnet 5.5, or Haiku 5.5). Scoring roles (the semantic judge, the swarm critic and judge) always run on Haiku 5.5. The key is stored only in your browser and never sent anywhere except directly to Anthropic's API — uncheck "Remember key on this device" on shared machines to keep it for the current tab session only.
+Click the **API Key** button in the top-right toolbar. Enter your Anthropic API key and pick a model (Claude Opus 5.5, Sonnet 5.5, or Haiku 5.5). Scoring roles (the semantic judge, the swarm critic and judge) always run on Haiku 5.5. The key is stored only in your browser and never sent anywhere except directly to Anthropic's API — uncheck "Remember key on this device" on shared machines to keep it for the current tab session only. If your key isn't tied to a single workspace, the API asks for a workspace ID: paste it into **Workspace ID** (it starts with `wrkspc_`; find it in the Console under Settings → Workspaces).
 
 > **Get an API key:** Visit [console.anthropic.com](https://console.anthropic.com/) to create an account and generate an API key.
 

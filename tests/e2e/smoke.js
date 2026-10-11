@@ -172,7 +172,7 @@ function makeMock(opts = {}) {
     try { body = JSON.parse(req.postData() || '{}'); } catch (e) {}
     const kind = classify(body);
     const prompt = body.messages && body.messages[0] ? textOf(body.messages[0].content) : '';
-    const entry = { idx: n++, kind, model: body.model, max_tokens: body.max_tokens, t: Date.now(), prompt, system: textOf(body.system), body, beta: req.headers()['anthropic-beta'] || null, done: false, aborted: false };
+    const entry = { idx: n++, kind, model: body.model, max_tokens: body.max_tokens, t: Date.now(), prompt, system: textOf(body.system), body, beta: req.headers()['anthropic-beta'] || null, workspace: req.headers()['anthropic-workspace-id'] || null, done: false, aborted: false };
     log.push(entry);
     let resp = opts.override ? await opts.override({ body, kind, entry, prompt, log }) : null;
     if (!resp) resp = defaultResponse(kind, body, prompt, opts);
@@ -258,7 +258,13 @@ async function scenario(id, name, opts, fn) {
     const a = await page.evaluate(() => ({ ls: !!localStorage.getItem('anthropic_api_key'), ss: !!sessionStorage.getItem('anthropic_api_key'), label: document.getElementById('apiKeyStatus').textContent }));
     await setKey(page, false);
     const b = await page.evaluate(() => ({ ls: !!localStorage.getItem('anthropic_api_key'), ss: !!sessionStorage.getItem('anthropic_api_key') }));
-    record('B02', 'API key storage', (a.ls && !a.ss && !b.ls && b.ss) ? 'PASS' : 'FAIL', { remembered: a, sessionOnly: b });
+    // Workspace ID: a malformed one is refused; a valid one follows the key's (session-only) storage.
+    await page.click('#apiKeyBtn'); await page.fill('#workspaceIdInput', 'not-a-workspace'); await page.click('#apiKeySave');
+    const refused = await page.evaluate(() => ({ modalOpen: document.getElementById('apiKeyModal').classList.contains('visible'), errorToast: !!document.querySelector('.toast-error'), stored: localStorage.getItem('anthropic_workspace_id') || sessionStorage.getItem('anthropic_workspace_id') }));
+    await page.fill('#workspaceIdInput', 'wrkspc_01XFDUDYJgAACzvnptvVoYEL'); await page.click('#apiKeySave');
+    const w = await page.evaluate(() => ({ ls: localStorage.getItem('anthropic_workspace_id'), ss: sessionStorage.getItem('anthropic_workspace_id') }));
+    const wsOk = refused.modalOpen && refused.errorToast && !refused.stored && w.ss === 'wrkspc_01XFDUDYJgAACzvnptvVoYEL' && !w.ls;
+    record('B02', 'API key storage', (a.ls && !a.ss && !b.ls && b.ss && wsOk) ? 'PASS' : 'FAIL', { remembered: a, sessionOnly: b, malformedWorkspace: refused, workspace: w });
   });
 
   await scenario('B03', 'Add source + analysis panel', {}, async ({ page, mock }) => {
@@ -718,6 +724,28 @@ async function scenario(id, name, opts, fn) {
     const card = await page.evaluate(() => { const c = document.querySelector('.card.research'); return c ? c.querySelector('.card-content').textContent : null; });
     const fixed = research.length === 2 && resumedTurn === 'user>assistant' && /FINAL finding/.test(card || '');
     record('X21', 'Researcher pause_turn', fixed ? 'FIXED' : 'CONFIRMED', { researchRequests: research.length, resumedTurn, researchCard: card && card.slice(0, 80) });
+  });
+
+
+  await scenario('X22', 'Key not scoped to a workspace: no way to send anthropic-workspace-id; raw API error shown', {
+    override: ({ entry }) => entry.workspace ? null : { status: 400, errType: 'invalid_request_error', message: 'This API key is not scoped to a workspace, so this request must include the anthropic-workspace-id header with the ID of the workspace to use. Add the header, or use an API key that is scoped to a workspace.' },
+  }, async ({ page, mock }) => {
+    const WS = 'wrkspc_01XFDUDYJgAACzvnptvVoYEL';
+    await setKey(page); await addSource(page);
+    const firstError = (await page.textContent('#analysisContent')).trim();
+    const guided = /workspace ID/.test(firstError) && /API Key/.test(firstError);
+    const hasField = (await page.$('#workspaceIdInput')) !== null;
+    let generated = false, stored = null;
+    if (hasField) {
+      await page.click('#apiKeyBtn'); await page.fill('#workspaceIdInput', WS); await page.click('#apiKeySave');
+      await closeAnalysis(page);
+      const id = await generate(page);
+      generated = await page.$eval(`#${id}`, c => c.classList.contains('variant'));
+      stored = await page.evaluate(() => localStorage.getItem('anthropic_workspace_id'));
+    }
+    const last = mock.log[mock.log.length - 1];
+    const fixed = guided && hasField && generated && last.workspace === WS && stored === WS;
+    record('X22', 'Unscoped key needs workspace ID', fixed ? 'FIXED' : 'CONFIRMED', { firstError: firstError.slice(0, 140), workspaceField: hasField, generatedAfterSaving: generated, headerSent: last.workspace, storedWorkspace: stored });
   });
 
   await browser.close(); server.close();
