@@ -42,7 +42,7 @@ P0 landed in `721e89c`; results in `tests/e2e/results/2026-09-25-after-p0/` — 
 
 - [x] **API upgrade** Opus 5.5 / Sonnet 5.5 / Haiku 5.5; one streaming request core; prompt caching (stable prefix first, cache-aware fan-out); effort pinned per route; refusal fallback on Opus/Sonnet; cache-aware pricing · probes B12, B13, X21 · `1b66f95` · results in `tests/e2e/results/2026-10-09-api-upgrade/` — 13 PASS, 17 FIXED, 4 CONFIRMED
 
-- [x] **Workspace ID** Keys not scoped to a workspace: optional Workspace ID field, sent as `anthropic-workspace-id`, stored with the key's remember choice; the API's workspace errors explain the fix in-app · probe X22
+- [x] **Workspace ID** Keys not scoped to a workspace: optional Workspace ID field, sent as `anthropic-workspace-id`, stored with the key's remember choice; the API's workspace errors explain the fix in-app · probe X22 · `25717c2`
 
 ## P2 — safety net & polish
 
