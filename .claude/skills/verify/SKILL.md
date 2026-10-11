@@ -40,12 +40,14 @@ node --test tests/    # js/util.js via its module.exports shim
     && !properties.ranking` → ablation blind judge, `properties.score &&
     properties.fix_instructions` → critic; ablation writer/editor carry an
     "ablation trial" system prompt; everything else is a rewrite.
-  - Rewrites are requested with `body.stream === true` → respond with
+  - Every request streams (`body.stream === true`) → respond with
     `contentType: 'text/event-stream'` and a proper SSE body
-    (message_start, content_block_start, several content_block_delta
-    text_delta chunks, content_block_stop, message_delta, message_stop).
-  - Non-streaming JSON calls → `{ content: [{type:'text', text}], stop_reason,
-    usage }`.
+    (message_start, content_block_start, content_block_delta text_delta
+    chunks, content_block_stop, message_delta, message_stop). The harness's
+    `sseFromMessage()` turns any JSON message into that stream.
+  - `system` and the user turn can be arrays of text blocks: the cached
+    prefix (source text / brief, with `cache_control`) comes first and the
+    per-request instructions after it. Join the block texts before matching.
 - Set a fake key via the API Key modal (`#apiKeyBtn` → `#apiKeyInput` →
   `#apiKeySave`) before any generation. The modal also has `#modelSelect` and
   the `#apiKeyRemember` checkbox (unchecked → sessionStorage).

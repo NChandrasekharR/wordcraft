@@ -18,7 +18,7 @@
        scope is shared across every js/*.js file. It reads existing globals
        (expPoolKey/getBaselinePool/addBaselineToPool from experiment.js,
        semanticDistancePairs/cachedSemanticDistance from measure.js,
-       callClaude/getModel from api.js, buildParamPrompt/computeDiffStats/
+       callClaude/getModel/EFFORT from api.js, buildParamRequest/computeDiffStats/
        escapeHtml/toneLabel… from util.js, currentSourceCard/sourceText/
        getCardText/showToast/requireApiKey from app.js) and never mutates them.
        ===================================================================== */
@@ -27,13 +27,13 @@
     const SENS_STORE = 'wordcraft_sensitivity_v1';
     const SENS_STORE_CAP = 10;
     const SENS_CONCURRENCY = 4;
-    const SENS_JUDGE_MODEL = 'claude-haiku-4-5';
+    const SENS_JUDGE_MODEL = 'claude-haiku-5-5';
     // Per-MTok pricing: api.js's MODEL_PRICING in the browser; the literal is
     // only a fallback so the pure helpers stay require()-able in Node tests.
     const SENS_PRICING = (typeof MODEL_PRICING !== 'undefined') ? MODEL_PRICING : {
-      'claude-opus-4-8': { in: 5, out: 25 },
-      'claude-sonnet-5': { in: 2, out: 10 },
-      'claude-haiku-4-5': { in: 1, out: 5 },
+      'claude-opus-5-5': { in: 4, out: 20 },
+      'claude-sonnet-5-5': { in: 2, out: 10 },
+      'claude-haiku-5-5': { in: 0.1, out: 0.5 },
     };
     // Rough per-call token assumptions for the cost estimate (labelled "rough").
     const SENS_GEN_IN_TOK = 400;
@@ -48,7 +48,7 @@
     const SENS_CLEAR_MARGIN = 0.05;
 
     // Neutral baseline params — identical to experiment.js's EXP_NEUTRAL and to
-    // buildParamPrompt(source,0,0,0,'general','inform').
+    // buildParamRequest(source,0,0,0,'general','inform').
     const SENS_NEUTRAL = { tone: 0, length: 0, complexity: 0, audience: 'general', intent: 'inform' };
 
     // --- pure helpers (exported via the Node shim; unit-tested) --------------
@@ -219,7 +219,7 @@
 
     // Rough $ estimate for a full run. PURE.
     function sensCostEstimate(genModel, genCount, judgeCount) {
-      const g = SENS_PRICING[genModel] || SENS_PRICING['claude-opus-4-8'];
+      const g = SENS_PRICING[genModel] || SENS_PRICING['claude-opus-5-5'];
       const j = SENS_PRICING[SENS_JUDGE_MODEL];
       const genCost = genCount * (SENS_GEN_IN_TOK * g.in + SENS_GEN_OUT_TOK * g.out) / 1e6;
       const judgeCost = judgeCount * (SENS_JUDGE_IN_TOK * j.in + SENS_JUDGE_OUT_TOK * j.out) / 1e6;
@@ -443,7 +443,8 @@
         const newBaselines = Math.max(0, 2 - existingPool.length);
 
         const points = sensSweepPoints({ toneLabel, lengthLabel, complexityLabel });
-        const baselinePrompt = buildParamPrompt(source, 0, 0, 0, 'general', 'inform');
+        // Every generation shares the cached prefix (system + source text).
+        const baselineRequest = buildParamRequest(source, 0, 0, 0, 'general', 'inform');
 
         sensController = trackedController();
         const signal = sensController.signal;
@@ -463,10 +464,10 @@
           //    only after the WHOLE batch succeeds (abort/partial never poisons).
           const baseFactories = [];
           for (let i = 0; i < newBaselines; i++) {
-            baseFactories.push(() => callClaude(baselinePrompt, { signal }).then(r => { sensMarkStep('base' + i); return r; }));
+            baseFactories.push(() => callClaude(baselineRequest, { signal, effort: EFFORT.rewrite }).then(r => { sensMarkStep('base' + i); return r; }));
           }
           const sweepFactories = points.map(p =>
-            () => callClaude(buildParamPrompt(source, p.params.tone, p.params.length, p.params.complexity, p.params.audience, p.params.intent), { signal }));
+            () => callClaude(buildParamRequest(source, p.params.tone, p.params.length, p.params.complexity, p.params.audience, p.params.intent), { signal, effort: EFFORT.rewrite }));
 
           const controller = sensController;
           const gen = await sensRunPool([...baseFactories, ...sweepFactories], SENS_CONCURRENCY, signal, () => controller.abort());

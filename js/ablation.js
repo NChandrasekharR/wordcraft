@@ -19,7 +19,8 @@
        Everything reuses swarm.js's callClaudeRaw so the cost meter / step
        counter in the agent panel keep working. This file modifies no other
        js/* module; it only READS globals declared earlier (getModel,
-       callClaudeRaw, swarm, SWARM_PRICING, CRITIC_SCHEMA, ROLES, createCard,
+       CHEAP_MODEL, webSearchTool, extractText, callClaudeRaw, resetSwarmUsage,
+       researchPrompt, swarm, SWARM_PRICING, CRITIC_SCHEMA, ROLES, createCard,
        finishVariantCard, connections, updateConnections, zoomToFit, logAgent,
        updateSwarmStats, escapeHtml, showToast, requireApiKey, …).
        ===================================================================== */
@@ -123,9 +124,9 @@
     // Rough cost estimate from SWARM_PRICING + per-stage token assumptions.
     // Pure: pricing is passed in so it is testable without the browser global.
     function ablCostEstimate(pricing, model, trials, factor) {
-      const HAIKU = 'claude-haiku-4-5';
+      const CHEAP = 'claude-haiku-5-5'; // api.js CHEAP_MODEL (critic)
       const gen = pricing[model] || { in: 0, out: 0 };
-      const cheap = pricing[HAIKU] || { in: 0, out: 0 };
+      const cheap = pricing[CHEAP] || { in: 0, out: 0 };
       const t = ABL_TOKENS;
       const c = (stage, p) => (stage.in / 1e6) * p.in + (stage.out / 1e6) * p.out;
 
@@ -133,7 +134,7 @@
       total += trials * c(t.writer, gen); // arm A: N writers
       total += trials * c(t.writer, gen); // arm B: N writers
       if (factor === 'critic') {
-        total += trials * c(t.critic, cheap); // N critics (haiku)
+        total += trials * c(t.critic, cheap); // N critics (cheap model)
         total += trials * c(t.editor, gen);   // N editors
       } else if (factor === 'research') {
         total += c(t.research, gen);          // one shared research pass
@@ -173,27 +174,17 @@
       const ABL_EDITOR_SYS = 'You are the Editor in an ablation trial. Revise the draft so it resolves every fix instruction while honoring the brief. Output ONLY the revised prose — no preamble.';
       const ABL_JUDGE_SYS = 'You are a blind judge in an ablation study. You see two anonymized candidate texts and the brief they must serve. You do NOT know which pipeline produced which text. Pick the ONE that better serves the brief. Output only the winner (1 or 2) and a one-sentence reason.';
 
-      // -- thin wrappers over callClaudeRaw (tracks swarm.usage / steps) ----
-      function ablExtractText(data) {
-        return (data.content || [])
-          .filter(b => b.type === 'text')
-          .map(b => b.text)
-          .join('\n')
-          .trim();
+      // -- thin wrappers over callClaudeRaw (tracks swarm usage / steps) ----
+      // `cached` is the part sibling calls share (brief, source, research);
+      // trials of the same arm send identical prefixes, so every call after
+      // the first reads them from the prompt cache.
+      async function ablText({ system, prompt, cached, model, tools, maxTokens, signal }) {
+        const data = await callClaudeRaw({ system, prompt, cached, tools, model, maxTokens, signal });
+        return extractText(data);
       }
-      async function ablText({ system, prompt, model, tools, maxTokens, signal }) {
-        const data = await callClaudeRaw({
-          system, messages: [{ role: 'user', content: prompt }],
-          tools, model, maxTokens, signal
-        });
-        return ablExtractText(data);
-      }
-      async function ablJson({ system, prompt, model, schema, maxTokens, signal }) {
-        const data = await callClaudeRaw({
-          system, messages: [{ role: 'user', content: prompt }],
-          model, maxTokens, signal, outputSchema: schema
-        });
-        return parseJson(ablExtractText(data));
+      async function ablJson({ system, prompt, cached, model, schema, maxTokens, signal }) {
+        const data = await callClaudeRaw({ system, prompt, cached, model, maxTokens, signal, outputSchema: schema });
+        return parseJson(extractText(data));
       }
 
       // -- pipeline stages --------------------------------------------------
@@ -201,42 +192,42 @@
         const ctx = research ? `\n\nResearch brief to draw on:\n${research}` : '';
         return ablText({
           system: ABL_WRITER_SYS,
-          prompt: `Brief/goal:\n${goal || '(none given — produce a strong, faithful rewrite)'}${ctx}\n\nSource text:\n${source}`,
-          model: getModel(), maxTokens: 1200, signal
+          cached: `Brief/goal:\n${goal || '(none given — produce a strong, faithful rewrite)'}${ctx}\n\nSource text:\n${source}`,
+          model: getModel(), maxTokens: 8192, signal
         });
       }
       async function ablCritic(goal, draft, signal) {
         return ablJson({
           system: ROLES.critic,
-          prompt: `Brief:\n${goal}\n\nDraft:\n${draft}`,
-          model: 'claude-haiku-4-5', schema: CRITIC_SCHEMA, maxTokens: 700, signal
+          cached: `Brief:\n${goal}`,
+          prompt: `Draft:\n${draft}`,
+          model: CHEAP_MODEL, schema: CRITIC_SCHEMA, maxTokens: 4096, signal
         });
       }
       async function ablEditor(goal, draft, fixes, signal) {
         return ablText({
           system: ABL_EDITOR_SYS,
-          prompt: `Brief:\n${goal}\n\nFix instructions:\n- ${fixes}\n\nCurrent draft:\n${draft}`,
-          model: getModel(), maxTokens: 1200, signal
+          cached: `Brief:\n${goal}`,
+          prompt: `Fix instructions:\n- ${fixes}\n\nCurrent draft:\n${draft}`,
+          model: getModel(), maxTokens: 8192, signal
         });
       }
       async function ablResearch(goal, source, signal) {
         const rm = getModel();
         return ablText({
           system: ROLES.researcher,
-          prompt: `Brief: ${goal || '(general improvement)'}\nSource context:\n${source}\n\nGather and summarize the most useful current facts for this brief.`,
+          cached: researchPrompt(`Brief: ${goal || '(general improvement)'}\nSource context:\n${source}\n\nGather and summarize the most useful current facts for this brief.`),
           model: rm,
-          tools: [{
-            type: rm === 'claude-haiku-4-5' ? 'web_search_20250305' : 'web_search_20260209',
-            name: 'web_search', max_uses: 4
-          }],
-          maxTokens: 1200, signal
+          tools: [webSearchTool(rm)],
+          maxTokens: 8192, signal
         });
       }
       async function ablJudge(goal, first, second, signal) {
-        const prompt = `Brief / goal:\n${goal || '(none given — judge on general quality)'}\n\nTwo candidate texts serve the same brief. Decide which one better serves it.\n\n--- OPTION 1 ---\n${first}\n\n--- OPTION 2 ---\n${second}\n\nReturn the winner (1 or 2) and a one-sentence reason.`;
         return ablJson({
-          system: ABL_JUDGE_SYS, prompt, model: getModel(),
-          schema: ABL_JUDGE_SCHEMA, maxTokens: 400, signal
+          system: ABL_JUDGE_SYS,
+          cached: `Brief / goal:\n${goal || '(none given — judge on general quality)'}\n\nTwo candidate texts serve the same brief. Decide which one better serves it.`,
+          prompt: `--- OPTION 1 ---\n${first}\n\n--- OPTION 2 ---\n${second}\n\nReturn the winner (1 or 2) and a one-sentence reason.`,
+          model: getModel(), schema: ABL_JUDGE_SCHEMA, maxTokens: 4096, signal
         });
       }
 
@@ -346,7 +337,7 @@
         ablState.controller = trackedController();
         swarm.running = true;
         swarm.controller = ablState.controller;
-        swarm.steps = 0; swarm.tokensIn = 0; swarm.tokensOut = 0; swarm.usage = {};
+        resetSwarmUsage();
         const signal = ablState.controller.signal;
         const aborted = () => signal.aborted;
         // Set when a call fails (vs. the user pressing Stop), so the catch

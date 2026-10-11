@@ -237,8 +237,9 @@
       const test = expTest.value;
       const cur = currentSidebarParams();
       const cp = candidateParams(test, cur);
-      const candidatePrompt = buildParamPrompt(source, cp.tone, cp.length, cp.complexity, cp.audience, cp.intent);
-      const baselinePrompt = buildParamPrompt(source, 0, 0, 0, 'general', 'inform');
+      // Baselines and candidate share the cached prefix (system + source).
+      const candidateRequest = buildParamRequest(source, cp.tone, cp.length, cp.complexity, cp.audience, cp.intent);
+      const baselineRequest = buildParamRequest(source, 0, 0, 0, 'general', 'inform');
 
       // Decide how many fresh baselines to draw: reach 2 when the pool is thin,
       // otherwise add exactly 1 (keeps the pool honest against drift + grows it).
@@ -248,6 +249,7 @@
 
       expController = trackedController();
       const signal = expController.signal;
+      const genOpts = { signal, effort: EFFORT.rewrite };
 
       expIntro.style.display = 'none';
       expTestRow.style.display = 'none';
@@ -263,9 +265,9 @@
         // only committed to the pool after the whole batch succeeds.
         const baselineTasks = [];
         for (let i = 0; i < newBaselines; i++) {
-          baselineTasks.push(callClaude(baselinePrompt, { signal }).then(r => { markExpStep('base' + i); return r; }));
+          baselineTasks.push(callClaude(baselineRequest, genOpts).then(r => { markExpStep('base' + i); return r; }));
         }
-        const candTask = callClaude(candidatePrompt, { signal }).then(r => { markExpStep('cand'); return r; });
+        const candTask = callClaude(candidateRequest, genOpts).then(r => { markExpStep('cand'); return r; });
         const settled = await Promise.all([...baselineTasks, candTask]);
         const freshBaselines = settled.slice(0, newBaselines);
         const cand = settled[settled.length - 1];

@@ -16,9 +16,15 @@
        ordered like the input. All pairs are judged in ONE batched API call.
        ===================================================================== */
 
-    const JUDGE_MODEL = 'claude-haiku-4-5';
-    const JUDGE_MAX_TOKENS = 1000;
+    const JUDGE_MODEL = 'claude-haiku-5-5';
     const JUDGE_MAX_CHARS = 1500;
+
+    // max_tokens for a batched judge call. Thinking counts toward it, and the
+    // JSON grows with the batch (~15 tokens per scored pair), so scale with
+    // the pair count instead of a fixed cap that a large batch could hit.
+    function judgeMaxTokens(pairCount) {
+      return Math.min(16000, 2048 + 40 * pairCount);
+    }
 
     // Structured-output schema: one {pair, distance} object per numbered pair.
     // additionalProperties:false + required everywhere keeps the model honest.
@@ -130,7 +136,8 @@
       const prompt = buildJudgePrompt(pairs);
       const result = await callClaudeJson(prompt, {
         model: JUDGE_MODEL,
-        maxTokens: JUDGE_MAX_TOKENS,
+        maxTokens: judgeMaxTokens(pairs.length),
+        effort: EFFORT.score,
         schema: SEMANTIC_JUDGE_SCHEMA,
         signal: opts.signal,
       });
@@ -141,7 +148,9 @@
     // Order-normalized so (a,b) and (b,a) share an entry. Keys are prefixed so
     // an all-digits djb2 hash can never be reordered as an integer property —
     // insertion order is what the LRU-ish cap relies on.
-    const SEMANTIC_CACHE_STORE = 'wordcraft_semantic_cache_v1';
+    // v2: scores from the Haiku 5.5 judge. v1 held Haiku 4.5 scores, which are
+    // not comparable, so they are not read.
+    const SEMANTIC_CACHE_STORE = 'wordcraft_semantic_cache_v2';
     const SEMANTIC_CACHE_CAP = 200;
     const SEMANTIC_CACHE_PREFIX = 'p';
 
@@ -213,5 +222,6 @@
         SEMANTIC_JUDGE_SCHEMA,
         JUDGE_MODEL,
         JUDGE_MAX_CHARS,
+        judgeMaxTokens,
       };
     }

@@ -658,7 +658,7 @@ Text to analyze:
 ${content}`;
 
       try {
-        const critique = await callClaudeJson(prompt, { schema: CRITIQUE_SCHEMA });
+        const critique = await callClaudeJson(prompt, { schema: CRITIQUE_SCHEMA, effort: EFFORT.standard });
         critiqueCache.set(card.id, critique); // Cache the result
         // The user may have selected another card while this was in flight.
         if (selectedCard !== card) return;
@@ -1070,7 +1070,7 @@ ${content}`;
 Text to analyze:
 ${text}`;
 
-        currentAnalysis = await callClaudeJson(prompt, { schema: ANALYSIS_SCHEMA });
+        currentAnalysis = await callClaudeJson(prompt, { schema: ANALYSIS_SCHEMA, effort: EFFORT.standard });
         renderAnalysis(currentAnalysis);
       } catch (err) {
         analysisContent.innerHTML = `<p style="color: var(--accent-error); padding: 20px;">Error: ${escapeHtml(err.message)}</p>`;
@@ -1188,14 +1188,7 @@ ${text}`;
 
       // Combine all selected suggestion instructions
       const instructions = selectedSuggestions.map((s, i) => `${i + 1}. ${s.prompt_instruction}`).join('\n');
-      const prompt = `Rewrite the following text by applying ALL of these improvements:
-
-${instructions}
-
-Original text:
-${text}
-
-Apply all the improvements together in a single coherent rewrite. Provide ONLY the rewritten text, no explanations or preamble.`;
+      const request = buildSuggestionRequest(text, instructions);
 
       // Create tags from selected suggestions
       const tags = selectedSuggestions.map(s => s.action);
@@ -1210,8 +1203,9 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
 
       try {
         const contentEl = card.querySelector('.card-content');
-        const result = await streamClaude(prompt, {
+        const result = await streamClaude(request, {
           signal: controller.signal,
+          effort: EFFORT.rewrite,
           onText: (soFar) => { contentEl.textContent = soFar; }
         });
         finishVariantCard(card, text, result);
@@ -1269,22 +1263,14 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
         : getOrCreateSourceCard(text);
       currentSourceCard = sourceCard;
 
-      let prompt;
+      let request;
       let tags;
-      let maxTokens = 4096;
+      let maxTokens = 8192;
 
       // Check if suggestions are selected
       if (usingSuggestions) {
         const instructions = selectedSuggestions.map((s, i) => `${i + 1}. ${s.prompt_instruction}`).join('\n');
-        prompt = `Rewrite the following text by applying ALL of these improvements:
-
-${instructions}
-
-Original text:
-${text}
-
-Apply all the improvements together in a single coherent rewrite. Provide ONLY the rewritten text, no explanations or preamble.`;
-
+        request = buildSuggestionRequest(text, instructions);
         tags = selectedSuggestions.map(s => s.action);
       } else {
         // Use parameter sliders
@@ -1292,9 +1278,9 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
         const length = parseInt(lengthSlider.value);
         const complexity = parseInt(complexitySlider.value);
 
-        prompt = buildParamPrompt(text, tone, length, complexity, audienceSelect.value, intentSelect.value);
+        request = buildParamRequest(text, tone, length, complexity, audienceSelect.value, intentSelect.value);
         tags = [toneLabel(tone), complexityLabel(complexity), audienceSelect.value];
-        if (length > 20) maxTokens = 8192; // leave room for "Longer" rewrites
+        if (length > 20) maxTokens = 16000; // leave room for "Longer" rewrites
       }
 
       const card = createCard(tags, 'Generating', 'generating');
@@ -1309,9 +1295,10 @@ Apply all the improvements together in a single coherent rewrite. Provide ONLY t
 
       try {
         const contentEl = card.querySelector('.card-content');
-        const result = await streamClaude(prompt, {
+        const result = await streamClaude(request, {
           signal: controller.signal,
           maxTokens,
+          effort: EFFORT.rewrite,
           onText: (soFar) => { contentEl.textContent = soFar; }
         });
         finishVariantCard(card, text, result);

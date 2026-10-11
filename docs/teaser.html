@@ -1,0 +1,1227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}[hidden]{display:none!important}</style>
+<title>Wordcraft Teaser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,200..700;1,9..144,200..700&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..600;1,8..60,300..600&display=swap">
+<style>
+/* Layout: a 1920×1080 film stage scaled to the column; transport, then the shot list (the storyboard) beneath.
+   Single dark theme by choice: this page is a screening room, and the film carries its own paper scenes. */
+:root {
+  --ink: #13100e;
+  --ink-2: #1e1815;
+  --ink-line: rgba(243, 237, 230, 0.12);
+  --on-ink: #f3ede6;
+  --on-ink-2: rgba(243, 237, 230, 0.68);
+  --on-ink-3: rgba(243, 237, 230, 0.4);
+  --paper: #f5f3f0;
+  --paper-2: #ece8e2;
+  --card: #ffffff;
+  --card-border: #e0dcd7;
+  --line: rgba(26, 24, 23, 0.09);
+  --text: #1a1817;
+  --text-2: #4a4745;
+  --text-3: #7a7572;
+  --clay: #c4703c;
+  --clay-hi: #e3925c;
+  --clay-dim: rgba(196, 112, 60, 0.13);
+  --sage: #2d8a5f;
+  --sage-hi: #5cc392;
+  --sage-dim: rgba(45, 138, 95, 0.12);
+  --violet: #7c5cad;
+  --rust: #c53d3d;
+  --rust-dim: rgba(197, 61, 61, 0.1);
+  --ochre: #a67c00;
+  --ochre-dim: rgba(166, 124, 0, 0.12);
+  --f-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --f-body: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --expo: cubic-bezier(0.16, 1, 0.3, 1);
+  color-scheme: dark;
+}
+
+html, body { background: var(--ink); color: var(--on-ink); }
+body { font-family: var(--f-body); -webkit-font-smoothing: antialiased; }
+* { box-sizing: border-box; }
+
+/* ---------- page chrome ---------- */
+.page { max-width: 1320px; margin: 0 auto; padding-inline: 16px; padding-block: 18px 48px; display: grid; gap: 14px; }
+@media (min-width: 900px) { .page { padding-inline: 28px; padding-block: 28px 64px; gap: 18px; } }
+.masthead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.masthead h1 { margin: 0; font: 400 clamp(22px, 3vw, 30px)/1.1 var(--f-display); letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px; }
+.masthead h1 svg { width: 26px; height: 26px; flex: none; }
+.masthead p { margin: 0; font: 500 11px/1.4 var(--f-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--on-ink-3); }
+
+.film { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 14px; overflow: hidden; box-shadow: 0 30px 90px rgba(0,0,0,0.55), 0 0 0 1px var(--ink-line); cursor: pointer; }
+.film:fullscreen { border-radius: 0; aspect-ratio: auto; width: 100vw; height: 100vh; }
+.film:focus-visible { outline: 2px solid var(--clay-hi); outline-offset: 3px; }
+.stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden; font-size: 24px; }
+.bigplay { position: absolute; inset: 0; margin: auto; width: 92px; height: 92px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.35); background: rgba(19,16,14,0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; display: grid; place-items: center; cursor: pointer; transition: transform .3s var(--expo), opacity .3s; }
+.bigplay:hover { transform: scale(1.06); }
+.bigplay svg { width: 30px; height: 30px; margin-left: 4px; }
+
+.transport { display: flex; align-items: center; gap: 12px; }
+.tbtn { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--ink-line); background: var(--ink-2); color: var(--on-ink); display: grid; place-items: center; cursor: pointer; }
+.tbtn:hover { border-color: var(--on-ink-3); }
+.tbtn:focus-visible, .bar:focus-visible, .shot:focus-visible { outline: 2px solid var(--clay-hi); outline-offset: 2px; }
+.tbtn svg { width: 16px; height: 16px; }
+.bar { flex: 1; min-width: 0; height: 32px; display: flex; align-items: center; gap: 4px; cursor: pointer; touch-action: none; border-radius: 6px; }
+.seg { position: relative; height: 5px; border-radius: 3px; background: rgba(243,237,230,0.14); overflow: hidden; min-width: 0; }
+.seg i { position: absolute; inset: 0; background: var(--clay-hi); transform-origin: 0 50%; transform: scaleX(0); }
+.time { flex: none; font: 500 12px/1 var(--f-mono); color: var(--on-ink-2); font-variant-numeric: tabular-nums; min-width: 86px; text-align: right; }
+@media (max-width: 560px) { .time { min-width: 0; font-size: 11px; } #restartBtn { display: none; } }
+
+.shots-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.shots-head h2 { margin: 0; font: 400 22px/1.2 var(--f-display); letter-spacing: -0.01em; }
+.shots-head span { font: 500 11px/1.4 var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--on-ink-3); }
+.shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.shot { text-align: left; display: grid; gap: 8px; align-content: start; padding: 14px 16px 16px; border-radius: 12px; border: 1px solid var(--ink-line); background: var(--ink-2); color: var(--on-ink); cursor: pointer; font: inherit; min-width: 0; transition: border-color .2s, background .2s; }
+.shot:hover { border-color: var(--on-ink-3); }
+.shot.on { border-color: var(--clay-hi); background: linear-gradient(180deg, rgba(227,146,92,0.12), rgba(227,146,92,0.03)); }
+.shot-top { display: flex; align-items: center; gap: 8px; font: 500 11px/1 var(--f-mono); letter-spacing: 0.08em; color: var(--on-ink-3); text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.shot-top b { color: var(--on-ink-2); font-weight: 500; }
+.shot-kind { margin-left: auto; padding: 4px 7px; border-radius: 999px; border: 1px solid var(--ink-line); color: var(--on-ink-2); }
+.shot.on .shot-kind { border-color: rgba(227,146,92,0.5); color: var(--clay-hi); }
+.shot-title { display: block; font: 400 20px/1.15 var(--f-display); letter-spacing: -0.01em; }
+.shot-desc { display: block; font-size: 14px; line-height: 1.45; color: var(--on-ink-2); }
+
+/* ---------- shared film parts ---------- */
+.scene { position: absolute; inset: 0; overflow: hidden; }
+.scene.dark { background: radial-gradient(120% 95% at 50% 42%, #231b16 0%, var(--ink) 58%, #0b0908 100%); color: var(--on-ink); }
+.scene.paper { background-color: var(--paper); background-image: radial-gradient(rgba(26,24,23,0.13) 1.3px, transparent 1.8px); background-size: 28px 28px; color: var(--text); }
+.abs { position: absolute; }
+.glow { position: absolute; width: 1000px; height: 1000px; border-radius: 50%; background: radial-gradient(circle, rgba(196,112,60,0.26) 0%, rgba(196,112,60,0.08) 38%, transparent 66%); transform: translate(-50%, -50%); pointer-events: none; }
+.eyebrow { font: 500 19px/1 var(--f-mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--clay); display: flex; align-items: center; gap: 14px; }
+.dark .eyebrow { color: var(--clay-hi); }
+.eyebrow .pip { width: 9px; height: 9px; border-radius: 50%; background: currentColor; box-shadow: 0 0 18px currentColor; }
+.h2 { margin: 0; font-family: var(--f-display); font-weight: 340; font-size: 86px; line-height: 0.98; letter-spacing: -0.032em; font-variation-settings: 'opsz' 144; text-wrap: balance; }
+.h2 em { font-style: italic; font-weight: 300; color: var(--clay); }
+.dark .h2 em { color: var(--clay-hi); }
+.chip { display: inline-flex; align-items: center; font: 500 14px/1 var(--f-mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 8px 11px; border-radius: 999px; background: var(--paper-2); color: var(--text-2); white-space: nowrap; }
+.chip.sage { background: var(--sage-dim); color: var(--sage); }
+.chip.clay { background: var(--clay-dim); color: var(--clay); }
+.chip.violet { background: rgba(124,92,173,0.12); color: var(--violet); }
+.wcard { position: absolute; background: var(--card); border: 1px solid var(--card-border); border-radius: 18px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 12px 34px rgba(60,40,20,0.11); color: var(--text); }
+.wcard::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: var(--accent, var(--clay)); }
+.wcard.src { --accent: var(--sage); }
+.wcard-head { display: flex; align-items: center; gap: 8px; padding: 22px 22px 16px; border-bottom: 1px solid var(--line); }
+.tog { margin-left: auto; display: inline-flex; border-radius: 8px; background: var(--paper-2); padding: 3px; }
+.tog span { font: 500 12px/1 var(--f-mono); letter-spacing: 0.06em; padding: 6px 8px; border-radius: 6px; color: var(--text-3); }
+.tog span.on { background: #fff; color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+.cursor { position: absolute; left: 0; top: 0; width: 46px; height: 56px; pointer-events: none; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.25)); transform-origin: 6px 4px; z-index: 30; }
+.hud { position: absolute; right: 48px; bottom: 40px; display: flex; align-items: center; gap: 10px; font: 500 17px/1 var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase; pointer-events: none; z-index: 50; }
+.hud svg { width: 24px; height: 24px; }
+.grain { position: absolute; inset: -25%; pointer-events: none; opacity: 0.075; mix-blend-mode: overlay; z-index: 60; background-size: 256px 256px; }
+.flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 55; }
+.typing::after { content: ''; display: inline-block; width: 0.09em; height: 0.95em; margin-left: 0.06em; vertical-align: -0.12em; background: var(--clay-hi); }
+
+/* ---------- 1 fork ---------- */
+.fork-cam { position: absolute; inset: 0; transform-origin: 50% 50%; }
+.fork-src { position: absolute; left: 112px; top: 470px; }
+.fork-src .tag, .fork-var .tag { font: 500 17px/1 var(--f-mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--on-ink-3); }
+.fork-src .tag { color: var(--sage-hi); }
+.fork-text { margin: 18px 0 0; font: 400 60px/1.1 var(--f-body); letter-spacing: -0.01em; white-space: nowrap; }
+.caret { display: inline-block; width: 4px; height: 56px; margin-left: 6px; vertical-align: -8px; background: var(--clay-hi); }
+.fork-svg { position: absolute; left: 0; top: 0; overflow: visible; }
+.fork-svg path { fill: none; stroke: var(--clay); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+.fork-svg .fl-line { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.fork-var { position: absolute; left: 1296px; width: 560px; transform: translateY(-50%); }
+.fork-var .tag { color: var(--clay-hi); }
+.fork-var p { margin: 12px 0 0; font: 400 34px/1.28 var(--f-body); color: var(--on-ink); min-height: 1.28em; }
+
+/* ---------- 2 title ---------- */
+.title-block { position: absolute; left: 128px; top: 262px; }
+.title-h { margin: 46px 0 0; font-family: var(--f-display); font-weight: 300; font-size: 176px; line-height: 0.96; letter-spacing: -0.04em; font-variation-settings: 'opsz' 144; }
+.title-h .ln { display: block; white-space: nowrap; }
+.title-h em { font-style: italic; font-weight: 250; color: var(--clay-hi); }
+.w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0 0.04em 0.12em; margin: 0 -0.04em -0.12em; }
+.w > span { display: inline-block; will-change: transform; }
+.title-mark { position: absolute; left: 1430px; top: 300px; width: 400px; height: 400px; overflow: visible; }
+.title-mark path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.tm-a { stroke: var(--clay); stroke-width: 34; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.tm-h { stroke: var(--clay); stroke-width: 34; opacity: 0; }
+.tm-flow { stroke: #ffd2b0; stroke-width: 12; stroke-dasharray: 0.07 0.93; opacity: 0; }
+
+/* ---------- 3 dials ---------- */
+.dials-cam { position: absolute; inset: 0; transform-origin: 533px 1212px; }
+.dials-head { position: absolute; left: 120px; top: 92px; display: grid; gap: 22px; }
+.pp { position: absolute; left: 120px; top: 300px; width: 640px; display: grid; gap: 16px; }
+.pslider { position: relative; padding: 22px 26px 20px; border-radius: 18px; border: 1px solid var(--card-border); background: #fbfaf9; display: grid; gap: 16px; }
+.ps-head { display: flex; align-items: baseline; justify-content: space-between; }
+.ps-label { font: 500 17px/1 var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); }
+.ps-val { font: 400 30px/1 var(--f-display); color: var(--clay); }
+.ps-track { position: relative; height: 30px; }
+.ps-track::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 6px; margin-top: -3px; border-radius: 3px; background: var(--paper-2); }
+.ps-track::after { content: ''; position: absolute; left: 50%; top: 50%; width: 2px; height: 16px; margin: -8px 0 0 -1px; background: rgba(26,24,23,0.18); }
+.ps-fill { position: absolute; top: 50%; height: 6px; margin-top: -3px; border-radius: 3px; background: rgba(196,112,60,0.45); }
+.ps-thumb { position: absolute; top: 50%; width: 32px; height: 32px; margin: -16px 0 0 -16px; border-radius: 50%; background: var(--clay); box-shadow: 0 0 0 5px #fff, 0 4px 14px rgba(0,0,0,0.22); z-index: 2; }
+.ps-ends { display: flex; justify-content: space-between; font: 500 14px/1 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+.pselects { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.psel { position: relative; padding: 20px 24px; border-radius: 18px; border: 1px solid var(--card-border); background: #fbfaf9; display: grid; gap: 12px; }
+.psel > span { font: 500 15px/1 var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); }
+.psel .roll { height: 34px; overflow: hidden; font: 400 30px/34px var(--f-body); color: var(--text); }
+.psel .roll div { display: grid; }
+.psel .ring { position: absolute; inset: -5px; border-radius: 22px; border: 3px solid var(--clay); opacity: 0; }
+.dcard { left: 880px; top: 300px; width: 760px; }
+.dcard .wcard-head { padding: 26px 26px 18px; }
+.dbody { position: relative; height: 300px; margin: 26px 30px 0; }
+.mlayer { position: absolute; left: 0; top: 0; right: 0; margin: 0; font: 400 44px/1.36 var(--f-body); color: var(--text); letter-spacing: -0.005em; }
+.mlayer span { display: inline-block; }
+.dfoot { display: flex; align-items: center; justify-content: space-between; padding: 18px 30px 24px; font: 500 15px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.dfoot b { color: var(--text-2); font-weight: 500; }
+
+/* ---------- 4 canvas ---------- */
+.cv-view { position: absolute; inset: 0; perspective: 2400px; perspective-origin: 50% 32%; }
+.cv-world { position: absolute; left: -340px; top: -210px; width: 2600px; height: 1500px; transform-style: preserve-3d; transform-origin: 50% 50%; }
+.cv-grid { position: absolute; inset: 0; border-radius: 40px; background-color: rgba(245,243,240,0.6); background-image: radial-gradient(rgba(26,24,23,0.2) 2px, transparent 2.6px); background-size: 40px 40px; -webkit-mask-image: radial-gradient(closest-side, #000 72%, transparent); mask-image: radial-gradient(closest-side, #000 72%, transparent); }
+.cv-svg { position: absolute; left: 0; top: 0; overflow: visible; }
+.cv-svg .dash { fill: none; stroke: var(--clay); stroke-width: 4; stroke-dasharray: 12 10; stroke-linecap: round; }
+.cv-svg .cv-head { fill: none; stroke: var(--clay); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
+.cv-svg mask path { fill: none; stroke: #fff; stroke-width: 14; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.cv-world .wcard { width: 460px; box-shadow: 0 2px 4px rgba(0,0,0,0.05), 0 40px 70px rgba(70,45,20,0.16); }
+.cv-world .wcard-head { padding: 20px 18px 14px; gap: 6px; }
+.cv-world .chip { font-size: 13px; padding: 7px 9px; }
+.cv-body { position: relative; padding: 18px 22px 22px; font: 400 27px/1.4 var(--f-body); min-height: 150px; }
+.cv-body .dif { position: absolute; left: 22px; right: 22px; top: 18px; opacity: 0; }
+.cv-body ins { text-decoration: none; background: rgba(45,138,95,0.18); color: #1d6b47; border-radius: 4px; padding: 0 3px; }
+.cv-body del { color: var(--rust); opacity: 0.75; }
+.cv-ring { position: absolute; inset: -12px; border-radius: 28px; border: 5px solid var(--violet); opacity: 0; pointer-events: none; }
+.cv-badge { position: absolute; top: -24px; right: -18px; width: 46px; height: 46px; border-radius: 50%; background: var(--violet); color: #fff; display: grid; place-items: center; font: 600 22px/1 var(--f-mono); opacity: 0; }
+.cv-headline { position: absolute; left: 0; top: 0; width: 980px; height: 420px; padding: 90px 0 0 120px; background: radial-gradient(110% 100% at 0% 0%, rgba(245,243,240,0.97) 40%, rgba(245,243,240,0) 75%); display: grid; align-content: start; gap: 22px; }
+.cv-kbd { position: absolute; right: 120px; top: 110px; display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-radius: 16px; background: rgba(26,24,23,0.88); color: #fff; font: 500 20px/1 var(--f-mono); letter-spacing: 0.04em; box-shadow: 0 20px 40px rgba(0,0,0,0.2); opacity: 0; }
+.cv-kbd kbd { font: inherit; padding: 7px 11px; border-radius: 8px; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.22); }
+.cv-compare { position: absolute; left: 140px; right: 140px; top: 742px; height: 300px; border-radius: 22px 22px 22px 22px; background: #fff; border: 1px solid var(--card-border); box-shadow: 0 -10px 60px rgba(60,40,20,0.18); overflow: hidden; transform: translateY(420px); }
+.cmp-head { display: flex; align-items: center; gap: 14px; padding: 22px 28px; border-bottom: 1px solid var(--line); }
+.cmp-head h4 { margin: 0; font: 400 30px/1 var(--f-display); }
+.cmp-head .chk { margin-left: auto; display: flex; align-items: center; gap: 10px; font: 500 15px/1 var(--f-mono); letter-spacing: 0.1em; color: var(--text-2); }
+.cmp-head .chk i { width: 20px; height: 20px; border-radius: 5px; background: var(--violet); display: grid; place-items: center; }
+.cmp-cols { display: grid; grid-template-columns: 1fr 1fr; }
+.cmp-col { padding: 18px 28px; display: grid; gap: 10px; align-content: start; font: 400 25px/1.45 var(--f-body); color: var(--text); min-width: 0; }
+.cmp-col + .cmp-col { border-left: 1px solid var(--line); }
+.cmp-col small { font: 500 14px/1 var(--f-mono); letter-spacing: 0.06em; color: var(--text-3); text-transform: uppercase; display: flex; gap: 10px; align-items: center; }
+.cmp-col ins { text-decoration: none; background: rgba(45,138,95,0.18); color: #1d6b47; border-radius: 4px; padding: 0 3px; }
+.cmp-col del { color: var(--rust); opacity: 0.75; }
+
+/* ---------- 5 swarm ---------- */
+.sw-head { position: absolute; left: 120px; top: 90px; display: grid; gap: 22px; width: 1060px; }
+.sw-brief { font: italic 300 30px/1.35 var(--f-body); color: var(--on-ink-2); margin: 0; }
+.sw-brief b { font-style: normal; font: 500 15px/1 var(--f-mono); letter-spacing: 0.14em; color: var(--on-ink-3); margin-right: 12px; vertical-align: 4px; }
+.sw-view { position: absolute; left: 40px; top: 340px; width: 1180px; height: 700px; perspective: 1700px; perspective-origin: 40% 30%; }
+.sw-plane { position: absolute; left: 50px; top: 40px; width: 1080px; height: 600px; transform-style: preserve-3d; transform-origin: 50% 50%; }
+.sw-svg { position: absolute; left: 0; top: 0; overflow: visible; }
+.sw-svg .base { fill: none; stroke: rgba(243,237,230,0.13); stroke-width: 3; }
+.sw-svg .lit { fill: none; stroke: var(--clay-hi); stroke-width: 3; stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0.85; }
+.sw-svg .pkt { fill: #ffe0c8; }
+.sw-svg .pkt-halo { fill: rgba(227,146,92,0.35); }
+.sw-node { position: absolute; width: 170px; height: 80px; padding: 14px 16px; border-radius: 16px; background: rgba(38,31,27,0.92); border: 1.5px solid rgba(243,237,230,0.14); display: grid; gap: 8px; align-content: start; }
+.sw-n-top { display: flex; align-items: center; gap: 8px; font: 500 13px/1 var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--on-ink-2); }
+.sw-n-top i { width: 9px; height: 9px; border-radius: 50%; background: var(--on-ink-3); flex: none; }
+.sw-n-msg { font: 400 20px/1.1 var(--f-body); color: var(--on-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sw-node .bar2 { position: absolute; left: 16px; right: 16px; bottom: 9px; height: 3px; border-radius: 2px; background: rgba(243,237,230,0.1); overflow: hidden; }
+.sw-node .bar2 b { position: absolute; inset: 0; background: var(--clay-hi); transform-origin: 0 50%; transform: scaleX(0); }
+.sw-crown { position: absolute; left: 50%; top: -20px; transform: translateX(-50%); padding: 7px 11px; border-radius: 999px; background: var(--clay-hi); color: #1a1209; font: 600 13px/1 var(--f-mono); letter-spacing: 0.14em; opacity: 0; white-space: nowrap; }
+.sw-panel { position: absolute; left: 1262px; top: 112px; width: 560px; height: 856px; border-radius: 24px; background: #fff; color: var(--text); box-shadow: 0 40px 100px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06); display: flex; flex-direction: column; overflow: hidden; }
+.swp-head { display: flex; align-items: center; justify-content: space-between; padding: 28px 30px 18px; }
+.swp-head h4 { margin: 0; font: 400 34px/1 var(--f-display); letter-spacing: -0.01em; }
+.swp-head span { font: 300 34px/1 var(--f-body); color: var(--text-3); }
+.swp-meta { display: flex; justify-content: space-between; padding: 0 30px 18px; border-bottom: 1px solid var(--line); font: 500 15px/1 var(--f-mono); letter-spacing: 0.06em; color: var(--text-3); text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.swp-meta b { color: var(--violet); font-weight: 500; }
+.swp-log { flex: 1; padding: 22px 30px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; }
+.swp-e { display: flex; gap: 14px; align-items: flex-start; }
+.swp-e i { flex: none; width: 11px; height: 11px; border-radius: 50%; margin-top: 7px; background: var(--violet); }
+.swp-e.done i { background: var(--sage); }
+.swp-e div { display: grid; gap: 5px; min-width: 0; }
+.swp-e small { font: 500 13px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+.swp-e p { margin: 0; font: 400 21px/1.3 var(--f-body); color: var(--text-2); }
+.swp-foot { position: relative; height: 92px; border-top: 1px solid var(--line); }
+.swp-stop, .swp-done { position: absolute; left: 30px; top: 20px; }
+.swp-stop { font: 400 20px/1 var(--f-body); padding: 13px 20px; border-radius: 12px; border: 1px solid var(--card-border); color: var(--text); }
+.swp-done { top: 36px; font: 500 15px/1.3 var(--f-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--sage); opacity: 0; }
+
+/* ---------- 6 experiment ---------- */
+.q-block { position: absolute; left: 230px; top: 380px; transform-origin: 0 0; }
+.q-block .ln { display: block; white-space: nowrap; font-family: var(--f-display); font-weight: 320; font-size: 148px; line-height: 1.0; letter-spacing: -0.04em; font-variation-settings: 'opsz' 144; }
+.q-block em { font-style: italic; font-weight: 280; color: var(--clay); }
+.ex-eyebrow { position: absolute; left: 120px; top: 108px; }
+.ex-copy { position: absolute; left: 120px; top: 360px; width: 610px; display: grid; gap: 30px; }
+.ex-copy p { margin: 0; font: 400 30px/1.42 var(--f-body); color: var(--text-2); }
+.ex-facts { display: grid; gap: 12px; }
+.ex-facts div { display: flex; align-items: baseline; gap: 16px; font: 500 16px/1.3 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); padding-top: 12px; border-top: 1px solid var(--line); }
+.ex-facts b { font: 400 34px/1 var(--f-display); letter-spacing: -0.01em; color: var(--text); text-transform: none; min-width: 62px; font-variant-numeric: tabular-nums; }
+.ex-cam { position: absolute; inset: 0; }
+.ex-panel { position: absolute; left: 850px; top: 130px; width: 950px; height: 790px; border-radius: 26px; background: #fff; border: 1px solid var(--card-border); box-shadow: 0 2px 6px rgba(0,0,0,0.05), 0 40px 90px rgba(60,40,20,0.16); padding: 34px 38px; display: flex; flex-direction: column; gap: 22px; }
+.exp-top { display: flex; align-items: center; justify-content: space-between; }
+.exp-top h4 { margin: 0; font: 400 38px/1 var(--f-display); letter-spacing: -0.01em; }
+.exp-chart { position: relative; height: 270px; border-radius: 16px; background: #fbfaf9; border: 1px solid var(--line); }
+.exp-chart .ax { position: absolute; left: 40px; right: 40px; bottom: 54px; height: 1px; background: rgba(26,24,23,0.2); }
+.exp-chart .tick { position: absolute; bottom: 22px; transform: translateX(-50%); font: 500 14px/1 var(--f-mono); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.exp-chart .cap { position: absolute; left: 40px; top: 20px; font: 500 14px/1 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+.exp-band { position: absolute; top: 56px; bottom: 54px; background: rgba(122,117,114,0.13); border-left: 2px dashed rgba(197,61,61,0.55); border-right: 2px dashed rgba(197,61,61,0.55); opacity: 0; }
+.exp-band span { position: absolute; left: 10px; top: 10px; font: 500 13px/1 var(--f-mono); letter-spacing: 0.1em; color: var(--rust); white-space: nowrap; }
+.exp-med { position: absolute; top: 56px; bottom: 54px; width: 2px; margin-left: -1px; background: rgba(26,24,23,0.35); opacity: 0; }
+.exp-dot { position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: #9a948f; border: 2px solid #fbfaf9; opacity: 0; }
+.exp-sig { position: absolute; top: 46px; bottom: 54px; width: 0; opacity: 0; }
+.exp-sig::before { content: ''; position: absolute; top: 18px; bottom: 0; left: -1.5px; width: 3px; background: var(--sage); border-radius: 2px; }
+.exp-sig i { position: absolute; left: -14px; top: 66px; width: 28px; height: 28px; background: var(--sage); transform: rotate(45deg); border-radius: 5px; box-shadow: 0 0 0 5px rgba(45,138,95,0.18); }
+.exp-sig span { position: absolute; left: 22px; top: 0; font: 600 16px/1 var(--f-mono); letter-spacing: 0.06em; color: var(--sage); white-space: nowrap; text-transform: uppercase; }
+.exp-trail { position: absolute; top: 120px; height: 4px; margin-top: -2px; border-radius: 2px; background: linear-gradient(90deg, rgba(45,138,95,0), rgba(45,138,95,0.5)); opacity: 0; }
+.exp-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.exp-col { border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; display: grid; gap: 10px; }
+.exp-col small { font: 500 14px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+.exp-col.noise small { color: var(--rust); }
+.exp-col.signal small { color: var(--sage); }
+.exp-col b { font: 400 40px/1 var(--f-display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.exp-col span { font: 400 19px/1.3 var(--f-body); color: var(--text-3); }
+.exp-verdict { border-radius: 16px; padding: 20px 22px; border: 1.5px solid var(--sage); background: var(--sage-dim); display: grid; gap: 10px; font: 400 21px/1.42 var(--f-body); color: var(--text); opacity: 0; transform-origin: 50% 0; }
+.exp-verdict .tr { font: 500 13px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); margin-right: 10px; vertical-align: 2px; }
+.exp-verdict .tr.m { color: var(--text-2); }
+.exp-verdict strong { font-weight: 600; }
+.exp-verdict em { color: var(--text-3); font-size: 18px; }
+
+/* ---------- 7 sensitivity ---------- */
+.se-head { position: absolute; left: 120px; top: 120px; width: 660px; display: grid; gap: 24px; }
+.se-sum { position: absolute; left: 120px; top: 470px; width: 620px; margin: 0; font: italic 300 31px/1.45 var(--f-body); color: var(--on-ink-2); }
+.se-sum b { font-style: normal; font-weight: 500; color: var(--on-ink); }
+.se-meta { position: absolute; left: 120px; top: 880px; display: flex; gap: 28px; font: 500 16px/1.3 var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--on-ink-3); }
+.se-view { position: absolute; left: 800px; top: 60px; width: 1080px; height: 960px; perspective: 1700px; perspective-origin: 30% 50%; }
+.se-panel { position: absolute; left: 90px; top: 96px; width: 880px; height: 768px; border-radius: 28px; background: #fff; color: var(--text); padding: 34px 40px; box-shadow: 0 60px 120px rgba(0,0,0,0.55); transform-origin: 0% 50%; overflow: hidden; }
+.se-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 26px; }
+.se-top h4 { margin: 0; font: 400 36px/1 var(--f-display); letter-spacing: -0.01em; }
+.se-legend { display: flex; gap: 18px; font: 500 13px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+.se-legend i { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 7px; vertical-align: 0; }
+.se-chart { position: relative; display: grid; gap: 20px; margin-bottom: 30px; }
+.se-band { position: absolute; top: -6px; bottom: -6px; left: 150px; background: rgba(122,117,114,0.12); border-right: 2px dashed rgba(197,61,61,0.6); border-radius: 6px 0 0 6px; }
+.se-band span { position: absolute; right: 8px; bottom: -28px; font: 500 12px/1 var(--f-mono); letter-spacing: 0.1em; color: var(--rust); white-space: nowrap; }
+.se-g { position: relative; display: grid; gap: 8px; }
+.se-gh { display: flex; align-items: center; gap: 12px; height: 32px; }
+.se-gh b { font: 400 26px/1 var(--f-display); letter-spacing: -0.01em; color: var(--text-2); }
+.se-g.strong .se-gh b { color: var(--clay); font-weight: 500; }
+.se-badge { font: 600 12px/1 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; padding: 7px 9px; border-radius: 6px; opacity: 0; }
+.se-badge.strong { background: var(--clay); color: #fff; }
+.se-badge.wording { border: 1.5px solid var(--text-3); color: var(--text-2); }
+.se-badge.marginal { border: 1.5px solid var(--ochre); color: var(--ochre); }
+.se-badge.noise { background: var(--paper-2); color: var(--text-3); }
+.se-row { display: grid; grid-template-columns: 150px 1fr 70px; align-items: center; }
+.se-row small { font: 500 13px/1 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+.se-track { position: relative; height: 22px; border-radius: 6px; background: #f6f4f1; border: 1px solid var(--line); overflow: hidden; }
+.se-bar { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px 0 0 6px; background: var(--clay); transform-origin: 0 50%; transform: scaleX(0); }
+.se-bar.w { background: #a9a39e; }
+.se-val { text-align: right; font: 500 16px/1 var(--f-mono); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.se-sheen { position: absolute; top: -20%; bottom: -20%; width: 260px; background: linear-gradient(100deg, transparent, rgba(255,255,255,0.75), transparent); transform: translateX(-400px) skewX(-14deg); pointer-events: none; mix-blend-mode: soft-light; }
+
+/* ---------- 8 ablation ---------- */
+.ab-head { position: absolute; left: 120px; top: 116px; width: 700px; display: grid; gap: 24px; }
+.ab-cfg { position: absolute; left: 120px; top: 420px; width: 680px; display: grid; }
+.ab-cfg div { display: grid; grid-template-columns: 150px 1fr; align-items: baseline; padding: 14px 0; border-top: 1px solid var(--line); }
+.ab-cfg small { font: 500 15px/1 var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); }
+.ab-cfg span { font: 400 26px/1.3 var(--f-body); color: var(--text); }
+.ab-tally { position: absolute; left: 120px; top: 666px; width: 680px; display: grid; gap: 14px; }
+.ab-r { display: grid; grid-template-columns: 150px 1fr 50px; align-items: center; gap: 14px; }
+.ab-r small { font: 500 15px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); }
+.ab-t { position: relative; height: 26px; border-radius: 8px; background: var(--paper-2); border: 1px solid var(--line); overflow: hidden; }
+.ab-t b { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: var(--sage); transform-origin: 0 50%; transform: scaleX(0); }
+.ab-r.b .ab-t b { background: #a9a39e; }
+.ab-r em { font: 400 34px/1 var(--f-display); font-style: normal; text-align: right; font-variant-numeric: tabular-nums; }
+.ab-verdict { position: absolute; left: 120px; top: 808px; width: 680px; padding: 18px 22px; border-radius: 12px; border-left: 4px solid var(--sage); background: var(--sage-dim); font: 400 23px/1.42 var(--f-body); color: var(--text-2); opacity: 0; }
+.ab-verdict strong { color: var(--text); }
+.ab-grid { position: absolute; left: 900px; top: 112px; width: 884px; display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.ab-tile { position: relative; height: 192px; perspective: 1100px; }
+.ab-inner { position: absolute; inset: 0; transform-style: preserve-3d; }
+.ab-face { position: absolute; inset: 0; border-radius: 18px; background: #fff; border: 1px solid var(--card-border); box-shadow: 0 10px 30px rgba(60,40,20,0.1); padding: 16px 18px; display: grid; grid-template-rows: auto 1fr; gap: 12px; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+.ab-face.back { transform: rotateY(180deg); }
+.ab-face header { display: flex; justify-content: space-between; font: 500 13px/1 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+.ab-face header b { font-weight: 500; color: var(--text-2); }
+.ab-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ab-c { position: relative; border-radius: 12px; border: 1px solid var(--line); background: #fbfaf9; padding: 12px 14px; display: grid; align-content: start; gap: 8px; }
+.ab-c .n { font: 400 30px/1 var(--f-display); color: var(--text); }
+.ab-c .ln2 { height: 7px; border-radius: 4px; background: #e6e1db; }
+.ab-c .arm { font: 600 12px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 8px; border-radius: 6px; justify-self: start; }
+.ab-c .arm.with { background: var(--sage-dim); color: var(--sage); }
+.ab-c .arm.without { background: var(--paper-2); color: var(--text-3); }
+.ab-c .pick { position: absolute; inset: -4px; border-radius: 15px; border: 3px solid var(--clay); opacity: 0; }
+.ab-c .pick::after { content: 'JUDGE'; position: absolute; right: 8px; top: -11px; padding: 4px 6px; border-radius: 5px; background: var(--clay); color: #fff; font: 600 10px/1 var(--f-mono); letter-spacing: 0.1em; }
+
+/* ---------- 9 end ---------- */
+.en-word { position: absolute; left: 0; right: 0; top: 440px; text-align: center; font-family: var(--f-display); font-weight: 300; font-size: 156px; line-height: 1; letter-spacing: -0.04em; font-variation-settings: 'opsz' 144; opacity: 0; white-space: nowrap; }
+.en-word.i { font-style: italic; color: var(--clay-hi); font-weight: 260; }
+.en-final { position: absolute; left: 0; right: 0; top: 250px; display: grid; justify-items: center; gap: 0; text-align: center; }
+.en-mark { width: 150px; height: 150px; overflow: visible; }
+.en-mark path { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke: var(--clay); stroke-width: 36; }
+.en-mark .a { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.en-mark .h { opacity: 0; }
+.en-word-mark { margin-top: 34px; font-family: var(--f-display); font-weight: 340; font-size: 168px; line-height: 1; letter-spacing: -0.04em; font-variation-settings: 'opsz' 144; display: flex; }
+.en-word-mark span { display: inline-block; }
+.en-tag { margin: 26px 0 0; font: italic 300 50px/1.2 var(--f-body); color: var(--on-ink-2); }
+.en-meta { margin-top: 62px; display: flex; gap: 22px; font: 500 18px/1 var(--f-mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--on-ink-3); }
+.en-url { margin-top: 22px; font: 500 22px/1 var(--f-mono); letter-spacing: 0.04em; color: var(--clay-hi); }
+
+@media (prefers-reduced-motion: reduce) {
+  .bigplay { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="masthead">
+    <h1><svg viewBox="0 0 1024 1024" aria-hidden="true"><g fill="none" stroke="#c4703c" stroke-width="70" stroke-linecap="round" stroke-linejoin="round"><path d="M75 395H455C540 395 560 330 640 240C700 170 740 150 820 150H930M870 85L945 150L870 215"/><path d="M75 470H470C560 470 610 420 720 410C780 400 820 395 930 395M870 330L945 395L870 460"/><path d="M75 548H490C570 548 610 600 720 615C790 625 830 625 930 625M870 560L945 625L870 690"/><path d="M75 628H460C540 628 570 700 640 790C700 860 740 865 820 865H930M870 800L945 865L870 930"/></g></svg>Wordcraft teaser</h1>
+    <p>50 seconds · 16:9 · 9 shots</p>
+  </header>
+
+  <div class="film" id="film" tabindex="0" aria-label="Wordcraft teaser film. Space plays or pauses.">
+    <div class="stage" id="stage">
+
+      <!-- 1 FORK -->
+      <section class="scene dark" id="sc-fork">
+        <div class="glow" style="left:1100px;top:540px"></div>
+        <div class="fork-cam">
+          <div class="fork-src">
+            <div class="tag">Source</div>
+            <p class="fork-text">Our onboarding takes too long.<span class="caret"></span></p>
+          </div>
+          <svg class="fork-svg" width="1920" height="1080" viewBox="0 0 1920 1080" aria-hidden="true">
+            <path class="fl-line" pathLength="1" d="M960 513L1050 513C1150 513 1150 250 1250 250L1268 250"/>
+            <path class="fl-line" pathLength="1" d="M960 531L1050 531C1150 531 1150 450 1250 450L1268 450"/>
+            <path class="fl-line" pathLength="1" d="M960 549L1050 549C1150 549 1150 650 1250 650L1268 650"/>
+            <path class="fl-line" pathLength="1" d="M960 567L1050 567C1150 567 1150 850 1250 850L1268 850"/>
+            <path class="fl-head" d="M1250 234L1270 250L1250 266" opacity="0"/>
+            <path class="fl-head" d="M1250 434L1270 450L1250 466" opacity="0"/>
+            <path class="fl-head" d="M1250 634L1270 650L1250 666" opacity="0"/>
+            <path class="fl-head" d="M1250 834L1270 850L1250 866" opacity="0"/>
+          </svg>
+          <div class="fork-var" style="top:250px" data-text="Honestly? Getting set up here takes way too long."><div class="tag">Casual</div><p></p></div>
+          <div class="fork-var" style="top:450px" data-text="Our onboarding process takes longer than it should."><div class="tag">Formal</div><p></p></div>
+          <div class="fork-var" style="top:650px" data-text="Onboarding is slow."><div class="tag">Shorter</div><p></p></div>
+          <div class="fork-var" style="top:850px" data-text="Every week spent onboarding is a week not spent shipping."><div class="tag">Persuade</div><p></p></div>
+        </div>
+      </section>
+
+      <!-- 2 TITLE -->
+      <section class="scene dark" id="sc-title" hidden>
+        <div class="glow" style="left:1630px;top:500px;width:1200px;height:1200px"></div>
+        <div class="title-block">
+          <div class="eyebrow"><span class="pip"></span>Wordcraft · Parametric writing studio</div>
+          <h1 class="title-h">
+            <span class="ln"><span class="w"><span>One</span></span> <span class="w"><span>draft.</span></span></span>
+            <span class="ln"><em><span class="w"><span>Every</span></span> <span class="w"><span>direction.</span></span></em></span>
+          </h1>
+        </div>
+        <svg class="title-mark" viewBox="0 0 1024 1024" aria-hidden="true">
+          <path class="tm-a" pathLength="1" d="M75 395H455C540 395 560 330 640 240C700 170 740 150 820 150H930"/>
+          <path class="tm-a" pathLength="1" d="M75 470H470C560 470 610 420 720 410C780 400 820 395 930 395"/>
+          <path class="tm-a" pathLength="1" d="M75 548H490C570 548 610 600 720 615C790 625 830 625 930 625"/>
+          <path class="tm-a" pathLength="1" d="M75 628H460C540 628 570 700 640 790C700 860 740 865 820 865H930"/>
+          <path class="tm-h" d="M870 85L945 150L870 215"/>
+          <path class="tm-h" d="M870 330L945 395L870 460"/>
+          <path class="tm-h" d="M870 560L945 625L870 690"/>
+          <path class="tm-h" d="M870 800L945 865L870 930"/>
+          <path class="tm-flow" pathLength="1" d="M75 395H455C540 395 560 330 640 240C700 170 740 150 820 150H930"/>
+          <path class="tm-flow" pathLength="1" d="M75 470H470C560 470 610 420 720 410C780 400 820 395 930 395"/>
+          <path class="tm-flow" pathLength="1" d="M75 548H490C570 548 610 600 720 615C790 625 830 625 930 625"/>
+          <path class="tm-flow" pathLength="1" d="M75 628H460C540 628 570 700 640 790C700 860 740 865 820 865H930"/>
+        </svg>
+      </section>
+
+      <!-- 3 DIALS -->
+      <section class="scene paper" id="sc-dials" hidden>
+        <div class="dials-cam">
+          <div class="dials-head">
+            <div class="eyebrow"><span class="pip"></span>Parametric rewrites</div>
+            <h2 class="h2">Five dials. <em>Live rewrites.</em></h2>
+          </div>
+          <div class="pp">
+            <div class="pslider" id="d-tone"><div class="ps-head"><span class="ps-label">Tone</span><span class="ps-val">Neutral</span></div><div class="ps-track"><div class="ps-fill"></div><div class="ps-thumb"></div></div><div class="ps-ends"><span>Casual</span><span>Formal</span></div></div>
+            <div class="pslider" id="d-length"><div class="ps-head"><span class="ps-label">Length</span><span class="ps-val">Same</span></div><div class="ps-track"><div class="ps-fill"></div><div class="ps-thumb"></div></div><div class="ps-ends"><span>Shorter</span><span>Longer</span></div></div>
+            <div class="pslider" id="d-complexity"><div class="ps-head"><span class="ps-label">Complexity</span><span class="ps-val">Moderate</span></div><div class="ps-track"><div class="ps-fill"></div><div class="ps-thumb" style="left:50%"></div></div><div class="ps-ends"><span>Simple</span><span>Elaborate</span></div></div>
+            <div class="pselects">
+              <div class="psel"><span>Audience</span><div class="roll"><div><span>General</span></div></div></div>
+              <div class="psel" id="d-intent"><span>Intent</span><div class="roll"><div><span>Inform</span><span>Persuade</span></div></div><i class="ring"></i></div>
+            </div>
+          </div>
+          <div class="wcard dcard">
+            <div class="wcard-head">
+              <span class="chip clay">Variant</span>
+              <span class="chip" data-chip="tone">Neutral</span>
+              <span class="chip" data-chip="len">Same</span>
+              <span class="chip" data-chip="intent">Inform</span>
+              <span class="tog"><span class="on">Text</span><span>Diff</span></span>
+            </div>
+            <div class="dbody">
+              <p class="mlayer">Our onboarding takes too long, and new hires feel it in their very first week.</p>
+              <p class="mlayer">Our onboarding process takes longer than it should, and new employees feel the effects within their first week.</p>
+              <p class="mlayer">Onboarding currently takes too long; new employees notice within days.</p>
+              <p class="mlayer">Every extra day of onboarding is a day new employees cannot yet deliver.</p>
+            </div>
+            <div class="dfoot"><span><b class="wc">16</b> words</span><span>Streaming · Sonnet 5</span></div>
+          </div>
+          <svg class="cursor" viewBox="0 0 46 56" aria-hidden="true"><path d="M4 3L4 42L14.5 32.5L21.5 48L29 44.8L22 29.5L36 29.5Z" fill="#fff" stroke="#1a1817" stroke-width="3" stroke-linejoin="round"/></svg>
+        </div>
+      </section>
+
+      <!-- 4 CANVAS -->
+      <section class="scene paper" id="sc-canvas" hidden>
+        <div class="cv-view">
+          <div class="cv-world">
+            <div class="cv-grid"></div>
+            <svg class="cv-svg" width="2600" height="1500" viewBox="0 0 2600 1500" aria-hidden="true">
+              <defs>
+                <mask id="cvm0" maskUnits="userSpaceOnUse" x="0" y="0" width="2600" height="1500"><path pathLength="1" d="M722 730C850 730 830 300 946 300"/></mask>
+                <mask id="cvm1" maskUnits="userSpaceOnUse" x="0" y="0" width="2600" height="1500"><path pathLength="1" d="M722 730C850 730 830 720 946 720"/></mask>
+                <mask id="cvm2" maskUnits="userSpaceOnUse" x="0" y="0" width="2600" height="1500"><path pathLength="1" d="M722 730C850 730 830 1140 946 1140"/></mask>
+                <mask id="cvm3" maskUnits="userSpaceOnUse" x="0" y="0" width="2600" height="1500"><path pathLength="1" d="M1422 300C1550 300 1530 460 1646 460"/></mask>
+                <mask id="cvm4" maskUnits="userSpaceOnUse" x="0" y="0" width="2600" height="1500"><path pathLength="1" d="M1422 720C1550 720 1530 980 1646 980"/></mask>
+              </defs>
+              <path class="dash" mask="url(#cvm0)" d="M722 730C850 730 830 300 946 300"/>
+              <path class="dash" mask="url(#cvm1)" d="M722 730C850 730 830 720 946 720"/>
+              <path class="dash" mask="url(#cvm2)" d="M722 730C850 730 830 1140 946 1140"/>
+              <path class="dash" mask="url(#cvm3)" d="M1422 300C1550 300 1530 460 1646 460"/>
+              <path class="dash" mask="url(#cvm4)" d="M1422 720C1550 720 1530 980 1646 980"/>
+              <path class="cv-head" d="M934 288L948 300L934 312"/>
+              <path class="cv-head" d="M934 708L948 720L934 732"/>
+              <path class="cv-head" d="M934 1128L948 1140L934 1152"/>
+              <path class="cv-head" d="M1634 448L1648 460L1634 472"/>
+              <path class="cv-head" d="M1634 968L1648 980L1634 992"/>
+            </svg>
+            <div class="wcard src" style="left:260px;top:600px"><div class="wcard-head"><span class="chip sage">Source</span></div><div class="cv-body">Our onboarding takes too long, and new hires feel it in their very first week.</div></div>
+            <div class="wcard cv-v1" style="left:960px;top:170px"><div class="wcard-head"><span class="chip">Formal</span><span class="chip">Moderate</span><span class="chip">General</span></div><div class="cv-body">Our onboarding process takes longer than it should, and new employees feel it in week one.</div><i class="cv-ring"></i><i class="cv-badge">1</i></div>
+            <div class="wcard cv-v2" style="left:960px;top:590px"><div class="wcard-head"><span class="chip">Formal</span><span class="chip">Shorter</span><span class="chip">Executive</span><span class="tog"><span class="on">Text</span><span>Diff</span></span></div><div class="cv-body"><div class="txt">Every extra day of onboarding is a day new employees cannot yet deliver.</div><div class="dif"><del>Our</del> <ins>Every extra day of</ins> onboarding <del>takes too long, and</del> <ins>is a day</ins> new <del>hires feel it</del> <ins>employees cannot yet deliver</ins>.</div></div></div>
+            <div class="wcard cv-v3" style="left:960px;top:1010px"><div class="wcard-head"><span class="chip">Casual</span><span class="chip">Simple</span><span class="chip">General</span></div><div class="cv-body">Real talk: our onboarding is a slog, and new folks feel it from day one.</div><i class="cv-ring"></i><i class="cv-badge">2</i></div>
+            <div class="wcard" style="left:1660px;top:330px"><div class="wcard-head"><span class="chip">Formal</span><span class="chip">Longer</span><span class="chip">Academic</span></div><div class="cv-body">Prolonged onboarding delays the point at which new employees begin to contribute.</div></div>
+            <div class="wcard" style="left:1660px;top:850px"><div class="wcard-head"><span class="chip">Neutral</span><span class="chip">Elaborate</span><span class="chip">Technical</span></div><div class="cv-body">Each onboarding day defers a new engineer's first merged change.</div></div>
+          </div>
+        </div>
+        <div class="cv-headline">
+          <div class="eyebrow"><span class="pip"></span>Infinite canvas</div>
+          <h2 class="h2">Branch it. Diff it.<br><em>Compare it.</em></h2>
+        </div>
+        <div class="cv-kbd"><kbd>⌘</kbd> + click to compare</div>
+        <div class="cv-compare">
+          <div class="cmp-head"><h4>Quick Compare</h4><span class="chip violet">2 variants</span><span class="chk"><i><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5L5 9L10 3" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></i>SHOW DIFF</span></div>
+          <div class="cmp-cols">
+            <div class="cmp-col"><small><span class="chip">Formal</span> 16 words · baseline</small><div>Our onboarding process takes longer than it should, and new employees feel it in week one.</div></div>
+            <div class="cmp-col"><small><span class="chip">Casual</span> 15 words</small><div><del>Our onboarding process takes longer than it should,</del> <ins>Real talk: our onboarding is a slog,</ins> and new <del>employees feel it in week one</del> <ins>folks feel it from day one</ins>.</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5 SWARM -->
+      <section class="scene dark" id="sc-swarm" hidden>
+        <div class="glow" style="left:620px;top:700px;width:1300px;height:1300px"></div>
+        <div class="sw-head">
+          <div class="eyebrow"><span class="pip"></span>Agent swarm</div>
+          <h2 class="h2">Six roles. <em>One brief.</em></h2>
+          <p class="sw-brief"><b>Brief</b>Make the case for fixing onboarding to a skeptical exec team.</p>
+        </div>
+        <div class="sw-view"><div class="sw-plane" id="swPlane"><svg class="sw-svg" width="1080" height="600" viewBox="0 0 1080 600" aria-hidden="true"></svg></div></div>
+        <div class="sw-panel">
+          <div class="swp-head"><h4>Agent Swarm</h4><span>×</span></div>
+          <div class="swp-meta"><b class="swp-phase">Planning</b><span class="swp-stats">0 steps · 0 tokens</span></div>
+          <div class="swp-log"></div>
+          <div class="swp-foot"><span class="swp-stop">Stop Swarm</span><span class="swp-done">Done · 3 cards on the canvas</span></div>
+        </div>
+      </section>
+
+      <!-- 6 EXPERIMENT -->
+      <section class="scene paper" id="sc-exp" hidden>
+        <div class="ex-cam">
+          <div class="eyebrow ex-eyebrow"><span class="pip"></span>Controlled experiment</div>
+          <div class="q-block">
+            <span class="ln"><span class="w"><span>Was</span></span> <span class="w"><span>that</span></span> <span class="w"><span>your</span></span> <span class="w"><span>edit,</span></span></span>
+            <span class="ln"><span class="w"><span>or</span></span> <em><span class="w"><span>the</span></span> <span class="w"><span>dice?</span></span></em></span>
+          </div>
+          <div class="ex-copy">
+            <p>Wordcraft re-runs a neutral baseline and checks whether your change clears the model's own randomness.</p>
+            <div class="ex-facts">
+              <div><b>15</b>baseline pairs, cached across runs</div>
+              <div><b>2</b>tracks: meaning and wording</div>
+            </div>
+          </div>
+          <div class="ex-panel">
+            <div class="exp-top"><h4>Controlled Experiment</h4><span class="chip">Test · Tone only</span></div>
+            <div class="exp-chart" id="expChart">
+              <div class="cap">Meaning moved · model-judged</div>
+              <div class="exp-band"><span>NOISE BAND · 15 PAIRS</span></div>
+              <div class="exp-med"></div>
+              <div class="ax"></div>
+              <div class="exp-trail"></div>
+              <div class="exp-sig"><i></i><span>Your edit · <b class="sigv">0</b>%</span></div>
+            </div>
+            <div class="exp-cols">
+              <div class="exp-col noise"><small>Noise · same config, re-run</small><b>8–22%</b><span>median 14% · 15 pairs</span></div>
+              <div class="exp-col signal"><small>Signal · your settings</small><b class="sigv2">0%</b><span>meaning moved vs baseline</span></div>
+            </div>
+            <div class="exp-verdict">
+              <div><span class="tr m">Meaning</span><strong>Likely real effect</strong> · Signal 41% vs noise 8–22% across 15 baseline pairs.</div>
+              <div><span class="tr">Wording</span><strong>Marginal</strong> · Signal 34% vs noise 19–38% across 15 baseline pairs.</div>
+              <em>Clears the whole noise band and beats its median by more than 5 points.</em>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7 SENSITIVITY -->
+      <section class="scene dark" id="sc-sens" hidden>
+        <div class="glow" style="left:1350px;top:560px;width:1400px;height:1400px"></div>
+        <div class="se-head">
+          <div class="eyebrow"><span class="pip"></span>Sensitivity map</div>
+          <h2 class="h2">Find the dials <em>that matter.</em></h2>
+        </div>
+        <p class="se-sum"></p>
+        <div class="se-meta"><span>~12 generations</span><span>Cached per text</span></div>
+        <div class="se-view">
+          <div class="se-panel">
+            <div class="se-top"><h4>Sensitivity Map</h4><div class="se-legend"><span><i style="background:var(--clay)"></i>Meaning</span><span><i style="background:#a9a39e"></i>Wording</span></div></div>
+            <div class="se-chart" id="seChart"></div>
+            <div class="se-sheen"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 8 ABLATION -->
+      <section class="scene paper" id="sc-abl" hidden>
+        <div class="ab-head">
+          <div class="eyebrow"><span class="pip"></span>Ablation lab</div>
+          <h2 class="h2">Does the critic <em>earn its cost?</em></h2>
+        </div>
+        <div class="ab-cfg">
+          <div><small>Factor</small><span>Critic + Editor round, with vs without</span></div>
+          <div><small>Trials</small><span>8 per arm</span></div>
+          <div><small>Judging</small><span>Blind, randomized pairs</span></div>
+        </div>
+        <div class="ab-tally">
+          <div class="ab-r a"><small>With critic</small><span class="ab-t"><b></b></span><em class="ab-ca">0</em></div>
+          <div class="ab-r b"><small>Without</small><span class="ab-t"><b></b></span><em class="ab-cb">0</em></div>
+        </div>
+        <div class="ab-verdict"><strong>Moderate signal.</strong> With critic won 6 of 8 blind comparisons, moderate evidence it helps here, not proof.</div>
+        <div class="ab-grid" id="abGrid"></div>
+      </section>
+
+      <!-- 9 END -->
+      <section class="scene dark" id="sc-end" hidden>
+        <div class="glow" style="left:960px;top:420px;width:1400px;height:1400px"></div>
+        <div class="en-word">Parametric rewrites.</div>
+        <div class="en-word i">Agent swarms.</div>
+        <div class="en-word">Controlled experiments.</div>
+        <div class="en-word i">Sensitivity maps.</div>
+        <div class="en-word">Blind ablations.</div>
+        <div class="en-final">
+          <svg class="en-mark" viewBox="0 0 1024 1024" aria-hidden="true">
+            <path class="a" pathLength="1" d="M75 395H455C540 395 560 330 640 240C700 170 740 150 820 150H930"/>
+            <path class="a" pathLength="1" d="M75 470H470C560 470 610 420 720 410C780 400 820 395 930 395"/>
+            <path class="a" pathLength="1" d="M75 548H490C570 548 610 600 720 615C790 625 830 625 930 625"/>
+            <path class="a" pathLength="1" d="M75 628H460C540 628 570 700 640 790C700 860 740 865 820 865H930"/>
+            <path class="h" d="M870 85L945 150L870 215"/>
+            <path class="h" d="M870 330L945 395L870 460"/>
+            <path class="h" d="M870 560L945 625L870 690"/>
+            <path class="h" d="M870 800L945 865L870 930"/>
+          </svg>
+          <div class="en-word-mark"><span>W</span><span>o</span><span>r</span><span>d</span><span>c</span><span>r</span><span>a</span><span>f</span><span>t</span></div>
+          <p class="en-tag">Writing, with a control group.</p>
+          <div class="en-meta"><span>Bring your own key</span><span>·</span><span>Runs in your browser</span><span>·</span><span>No backend</span></div>
+          <div class="en-url">nchandrasekharr.github.io/wordcraft</div>
+        </div>
+      </section>
+
+      <div class="hud" id="hud"><svg viewBox="0 0 1024 1024" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="80" stroke-linecap="round" stroke-linejoin="round"><path d="M75 395H455C540 395 560 330 640 240C700 170 740 150 820 150H930M870 85L945 150L870 215"/><path d="M75 470H470C560 470 610 420 720 410C780 400 820 395 930 395M870 330L945 395L870 460"/><path d="M75 548H490C570 548 610 600 720 615C790 625 830 625 930 625M870 560L945 625L870 690"/><path d="M75 628H460C540 628 570 700 640 790C700 860 740 865 820 865H930M870 800L945 865L870 930"/></g></svg>Wordcraft</div>
+      <div class="flash" id="flash"></div>
+      <div class="grain" id="grain"></div>
+    </div>
+    <button class="bigplay" id="bigPlay" aria-label="Play" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4l14 8-14 8z" fill="currentColor"/></svg></button>
+  </div>
+
+  <div class="transport">
+    <button class="tbtn" id="playBtn" aria-label="Pause"></button>
+    <div class="bar" id="bar" role="slider" tabindex="0" aria-label="Seek" aria-valuemin="0" aria-valuemax="50" aria-valuenow="0"></div>
+    <span class="time" id="time">0:00 / 0:50</span>
+    <button class="tbtn" id="restartBtn" aria-label="Restart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button class="tbtn" id="fsBtn" aria-label="Full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+
+  <div class="shots-head"><h2>Storyboard</h2><span>Click a shot to jump to it</span></div>
+  <div class="shots" id="shots"></div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const clamp = (v, a = 0, b = 1) => (v < a ? a : v > b ? b : v);
+  const lerp = (a, b, p) => a + (b - a) * p;
+  const E = {
+    lin: p => p,
+    outExpo: p => (p >= 1 ? 1 : 1 - Math.pow(2, -10 * p)),
+    outCubic: p => 1 - Math.pow(1 - p, 3),
+    inCubic: p => p * p * p,
+    inOut: p => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2),
+    outSine: p => Math.sin((p * Math.PI) / 2),
+    outBack: p => { const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); },
+  };
+  const seg = (t, a, b, e = E.lin) => e(clamp((t - a) / (b - a)));
+  const stag = (p, i, n, spread = 0.5) => clamp((p - (n > 1 ? i / (n - 1) : 0) * spread) / (1 - spread));
+  const kf = (t, keys, e = E.inOut) => {
+    if (t <= keys[0][0]) return keys[0][1];
+    for (let i = 1; i < keys.length; i++) {
+      const [t1, v1] = keys[i], [t0, v0] = keys[i - 1];
+      if (t <= t1) {
+        const p = e((t - t0) / (t1 - t0));
+        return Array.isArray(v0) ? v0.map((v, j) => lerp(v, v1[j], p)) : lerp(v0, v1, p);
+      }
+    }
+    return keys[keys.length - 1][1];
+  };
+  // Write a style only when it changed: keeps per-frame work small.
+  const st = (el, prop, val) => { const k = '_' + prop; if (el[k] !== val) { el.style[prop] = val; el[k] = val; } };
+  const fade = (el, p, { x = 0, y = 0, blur = 0, scale = 0 } = {}) => {
+    st(el, 'opacity', String(+p.toFixed(3)));
+    const q = 1 - p;
+    st(el, 'transform', (x || y ? `translate(${(q * x).toFixed(1)}px,${(q * y).toFixed(1)}px)` : '') + (scale ? ` scale(${(1 - q * scale).toFixed(4)})` : '') || 'none');
+    if (blur) st(el, 'filter', p < 1 && p > 0 ? `blur(${(q * blur).toFixed(1)}px)` : 'none');
+  };
+  const typeText = (el, str, p) => { const n = Math.round(str.length * clamp(p)); if (el._n !== n) { el.textContent = str.slice(0, n); el._n = n; } };
+  const splitWords = el => {
+    const words = el.textContent.trim().split(/\s+/);
+    el.textContent = '';
+    return words.map((w, i) => { const s = document.createElement('span'); s.textContent = w; el.appendChild(s); if (i < words.length - 1) el.appendChild(document.createTextNode(' ')); return s; });
+  };
+  const make = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+  const offsetIn = (el, root) => { let x = 0, y = 0, n = el; while (n && n !== root) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; } return { x, y, w: el.offsetWidth, h: el.offsetHeight }; };
+  const toneLabel = v => (v <= -60 ? 'Very Casual' : v <= -20 ? 'Casual' : v < 20 ? 'Neutral' : v < 60 ? 'Formal' : 'Very Formal');
+  const lengthLabel = v => (v <= -60 ? 'Much Shorter' : v <= -20 ? 'Shorter' : v < 20 ? 'Same' : v < 60 ? 'Longer' : 'Much Longer');
+  const bump = (t, a, d = 0.35) => { const p = (t - a) / d; return p > 0 && p < 1 ? Math.sin(p * Math.PI) : 0; };
+  const fmt = n => Math.round(n).toLocaleString('en-US');
+  const resets = [];
+
+  /* ===== 1 FORK ===== */
+  const rFork = (() => {
+    const el = $('#sc-fork'), cam = $('.fork-cam', el), caret = $('.caret', el), src = $('.fork-src', el);
+    const lines = $$('.fl-line', el), heads = $$('.fl-head', el);
+    const vars = $$('.fork-var', el).map(v => ({ tag: $('.tag', v), p: $('p', v), str: v.dataset.text }));
+    return lt => {
+      st(cam, 'transform', `translateX(${(-36 * seg(lt, 0, 4.6)).toFixed(1)}px) scale(${(1 + 0.04 * seg(lt, 0, 4.6, E.outSine)).toFixed(4)})`);
+      st(caret, 'opacity', lt < 0.55 ? (Math.floor(lt * 3.2) % 2 ? '0' : '1') : '0');
+      fade(src, 1 - 0.35 * seg(lt, 2.2, 3.2));
+      lines.forEach((l, k) => st(l, 'strokeDashoffset', String(+(1 - seg(lt, 0.45 + 0.09 * k, 1.3 + 0.09 * k, E.inOut)).toFixed(4))));
+      heads.forEach((h, k) => st(h, 'opacity', String(seg(lt, 1.18 + 0.09 * k, 1.4 + 0.09 * k))));
+      vars.forEach((o, k) => {
+        const a = 1.25 + 0.17 * k;
+        fade(o.tag, seg(lt, a, a + 0.4, E.outCubic), { x: -18 });
+        const tp = seg(lt, a + 0.1, a + 0.1 + o.str.length * 0.018);
+        typeText(o.p, o.str, tp);
+        o.p.classList.toggle('typing', tp > 0 && tp < 1);
+      });
+    };
+  })();
+
+  /* ===== 2 TITLE ===== */
+  const rTitle = (() => {
+    const el = $('#sc-title'), eb = $('.eyebrow', el), words = $$('.w > span', el), block = $('.title-block', el), mark = $('.title-mark', el);
+    const arms = $$('.tm-a', el), heads = $$('.tm-h', el), flows = $$('.tm-flow', el);
+    return lt => {
+      fade(eb, seg(lt, 0.15, 0.8, E.outCubic), { y: 16 });
+      words.forEach((w, k) => {
+        const a = 0.28 + k * 0.12 + (k >= 2 ? 0.2 : 0), p = seg(lt, a, a + 1.1, E.outExpo);
+        st(w, 'transform', `translateY(${((1 - p) * 108).toFixed(2)}%)`);
+        st(w, 'filter', p < 1 ? `blur(${((1 - p) * 12).toFixed(1)}px)` : 'none');
+      });
+      arms.forEach((a, k) => st(a, 'strokeDashoffset', String(+(1 - seg(lt, 0.4 + 0.1 * k, 1.5 + 0.1 * k, E.inOut)).toFixed(4))));
+      heads.forEach((h, k) => st(h, 'opacity', String(seg(lt, 1.35 + 0.1 * k, 1.6 + 0.1 * k))));
+      flows.forEach((f, k) => { st(f, 'opacity', String(seg(lt, 1.7, 2.3) * 0.9)); st(f, 'strokeDashoffset', String(+(-(lt * 0.42) - k * 0.17).toFixed(4))); });
+      st(block, 'transform', `translateX(${(-26 * seg(lt, 0, 4.8)).toFixed(1)}px)`);
+      st(mark, 'transform', `translateX(${(22 * seg(lt, 0, 4.8)).toFixed(1)}px) rotate(${(-3 + 3 * seg(lt, 0, 4.8, E.outSine)).toFixed(2)}deg)`);
+    };
+  })();
+
+  /* ===== 3 DIALS ===== */
+  const rDials = (() => {
+    const el = $('#sc-dials'), cam = $('.dials-cam', el), cur = $('.cursor', el), head = $('.dials-head', el);
+    const slider = sel => { const r = $(sel, el); return { thumb: $('.ps-thumb', r), fill: $('.ps-fill', r), val: $('.ps-val', r), track: $('.ps-track', r) }; };
+    const tone = slider('#d-tone'), len = slider('#d-length');
+    const intent = $('#d-intent', el), roll = $('.roll > div', intent), ring = $('.ring', intent);
+    const layers = $$('.mlayer', el).map(splitWords);
+    const counts = layers.map(l => l.length);
+    const chips = { tone: $('[data-chip=tone]', el), len: $('[data-chip=len]', el), intent: $('[data-chip=intent]', el) };
+    const wc = $('.wc', el);
+    let geo = null;
+    resets.push(() => { geo = null; });
+    const measure = () => {
+      const t = offsetIn(tone.track, cam), l = offsetIn(len.track, cam), i = offsetIn(intent, cam);
+      geo = { tone: { x: t.x, y: t.y + t.h / 2, w: t.w }, len: { x: l.x, y: l.y + l.h / 2, w: l.w }, intent: { x: i.x + i.w * 0.55, y: i.y + i.h * 0.66 } };
+    };
+    const setSlider = (s, f) => {
+      st(s.thumb, 'left', (f * 100).toFixed(2) + '%');
+      const lo = Math.min(f, 0.5), hi = Math.max(f, 0.5);
+      st(s.fill, 'left', (lo * 100).toFixed(2) + '%'); st(s.fill, 'width', ((hi - lo) * 100).toFixed(2) + '%');
+    };
+    const morph = (spans, pin, pout) => {
+      const n = spans.length;
+      spans.forEach((s, i) => {
+        const qi = stag(pin, i, n, 0.55), qo = stag(pout, i, n, 0.55);
+        const o = qi * (1 - qo);
+        st(s, 'opacity', String(+o.toFixed(3)));
+        st(s, 'filter', o > 0 && o < 1 ? `blur(${((1 - qi) * 9 + qo * 9).toFixed(1)}px)` : 'none');
+        st(s, 'transform', `translateY(${((1 - qi) * 16 - qo * 16).toFixed(1)}px)`);
+      });
+    };
+    const setChip = (chip, text, t0, lt) => { if (chip.textContent !== text) chip.textContent = text; st(chip, 'transform', `scale(${(1 + 0.16 * bump(lt, t0, 0.4)).toFixed(3)})`); chip.classList.toggle('clay', lt > t0); };
+    return lt => {
+      if (!geo) measure();
+      st(cam, 'transform', `scale(${kf(lt, [[0, 1.26], [2.3, 1.26], [3.7, 1]]).toFixed(4)})`);
+      fade(head, seg(lt, 2.9, 3.8, E.outCubic), { y: 24, blur: 8 });
+      const tf = lerp(0.5, 0.78, seg(lt, 1.05, 2.1, E.inOut));
+      const lf = lerp(0.5, 0.26, seg(lt, 2.95, 3.75, E.inOut));
+      setSlider(tone, tf); setSlider(len, lf);
+      const tl = toneLabel(Math.round((tf * 2 - 1) * 100)), ll = lengthLabel(Math.round((lf * 2 - 1) * 100));
+      if (tone.val.textContent !== tl) tone.val.textContent = tl;
+      if (len.val.textContent !== ll) len.val.textContent = ll;
+      st(roll, 'transform', `translateY(${(-34 * seg(lt, 4.5, 4.85, E.outExpo)).toFixed(1)}px)`);
+      st(ring, 'opacity', String(seg(lt, 4.38, 4.5) * (1 - seg(lt, 5.1, 5.4))));
+      // cursor choreography
+      const pT = { x: geo.tone.x + geo.tone.w * tf, y: geo.tone.y }, pL = { x: geo.len.x + geo.len.w * lf, y: geo.len.y };
+      const pL0 = { x: geo.len.x + geo.len.w * 0.5, y: geo.len.y }, pT0 = { x: geo.tone.x + geo.tone.w * 0.5, y: geo.tone.y };
+      let cx, cy;
+      if (lt < 0.95) { const p = seg(lt, 0.1, 0.95, E.outCubic); cx = lerp(1500, pT0.x, p); cy = lerp(1040, pT0.y, p); }
+      else if (lt < 2.2) { cx = pT.x; cy = pT.y; }
+      else if (lt < 2.9) { const p = seg(lt, 2.2, 2.9, E.inOut); cx = lerp(pT.x, pL0.x, p); cy = lerp(pT.y, pL0.y, p); }
+      else if (lt < 3.85) { cx = pL.x; cy = pL.y; }
+      else { const p = seg(lt, 3.85, 4.4, E.inOut), q = seg(lt, 5.0, 5.9, E.inOut); cx = lerp(pL.x, geo.intent.x, p) + q * 120; cy = lerp(pL.y, geo.intent.y, p) + q * 60; }
+      const press = (lt > 0.95 && lt < 2.2) || (lt > 2.9 && lt < 3.85) || (lt > 4.42 && lt < 4.6);
+      st(cur, 'transform', `translate(${(cx - 6).toFixed(1)}px,${(cy - 4).toFixed(1)}px) scale(${press ? 0.86 : 1})`);
+      // card rewrites itself
+      const ms = [seg(lt, 1.45, 2.35), seg(lt, 3.15, 3.9), seg(lt, 4.6, 5.35)];
+      layers.forEach((spans, k) => morph(spans, k === 0 ? 1 : ms[k - 1], k === layers.length - 1 ? 0 : ms[k]));
+      const c = lerp(lerp(lerp(counts[0], counts[1], ms[0]), counts[2], ms[1]), counts[3], ms[2]);
+      const cs = String(Math.round(c)); if (wc.textContent !== cs) wc.textContent = cs;
+      setChip(chips.tone, ms[0] > 0.3 ? 'Formal' : 'Neutral', 1.72, lt);
+      setChip(chips.len, ms[1] > 0.3 ? 'Shorter' : 'Same', 3.38, lt);
+      setChip(chips.intent, ms[2] > 0.3 ? 'Persuade' : 'Inform', 4.82, lt);
+    };
+  })();
+
+  /* ===== 4 CANVAS ===== */
+  const rCanvas = (() => {
+    const el = $('#sc-canvas'), world = $('.cv-world', el), cards = $$('.cv-world .wcard', el);
+    const masks = $$('mask path', el), heads = $$('.cv-head', el), headline = $('.cv-headline', el);
+    const txt = $('.cv-v2 .txt', el), dif = $('.cv-v2 .dif', el), tog = $$('.cv-v2 .tog span', el);
+    const rings = $$('.cv-ring', el), badges = $$('.cv-badge', el), kbd = $('.cv-kbd', el), cmp = $('.cv-compare', el);
+    const appear = [-1, 1.0, 1.25, 1.5, 1.9, 2.15];
+    const draw = [[0.75, 1.1], [1.0, 1.35], [1.25, 1.6], [1.65, 2.0], [1.9, 2.25]];
+    return lt => {
+      const [rx, rz, s, tx, ty] = kf(lt, [[0, [0, 0, 0.6, 0, 40]], [1.45, [54, -30, 0.8, -40, 70]], [6.4, [45, -18, 0.9, -190, 40]]]);
+      st(world, 'transform', `translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) rotateX(${rx.toFixed(2)}deg) rotateZ(${rz.toFixed(2)}deg) scale(${s.toFixed(4)})`);
+      cards.forEach((c, k) => {
+        const p = appear[k] < 0 ? 1 : seg(lt, appear[k], appear[k] + 0.6, E.outCubic);
+        st(c, 'opacity', String(+p.toFixed(3)));
+        st(c, 'transform', `translateZ(${((1 - p) * 320).toFixed(1)}px)`);
+      });
+      masks.forEach((m, k) => st(m, 'strokeDashoffset', String(+(1 - seg(lt, draw[k][0], draw[k][1], E.inOut)).toFixed(4))));
+      heads.forEach((h, k) => st(h, 'opacity', String(seg(lt, draw[k][1] - 0.05, draw[k][1] + 0.1))));
+      fade(headline, seg(lt, 0.25, 1.0, E.outCubic), { y: 20 });
+      const d = seg(lt, 3.0, 3.4, E.inOut);
+      st(txt, 'opacity', String(1 - d)); st(dif, 'opacity', String(d));
+      tog[0].classList.toggle('on', d < 0.5); tog[1].classList.toggle('on', d >= 0.5);
+      [3.85, 4.15].forEach((a, k) => {
+        const p = seg(lt, a, a + 0.3, E.outBack);
+        st(rings[k], 'opacity', String(clamp(p))); st(rings[k], 'transform', `scale(${(1.06 - 0.06 * p).toFixed(4)})`);
+        st(badges[k], 'opacity', String(clamp(p))); st(badges[k], 'transform', `scale(${(0.4 + 0.6 * p).toFixed(4)})`);
+      });
+      fade(kbd, seg(lt, 3.6, 3.9, E.outCubic) * (1 - seg(lt, 4.6, 4.9)), { y: -12 });
+      st(cmp, 'transform', `translateY(${((1 - seg(lt, 4.5, 5.2, E.outExpo)) * 420).toFixed(1)}px)`);
+    };
+  })();
+
+  /* ===== 5 SWARM ===== */
+  const rSwarm = (() => {
+    const el = $('#sc-swarm'), plane = $('#swPlane'), svg = $('.sw-svg', el), NS = 'http://www.w3.org/2000/svg';
+    const W = 170, H = 80;
+    const N = {
+      planner: { x: 0, y: 260, role: 'Planner', msgs: ['Decomposing…', '3 angles'], a: 0.3, d: 0.9 },
+      research: { x: 215, y: 260, role: 'Researcher', msgs: ['Searching…', '4 sources'], a: 1.4, d: 1.9 },
+      w1: { x: 450, y: 90, role: 'Writer', msgs: ['The skeptic', 'The skeptic'], a: 2.4, d: 3.2, bar: true },
+      w2: { x: 450, y: 260, role: 'Writer', msgs: ['The numbers', 'The numbers'], a: 2.45, d: 3.25, bar: true },
+      w3: { x: 450, y: 430, role: 'Writer', msgs: ['The story', 'The story'], a: 2.5, d: 3.3, bar: true },
+      critic: { x: 690, y: 150, role: 'Critic', msgs: ['Pressing…', 'Score 6/10'], a: 3.65, d: 4.25 },
+      editor: { x: 690, y: 370, role: 'Editor', msgs: ['Revising…', '2 fixes in'], a: 4.6, d: 5.0 },
+      judge: { x: 910, y: 260, role: 'Judge', msgs: ['Ranking…', 'Winner: 2'], a: 5.35, d: 5.75 },
+    };
+    const R = n => [N[n].x + W, N[n].y + H / 2], L = n => [N[n].x, N[n].y + H / 2];
+    const curve = ([x1, y1], [x2, y2]) => `M${x1} ${y1}C${x1 + 70} ${y1} ${x2 - 70} ${y2} ${x2} ${y2}`;
+    const EDGES = [
+      { d: curve(R('planner'), L('research')), a: 0.9, b: 1.4 },
+      { d: curve(R('research'), L('w1')), a: 1.9, b: 2.4 },
+      { d: curve(R('research'), L('w2')), a: 1.95, b: 2.45 },
+      { d: curve(R('research'), L('w3')), a: 2.0, b: 2.5 },
+      { d: curve(R('w1'), L('critic')), a: 3.2, b: 3.62 },
+      { d: curve(R('w2'), L('critic')), a: 3.25, b: 3.65 },
+      { d: curve(R('w3'), L('critic')), a: 3.3, b: 3.68 },
+      { d: `M${N.critic.x + W / 2} ${N.critic.y + H}C${N.critic.x + W / 2 + 30} ${N.critic.y + H + 60} ${N.editor.x + W / 2 + 30} ${N.editor.y - 60} ${N.editor.x + W / 2} ${N.editor.y}`, a: 4.25, b: 4.6 },
+      { d: curve(R('editor'), L('judge')), a: 5.0, b: 5.35 },
+    ];
+    EDGES.forEach(e => {
+      const base = document.createElementNS(NS, 'path'); base.setAttribute('d', e.d); base.setAttribute('class', 'base');
+      const lit = document.createElementNS(NS, 'path'); lit.setAttribute('d', e.d); lit.setAttribute('class', 'lit'); lit.setAttribute('pathLength', '1');
+      const halo = document.createElementNS(NS, 'circle'); halo.setAttribute('r', '16'); halo.setAttribute('class', 'pkt-halo');
+      const pkt = document.createElementNS(NS, 'circle'); pkt.setAttribute('r', '6'); pkt.setAttribute('class', 'pkt');
+      svg.append(base, lit, halo, pkt);
+      Object.assign(e, { base, lit, halo, pkt, len: 0 });
+    });
+    Object.entries(N).forEach(([id, n]) => {
+      const node = make('div', 'sw-node');
+      node.style.left = n.x + 'px'; node.style.top = n.y + 'px';
+      const top = make('div', 'sw-n-top'); n.dot = make('i'); top.append(n.dot, make('span', null, n.role));
+      n.msg = make('div', 'sw-n-msg', n.msgs[0]);
+      node.append(top, n.msg);
+      if (n.bar) { const b = make('div', 'bar2'); n.fill = make('b'); b.append(n.fill); node.append(b); }
+      if (id === 'w2') { n.crown = make('div', 'sw-crown', 'WINNER'); node.append(n.crown); }
+      plane.append(node); n.el = node;
+    });
+    const LOG = [
+      { role: 'Planner', a: 0.3, d: 0.9, run: 'Decomposing the brief…', done: '3 angles: The skeptic · The numbers · The story', tok: 1450 },
+      { role: 'Researcher', a: 1.4, d: 1.9, run: 'Searching the web…', done: 'Research card posted · 4 sources', tok: 5200 },
+      { role: 'Writer', a: 2.4, d: 3.2, run: 'Drafting “The skeptic”…', done: 'Drafted “The skeptic”', tok: 3100 },
+      { role: 'Writer', a: 2.45, d: 3.25, run: 'Drafting “The numbers”…', done: 'Drafted “The numbers”', tok: 3300 },
+      { role: 'Writer', a: 2.5, d: 3.3, run: 'Drafting “The story”…', done: 'Drafted “The story”', tok: 3050 },
+      { role: 'Critic', a: 3.65, d: 4.25, run: 'Pressing “The numbers”…', done: '“The numbers”: 6/10 · second sentence is vague', tok: 2600 },
+      { role: 'Editor', a: 4.6, d: 5.0, run: 'Revising “The numbers”…', done: 'Revised · both fixes resolved', tok: 3400 },
+      { role: 'Judge', a: 5.35, d: 5.75, run: 'Ranking variants…', done: 'Winner: “The numbers” · ranked 2 › 1 › 3', tok: 2210 },
+    ];
+    const logEl = $('.swp-log', el);
+    LOG.forEach(e => {
+      const row = make('div', 'swp-e'), dot = make('i'), box = make('div');
+      e.p = make('p', null, e.run);
+      box.append(make('small', null, e.role), e.p); row.append(dot, box); logEl.append(row);
+      e.row = row; e.dot = dot;
+    });
+    const phaseEl = $('.swp-phase', el), statsEl = $('.swp-stats', el), stop = $('.swp-stop', el), doneEl = $('.swp-done', el), panel = $('.sw-panel', el), head = $('.sw-head', el);
+    const PHASES = [[0, 'Planning'], [1.4, 'Researching'], [2.4, 'Drafting'], [3.65, 'Critiquing'], [4.6, 'Revising'], [5.35, 'Judging'], [5.75, 'Done']];
+    const nodeState = (n, lt) => (lt < n.a ? 0 : lt < n.d ? 1 : 2);
+    return lt => {
+      st(plane, 'transform', `rotateX(${kf(lt, [[0, 32], [6.8, 22]]).toFixed(2)}deg) rotateY(${kf(lt, [[0, -22], [6.8, -9]]).toFixed(2)}deg) rotateZ(${kf(lt, [[0, 2], [6.8, 0]]).toFixed(2)}deg) scale(${kf(lt, [[0, 0.94], [6.8, 1.0]]).toFixed(4)})`);
+      fade(head, seg(lt, 0.3, 1.0, E.outCubic), { y: 18 });
+      fade(panel, seg(lt, 0.2, 0.9, E.outExpo), { x: 80 });
+      EDGES.forEach(e => {
+        if (!e.len) e.len = e.base.getTotalLength() || 1;
+        const p = seg(lt, e.a, e.b, E.inOut), on = p > 0 && p < 1;
+        st(e.lit, 'strokeDashoffset', String(+(1 - p).toFixed(4)));
+        st(e.lit, 'opacity', String(p >= 1 ? 0.45 : 0.9));
+        if (on) { const pt = e.base.getPointAtLength(e.len * p); [e.pkt, e.halo].forEach(c => { c.setAttribute('cx', pt.x.toFixed(1)); c.setAttribute('cy', pt.y.toFixed(1)); }); }
+        st(e.pkt, 'opacity', on ? '1' : '0'); st(e.halo, 'opacity', on ? '1' : '0');
+      });
+      const won = seg(lt, 5.75, 6.15, E.outBack);
+      Object.entries(N).forEach(([id, n]) => {
+        const s = nodeState(n, lt);
+        const pulse = s === 1 ? 0.6 + 0.4 * Math.sin(lt * 14) : 1;
+        st(n.el, 'borderColor', s === 1 ? 'rgba(227,146,92,0.95)' : s === 2 ? 'rgba(92,195,146,0.45)' : 'rgba(243,237,230,0.14)');
+        st(n.el, 'boxShadow', s === 1 ? '0 0 0 6px rgba(227,146,92,0.12), 0 0 40px rgba(227,146,92,0.35)' : (id === 'w2' && won > 0 ? `0 0 0 ${(6 * won).toFixed(1)}px rgba(227,146,92,0.2), 0 0 60px rgba(227,146,92,${(0.45 * won).toFixed(2)})` : 'none'));
+        st(n.dot, 'background', s === 1 ? '#e3925c' : s === 2 ? '#5cc392' : 'rgba(243,237,230,0.4)');
+        st(n.dot, 'opacity', String(+pulse.toFixed(2)));
+        const m = s === 2 ? n.msgs[1] : n.msgs[0]; if (n.msg.textContent !== m) n.msg.textContent = m;
+        if (n.fill) st(n.fill, 'transform', `scaleX(${seg(lt, n.a, n.d).toFixed(3)})`);
+        let sc = 1;
+        if (id === 'w2') { sc = 1 + 0.07 * clamp(won); st(n.crown, 'opacity', String(clamp(won))); st(n.crown, 'transform', `translateX(-50%) translateY(${((1 - clamp(won)) * 10).toFixed(1)}px)`); }
+        else if (won > 0 && (id === 'w1' || id === 'w3')) st(n.el, 'opacity', String(1 - 0.45 * clamp(won)));
+        else st(n.el, 'opacity', '1');
+        st(n.el, 'transform', `scale(${sc.toFixed(4)})`);
+      });
+      let steps = 0, tok = 0;
+      LOG.forEach(e => {
+        const shown = lt >= e.a;
+        fade(e.row, seg(lt, e.a, e.a + 0.3, E.outCubic), { y: 14 });
+        const done = lt >= e.d;
+        e.row.classList.toggle('done', done);
+        st(e.dot, 'opacity', done || !shown ? '1' : String(0.5 + 0.5 * Math.round((Math.sin(lt * 12) + 1) / 2)));
+        const txt = done ? e.done : e.run; if (e.p.textContent !== txt) e.p.textContent = txt;
+        if (shown) steps += done ? 2 : 1;
+        tok += e.tok * seg(lt, e.a, e.d);
+      });
+      const ph = PHASES.filter(p => lt >= p[0]).pop()[1]; if (phaseEl.textContent !== ph) phaseEl.textContent = ph;
+      const sx = `${steps} steps · ${fmt(tok)} tokens`; if (statsEl.textContent !== sx) statsEl.textContent = sx;
+      st(stop, 'opacity', String(1 - seg(lt, 5.75, 5.95))); st(doneEl, 'opacity', String(seg(lt, 5.85, 6.1)));
+    };
+  })();
+
+  /* ===== 6 EXPERIMENT ===== */
+  const rExp = (() => {
+    const el = $('#sc-exp'), q = $('.q-block', el), qWords = $$('.q-block .w > span', el), eb = $('.ex-eyebrow', el), copy = $('.ex-copy', el), panel = $('.ex-panel', el), cam = $('.ex-cam', el);
+    const chart = $('#expChart'), band = $('.exp-band', el), med = $('.exp-med', el), sig = $('.exp-sig', el), trail = $('.exp-trail', el), verdict = $('.exp-verdict', el);
+    const sigv = $('.sigv', el), sigv2 = $('.sigv2', el), facts = $$('.ex-facts > div', el);
+    const X0 = 40, CW = 950 - 76 - 2 - 80, MAX = 0.6; // chart inner width (panel 950, padding 38*2, borders, axis inset 40*2)
+    const xOf = v => X0 + (v / MAX) * CW;
+    [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6].forEach(v => { const t = make('div', 'tick', Math.round(v * 100) + '%'); t.style.left = xOf(v) + 'px'; chart.append(t); });
+    const NOISE = [0.08, 0.1, 0.11, 0.12, 0.13, 0.13, 0.14, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.21, 0.22];
+    const JIT = [0.62, 0.3, 0.78, 0.45, 0.2, 0.7, 0.38, 0.86, 0.55, 0.25, 0.66, 0.42, 0.8, 0.34, 0.58];
+    const dots = NOISE.map((v, i) => { const d = make('div', 'exp-dot'); d.style.left = xOf(v) + 'px'; d.style.top = (70 + JIT[i] * 120) + 'px'; chart.append(d); return d; });
+    band.style.left = xOf(0.08) + 'px'; band.style.width = (xOf(0.22) - xOf(0.08)) + 'px'; med.style.left = xOf(0.14) + 'px';
+    // q-block flies from centre stage into the headline slot
+    const Q_TO = { x: 120 - 230, y: 150 - 380, s: 0.47 };
+    return lt => {
+      qWords.forEach((w, k) => { const a = 0.05 + k * 0.08 + (k >= 4 ? 0.12 : 0), p = seg(lt, a, a + 0.8, E.outExpo); st(w, 'transform', `translateY(${((1 - p) * 108).toFixed(2)}%)`); st(w, 'filter', p < 1 ? `blur(${((1 - p) * 10).toFixed(1)}px)` : 'none'); });
+      const fly = seg(lt, 1.45, 2.25, E.inOut);
+      st(q, 'transform', `translate(${(Q_TO.x * fly).toFixed(1)}px,${(Q_TO.y * fly).toFixed(1)}px) scale(${lerp(1, Q_TO.s, fly).toFixed(4)})`);
+      fade(eb, seg(lt, 2.0, 2.5, E.outCubic), { y: 10 });
+      fade(copy, seg(lt, 2.15, 2.8, E.outCubic), { y: 24 });
+      facts.forEach((f, k) => fade(f, seg(lt, 2.5 + k * 0.15, 2.9 + k * 0.15, E.outCubic), { y: 12 }));
+      fade(panel, seg(lt, 1.95, 2.7, E.outExpo), { x: 120, scale: 0.04 });
+      dots.forEach((d, i) => { const p = seg(lt, 2.55 + i * 0.06, 2.9 + i * 0.06, E.outBack); st(d, 'opacity', String(clamp(p * 1.4))); st(d, 'transform', `translateY(${((1 - p) * -46).toFixed(1)}px)`); });
+      st(band, 'opacity', String(seg(lt, 3.3, 3.6))); st(med, 'opacity', String(seg(lt, 3.4, 3.7)));
+      const sp = seg(lt, 3.7, 4.5, E.outExpo), v = 0.41 * sp;
+      st(sig, 'opacity', String(seg(lt, 3.65, 3.8))); st(sig, 'left', xOf(v).toFixed(1) + 'px');
+      st(trail, 'opacity', String(seg(lt, 3.7, 3.8) * (1 - seg(lt, 4.5, 5.0)))); st(trail, 'left', xOf(Math.max(0, v - 0.18)).toFixed(1) + 'px'); st(trail, 'width', (xOf(v) - xOf(Math.max(0, v - 0.18))).toFixed(1) + 'px');
+      const pv = String(Math.round(v * 100)); if (sigv.textContent !== pv) sigv.textContent = pv; if (sigv2.textContent !== pv + '%') sigv2.textContent = pv + '%';
+      fade(verdict, seg(lt, 4.6, 5.1, E.outExpo), { y: 16, scale: 0.03 });
+      const push = seg(lt, 5.2, 7.0, E.inOut);
+      st(cam, 'transformOrigin', '1325px 850px');
+      st(cam, 'transform', `scale(${(1 + 0.08 * push).toFixed(4)})`);
+    };
+  })();
+
+  /* ===== 7 SENSITIVITY ===== */
+  const rSens = (() => {
+    const el = $('#sc-sens'), chart = $('#seChart'), panel = $('.se-panel', el), sum = $('.se-sum', el), head = $('.se-head', el), meta = $('.se-meta', el), sheen = $('.se-sheen', el);
+    const KNOBS = [
+      { n: 'Tone', m: 0.15, w: 0.36, v: 'wording', b: 'Wording only' },
+      { n: 'Length', m: 0.46, w: 0.52, v: 'strong', b: 'Moves meaning' },
+      { n: 'Complexity', m: 0.1, w: 0.17, v: 'noise', b: 'Inside noise' },
+      { n: 'Audience', m: 0.25, w: 0.3, v: 'marginal', b: 'Marginal' },
+      { n: 'Intent', m: 0.49, w: 0.41, v: 'strong', b: 'Moves meaning' },
+    ];
+    const MAX = 0.6, TRACK = 880 - 80 - 150 - 70;
+    const bandEl = make('div', 'se-band'); bandEl.append(make('span', null, 'NOISE FLOOR')); bandEl.style.width = ((0.22 / MAX) * TRACK) + 'px'; chart.append(bandEl);
+    const rows = [];
+    KNOBS.forEach((k, g) => {
+      const grp = make('div', 'se-g' + (k.v === 'strong' ? ' strong' : ''));
+      const gh = make('div', 'se-gh'); const badge = make('span', 'se-badge ' + k.v, k.b); gh.append(make('b', null, k.n), badge); grp.append(gh);
+      [['Meaning', k.m, ''], ['Wording', k.w, ' w']].forEach(([lab, val, cls], r) => {
+        const row = make('div', 'se-row'); const tr = make('span', 'se-track'); const bar = make('i', 'se-bar' + cls); bar.style.width = ((val / MAX) * 100) + '%'; tr.append(bar);
+        const vEl = make('span', 'se-val', '0%'); row.append(make('small', null, lab), tr, vEl); grp.append(row);
+        rows.push({ bar, vEl, val, a: 0.75 + g * 0.17 + r * 0.07 });
+      });
+      chart.append(grp); k.badge = badge; k.g = g;
+    });
+    const SUM = 'For this text: Length and Intent move meaning well beyond noise; Tone is mostly wording; Audience is marginal; Complexity sits inside the noise band.';
+    return lt => {
+      fade(head, seg(lt, 0.25, 0.95, E.outCubic), { y: 18 });
+      st(panel, 'transform', `rotateY(${kf(lt, [[0, -38], [1.2, -24], [5.8, -14]]).toFixed(2)}deg) rotateX(${kf(lt, [[0, 10], [5.8, 4]]).toFixed(2)}deg) translateZ(${kf(lt, [[0, -160], [1.2, -40], [5.8, 0]]).toFixed(1)}px) translateY(${(Math.sin(lt * 1.3) * 6).toFixed(1)}px)`);
+      st(panel, 'opacity', String(seg(lt, 0.1, 0.6)));
+      rows.forEach(r => { const p = seg(lt, r.a, r.a + 1.0, E.outExpo); st(r.bar, 'transform', `scaleX(${p.toFixed(4)})`); const t = Math.round(r.val * 100 * p) + '%'; if (r.vEl.textContent !== t) r.vEl.textContent = t; });
+      KNOBS.forEach(k => { const p = seg(lt, 2.35 + k.g * 0.09, 2.65 + k.g * 0.09, E.outBack); st(k.badge, 'opacity', String(clamp(p))); st(k.badge, 'transform', `scale(${(0.6 + 0.4 * p).toFixed(4)})`); });
+      const tp = seg(lt, 2.55, 4.7);
+      typeText(sum, SUM, tp); sum.classList.toggle('typing', tp > 0 && tp < 1);
+      fade(meta, seg(lt, 4.4, 4.9), { y: 10 });
+      st(sheen, 'transform', `translateX(${lerp(-400, 1200, seg(lt, 3.2, 4.4, E.inOut)).toFixed(1)}px) skewX(-14deg)`);
+    };
+  })();
+
+  /* ===== 8 ABLATION ===== */
+  const rAbl = (() => {
+    const el = $('#sc-abl'), grid = $('#abGrid'), head = $('.ab-head', el), cfg = $$('.ab-cfg > div', el), tally = $('.ab-tally', el);
+    const fillA = $('.ab-r.a b', el), fillB = $('.ab-r.b b', el), ca = $('.ab-ca', el), cb = $('.ab-cb', el), verdict = $('.ab-verdict', el);
+    const WITH_POS = [2, 1, 1, 2, 1, 2, 2, 1], WITH_WON = [1, 1, 0, 1, 1, 1, 0, 1];
+    const lines = n => Array.from({ length: n }, (_, i) => { const l = make('span', 'ln2'); l.style.width = [92, 78, 88, 60][i % 4] + '%'; return l; });
+    const tiles = WITH_POS.map((wp, i) => {
+      const tile = make('div', 'ab-tile'), inner = make('div', 'ab-inner'), front = make('div', 'ab-face'), back = make('div', 'ab-face back');
+      const pickPos = WITH_WON[i] ? wp : 3 - wp;
+      const hf = make('header'); hf.append(make('span', null, `Pair ${i + 1}`), make('b', null, 'Blind')); front.append(hf);
+      const pf = make('div', 'ab-pair'), picks = [];
+      [1, 2].forEach(pos => { const c = make('div', 'ab-c'); c.append(make('span', 'n', String(pos)), ...lines(3)); const pk = make('i', 'pick'); c.append(pk); if (pos === pickPos) picks.push(pk); pf.append(c); });
+      front.append(pf);
+      const hb = make('header'); hb.append(make('span', null, `Pair ${i + 1}`), make('b', null, WITH_WON[i] ? 'With critic won' : 'Without won')); back.append(hb);
+      const pb = make('div', 'ab-pair');
+      [1, 2].forEach(pos => { const isWith = pos === wp; const c = make('div', 'ab-c'); c.append(make('span', 'arm ' + (isWith ? 'with' : 'without'), isWith ? 'With critic' : 'Without'), ...lines(3)); if (pos === pickPos) { const pk = make('i', 'pick'); pk.style.opacity = '1'; c.append(pk); } pb.append(c); });
+      back.append(pb);
+      inner.append(front, back); tile.append(inner); grid.append(tile);
+      return { tile, inner, pick: picks[0], i };
+    });
+    return lt => {
+      fade(head, seg(lt, 0.2, 0.9, E.outCubic), { y: 18 });
+      cfg.forEach((c, k) => fade(c, seg(lt, 0.5 + k * 0.12, 0.95 + k * 0.12, E.outCubic), { y: 12 }));
+      fade(tally, seg(lt, 0.9, 1.4, E.outCubic), { y: 12 });
+      let a = 0, b = 0;
+      tiles.forEach(t => {
+        fade(t.tile, seg(lt, 0.1 + t.i * 0.06, 0.6 + t.i * 0.06, E.outCubic), { y: 34 });
+        const pk = seg(lt, 0.75 + t.i * 0.17, 0.95 + t.i * 0.17, E.outBack);
+        st(t.pick, 'opacity', String(clamp(pk))); st(t.pick, 'transform', `scale(${(1.12 - 0.12 * pk).toFixed(4)})`);
+        const f = seg(lt, 2.3 + t.i * 0.1, 2.9 + t.i * 0.1, E.inOut);
+        st(t.inner, 'transform', `rotateY(${(180 * f).toFixed(2)}deg) translateZ(${(Math.sin(f * Math.PI) * 40).toFixed(1)}px)`);
+        if (f >= 0.5) { if (WITH_WON[t.i]) a++; else b++; }
+      });
+      st(fillA, 'transform', `scaleX(${(a / 8).toFixed(4)})`); st(fillB, 'transform', `scaleX(${(b / 8).toFixed(4)})`);
+      if (ca.textContent !== String(a)) ca.textContent = String(a);
+      if (cb.textContent !== String(b)) cb.textContent = String(b);
+      fade(verdict, seg(lt, 3.6, 4.1, E.outExpo), { y: 14 });
+    };
+  })();
+
+  /* ===== 9 END ===== */
+  const rEnd = (() => {
+    const el = $('#sc-end'), words = $$('.en-word', el), fin = $('.en-final', el);
+    const arms = $$('.en-mark .a', el), heads = $$('.en-mark .h', el), letters = $$('.en-word-mark span', el), tag = $('.en-tag', el), meta = $('.en-meta', el), url = $('.en-url', el);
+    const SLOT = 0.38;
+    return lt => {
+      words.forEach((w, k) => {
+        const a = 0.05 + k * SLOT, on = lt >= a && lt < a + SLOT;
+        const p = on ? seg(lt, a, a + 0.16, E.outExpo) : 0;
+        st(w, 'opacity', on ? String(+p.toFixed(3)) : '0');
+        st(w, 'transform', on ? `scale(${(1.06 - 0.06 * p).toFixed(4)})` : 'none');
+        st(w, 'filter', on && p < 1 ? `blur(${((1 - p) * 14).toFixed(1)}px)` : 'none');
+      });
+      const f0 = 0.05 + 5 * SLOT + 0.1;
+      st(fin, 'opacity', lt >= f0 ? '1' : '0');
+      arms.forEach((a, k) => st(a, 'strokeDashoffset', String(+(1 - seg(lt, f0 + 0.05 * k, f0 + 0.75 + 0.05 * k, E.inOut)).toFixed(4))));
+      heads.forEach((h, k) => st(h, 'opacity', String(seg(lt, f0 + 0.6 + 0.05 * k, f0 + 0.8 + 0.05 * k))));
+      letters.forEach((l, k) => { const p = seg(lt, f0 + 0.3 + k * 0.04, f0 + 1.1 + k * 0.04, E.outExpo); st(l, 'opacity', String(+clamp(p * 1.5).toFixed(3))); st(l, 'transform', `translateY(${((1 - p) * 60).toFixed(1)}px)`); st(l, 'filter', p < 1 ? `blur(${((1 - p) * 10).toFixed(1)}px)` : 'none'); });
+      fade(tag, seg(lt, f0 + 1.0, f0 + 1.6, E.outCubic), { y: 18, blur: 8 });
+      fade(meta, seg(lt, f0 + 1.4, f0 + 1.9, E.outCubic), { y: 10 });
+      fade(url, seg(lt, f0 + 1.6, f0 + 2.1, E.outCubic), { y: 10 });
+    };
+  })();
+
+  /* ===== timeline ===== */
+  const SC = [
+    { id: 'fork', start: 0, render: rFork, tone: 'dark', hud: false, n: 'Fork', kind: 'Type', d: 'One sentence splits along the logo’s four lines into four typed rewrites.' },
+    { id: 'title', start: 3.9, enter: { t: 'blur', d: 0.7 }, render: rTitle, tone: 'dark', hud: false, n: 'Title', kind: 'Type', d: '“One draft. Every direction.” rises out of a blur while the mark draws itself.' },
+    { id: 'dials', start: 8.4, enter: { t: 'iris', d: 0.6 }, render: rDials, tone: 'paper', hud: true, n: 'Dials', kind: 'UI close-up', d: 'The cursor drags Tone and Length and flips Intent. The card rewrites itself word by word.' },
+    { id: 'canvas', start: 14.3, enter: { t: 'blur', d: 0.55 }, render: rCanvas, tone: 'paper', hud: true, n: 'Canvas', kind: 'Tilted', d: 'The canvas tips into 3D as variants drop in. Diff view, ⌘-click, Quick Compare.' },
+    { id: 'swarm', start: 20.2, enter: { t: 'wipeUp', d: 0.6 }, render: rSwarm, tone: 'dark', hud: true, n: 'Swarm', kind: 'Tilted + UI', d: 'Planner to Judge as a live graph, beside the real Agent Swarm log and its token count.' },
+    { id: 'exp', start: 27.0, enter: { t: 'cut', d: 0.0 }, render: rExp, tone: 'paper', hud: true, n: 'Experiment', kind: 'Type → UI', d: '“Was that your edit, or the dice?” Noise pairs fill in and the signal clears the band.' },
+    { id: 'sens', start: 33.9, enter: { t: 'wipeLeft', d: 0.55 }, render: rSens, tone: 'dark', hud: true, n: 'Sensitivity', kind: 'Tilted', d: 'Bars grow against the noise floor, and each knob is sorted into meaning, wording or noise.' },
+    { id: 'abl', start: 39.6, enter: { t: 'slideUp', d: 0.7 }, render: rAbl, tone: 'paper', hud: true, n: 'Ablation', kind: 'UI close-up', d: 'Eight blind pairs are judged, then flip to show which arm won. With critic: 6 of 8.' },
+    { id: 'end', start: 44.6, enter: { t: 'cut', d: 0.0 }, render: rEnd, tone: 'dark', hud: false, n: 'End card', kind: 'Type', d: 'A five-word capability strobe, then the wordmark and “Writing, with a control group.”' },
+  ];
+  const TOTAL = 50.4;
+  SC.forEach((s, i) => { s.el = document.getElementById('sc-' + s.id); s.end = i < SC.length - 1 ? SC[i + 1].start + (SC[i + 1].enter.d || 0) : TOTAL + 1; s.next = i < SC.length - 1 ? SC[i + 1].start : TOTAL; });
+
+  const stage = $('#stage'), film = $('#film'), hud = $('#hud'), flash = $('#flash'), grain = $('#grain');
+  const enter = (s, lt) => {
+    const el = s.el, e = s.enter;
+    if (!e || e.d === 0 || lt >= e.d) { st(el, 'opacity', '1'); st(el, 'filter', 'none'); st(el, 'clipPath', 'none'); st(el, 'transform', 'none'); st(el, 'boxShadow', 'none'); return; }
+    const p = clamp(lt / e.d);
+    if (e.t === 'blur') { const q = E.outCubic(p); st(el, 'opacity', String(+q.toFixed(3))); st(el, 'filter', `blur(${((1 - q) * 26).toFixed(1)}px)`); st(el, 'transform', `scale(${(1.08 - 0.08 * q).toFixed(4)})`); }
+    else if (e.t === 'iris') { const q = E.inOut(p); st(el, 'clipPath', `circle(${(q * 120).toFixed(2)}% at 50% 50%)`); }
+    else if (e.t === 'wipeUp') { const q = E.inOut(p); st(el, 'clipPath', `inset(${((1 - q) * 100).toFixed(2)}% 0 0 0)`); }
+    else if (e.t === 'wipeLeft') { const q = E.inOut(p); st(el, 'clipPath', `inset(0 0 0 ${((1 - q) * 100).toFixed(2)}%)`); }
+    else if (e.t === 'slideUp') { const q = E.outExpo(p); st(el, 'transform', `translateY(${((1 - q) * 100).toFixed(2)}%)`); st(el, 'boxShadow', '0 -40px 120px rgba(0,0,0,0.6)'); }
+  };
+
+  let T = 0, playing = true, last = null, dirty = true, active = -1;
+  const render = () => {
+    let top = 0;
+    SC.forEach((s, i) => {
+      const on = T >= s.start && T < s.end;
+      if (s.el.hidden === on) s.el.hidden = !on;
+      if (!on) return;
+      top = i;
+      const lt = T - s.start;
+      enter(s, lt);
+      s.render(lt);
+    });
+    const cur = SC.findIndex(s => T >= s.start && T < s.next);
+    const s = SC[cur < 0 ? SC.length - 1 : cur];
+    st(hud, 'opacity', s.hud ? '0.85' : '0'); st(hud, 'color', s.tone === 'dark' ? 'rgba(243,237,230,0.55)' : 'rgba(26,24,23,0.45)');
+    // white pop on hard cuts
+    const cutAt = SC.filter(x => x.enter && x.enter.t === 'cut').map(x => x.start);
+    const sinceCut = Math.min(...cutAt.map(c => (T >= c ? T - c : 99)));
+    st(flash, 'opacity', String(+(sinceCut < 0.22 ? 0.5 * (1 - sinceCut / 0.22) : 0).toFixed(3)));
+    updateTransport(cur < 0 ? SC.length - 1 : cur);
+  };
+
+  /* grain */
+  try {
+    const c = document.createElement('canvas'); c.width = c.height = 256;
+    const g = c.getContext('2d'), img = g.createImageData(256, 256);
+    for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; }
+    g.putImageData(img, 0, 0); grain.style.backgroundImage = `url(${c.toDataURL()})`;
+  } catch (e) { grain.hidden = true; }
+  let grainTick = 0;
+
+  /* scale stage to the film box */
+  const fit = () => {
+    const r = film.getBoundingClientRect();
+    const s = Math.min(r.width / 1920, r.height / 1080);
+    stage.style.transform = `translate(${((r.width - 1920 * s) / 2).toFixed(2)}px,${((r.height - 1080 * s) / 2).toFixed(2)}px) scale(${s.toFixed(5)})`;
+  };
+  new ResizeObserver(fit).observe(film); fit();
+
+  /* transport */
+  const bar = $('#bar'), timeEl = $('#time'), playBtn = $('#playBtn'), bigPlay = $('#bigPlay'), shotsEl = $('#shots');
+  const ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z" fill="currentColor"/></svg>';
+  const ICON_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h3.5v16H7zM13.5 4H17v16h-3.5z" fill="currentColor"/></svg>';
+  const segs = SC.map(s => { const d = make('div', 'seg'); d.style.flex = String(s.next - s.start); const i = make('i'); d.append(i); bar.append(d); return i; });
+  const mmss = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+  const shots = SC.map((s, i) => {
+    const b = make('button', 'shot'); b.type = 'button';
+    const top = make('div', 'shot-top'); top.append(make('b', null, String(i + 1).padStart(2, '0')), make('span', null, mmss(s.start)), make('span', 'shot-kind', s.kind));
+    b.append(top, make('span', 'shot-title', s.n), make('span', 'shot-desc', s.d));
+    b.addEventListener('click', () => { seek(s.start + ((s.enter && s.enter.d) || 0) + 0.01); setPlaying(true); });
+    shotsEl.append(b); return b;
+  });
+  let lastTxt = '';
+  function updateTransport(cur) {
+    SC.forEach((s, i) => st(segs[i], 'transform', `scaleX(${clamp((T - s.start) / (s.next - s.start)).toFixed(4)})`));
+    const txt = `${mmss(T)} / ${mmss(TOTAL)}`; if (txt !== lastTxt) { timeEl.textContent = txt; lastTxt = txt; bar.setAttribute('aria-valuenow', String(Math.floor(T))); bar.setAttribute('aria-valuetext', `${txt}, shot ${cur + 1}: ${SC[cur].n}`); }
+    if (active !== cur) { shots.forEach((b, i) => b.classList.toggle('on', i === cur)); active = cur; }
+  }
+  function setPlaying(p) {
+    playing = p; last = null;
+    playBtn.innerHTML = p ? ICON_PAUSE : ICON_PLAY; playBtn.setAttribute('aria-label', p ? 'Pause' : 'Play');
+    bigPlay.hidden = p;
+  }
+  function seek(t) { T = clamp(t, 0, TOTAL - 0.001); dirty = true; }
+  const tFromX = x => {
+    const kids = Array.from(bar.children);
+    for (let i = 0; i < kids.length; i++) {
+      const r = kids[i].getBoundingClientRect();
+      if (x <= r.right + 2 || i === kids.length - 1) return SC[i].start + clamp((x - r.left) / r.width) * (SC[i].next - SC[i].start);
+    }
+    return 0;
+  };
+  let scrubbing = false, wasPlaying = false;
+  bar.addEventListener('pointerdown', e => { scrubbing = true; wasPlaying = playing; setPlaying(false); bar.setPointerCapture(e.pointerId); seek(tFromX(e.clientX)); });
+  bar.addEventListener('pointermove', e => { if (scrubbing) seek(tFromX(e.clientX)); });
+  const endScrub = () => { if (scrubbing) { scrubbing = false; if (wasPlaying) setPlaying(true); } };
+  bar.addEventListener('pointerup', endScrub); bar.addEventListener('pointercancel', endScrub);
+  bar.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') { seek(T + 2); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft') { seek(T - 2); e.preventDefault(); }
+  });
+  playBtn.addEventListener('click', () => setPlaying(!playing));
+  bigPlay.addEventListener('click', e => { e.stopPropagation(); setPlaying(true); });
+  film.addEventListener('click', () => setPlaying(!playing));
+  $('#restartBtn').addEventListener('click', () => { seek(0); setPlaying(true); });
+  $('#fsBtn').addEventListener('click', () => {
+    try {
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      else if (film.requestFullscreen) film.requestFullscreen().catch(() => {});
+    } catch (e) { /* full screen is optional */ }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    if (e.key === ' ' || e.key === 'k') { if (e.target === bar || e.target === film || e.target === document.body) { setPlaying(!playing); e.preventDefault(); } }
+    else if (e.key === 'Home') { seek(0); }
+  });
+
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) { T = 50.0; setPlaying(false); } else setPlaying(true);
+
+  const tick = now => {
+    if (playing) {
+      if (last != null) { T += Math.min(0.1, (now - last) / 1000); if (T >= TOTAL) T = 0; }
+      last = now; dirty = true;
+      if (++grainTick % 3 === 0) grain.style.transform = `translate(${(Math.random() * 40 - 20).toFixed(0)}px,${(Math.random() * 40 - 20).toFixed(0)}px)`;
+    }
+    if (dirty) { render(); dirty = false; }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { resets.forEach(f => f()); dirty = true; });
+
+  // Frame-accurate seek for previews and testing.
+  window.__teaser = { seek: t => { setPlaying(false); seek(t); render(); }, total: TOTAL, scenes: SC.map(s => ({ id: s.id, start: s.start })) };
+})();
+</script>
+</body>
+</html>
